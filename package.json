@@ -2,9 +2,9 @@
   "name": "secure-e-voting-system",
   "version": "1.0.0",
   "description": "Secure Voting System Deployment",
-  "main": "api/server.js",
+  "main": "server/server.js",
   "scripts": {
-    "start": "node api/server.js",
+    "start": "node server/server.js",
     "build": "echo 'No build step required for static frontend'"
   },
   "dependencies": {

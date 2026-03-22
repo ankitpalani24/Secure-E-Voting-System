@@ -1,10 +1,10 @@
 # Node Modules
 node_modules/
-api/node_modules/
+server/node_modules/
 
 # Environment Variables
 .env
-api/.env
+server/.env
 
 # Logs and OS files
 *.log
