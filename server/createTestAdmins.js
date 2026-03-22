@@ -25,10 +25,18 @@ mongoose.connect(process.env.MONGO_URI)
             { username: "Het", password: hashed2 },
             { upsert: true }
         );
+        // Create Yaxit
+        const hashed3 = await bcrypt.hash("yaxit123", 10);
+        await Admin.findOneAndUpdate(
+            { username: "Yaxit" },
+            { username: "Yaxit", password: hashed3 },
+            { upsert: true }
+        );
 
         console.log("Test admins created:");
         console.log("Ankit / ankit123");
         console.log("Het / het123");
+        console.log("Yaxit / yaxit123");
         console.log("Original admin/admin123 also works");
 
         process.exit();
