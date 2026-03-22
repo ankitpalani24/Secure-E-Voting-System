@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="register-party.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+
+<body>
+
+    <header class="top-header">
+        <div class="header-left">
+            <h1>Admin Dashboard</h1>
+            <p>Welcome, System Administrator</p>
+        </div>
+        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i>
+            Logout</a>
+    </header>
+
+    <main class="container">
+        <nav class="tab-nav">
+            <a href="../../admin/dashboard/dashboard.html" class="tab"><i class="fas fa-chart-line"></i>
+                Overview</a>
+            <a href="../../admin/voters/voters.html" class="tab"><i class="fas fa-users"></i> Voters
+                (0)</a>
+            <a href="../../admin/parties/parties.html" class="tab"><i class="fas fa-building"></i>
+                Parties
+                (0)</a>
+            <a href="../../admin/results/results.html" class="tab"><i class="fas fa-poll"></i> Results</a>
+            <a href="../../admin/register-voter/register-voter.html" class="tab"><i class="fas fa-user-plus"></i>
+                Register Voter</a>
+            <a href="../../admin/register-party/register-party.html" class="tab active"><i class="fas fa-plus"></i>
+                Register Party</a>
+        </nav>
+
+        <section class="stats-grid">
+            <div class="rstat-card">
+                <div>
+                    <h2 class="value">Add New Party</h2>
+                </div>
+                <button class="icon-box purple"><i class="fas fa-plus"></i></button>
+            </div>
+        </section>
+        <!-- ....... -->
+        <div id="addparty" class="hidden">
+            <div class="stat-card">
+                <div class="regparty">
+                    <div class="card">
+                        <div class="header">
+                            <span class="icon">🗳️</span>
+                            <h1>Register New Party</h1>
+                        </div>
+
+                        <form id="partyForm">
+                            <div class="field-group">
+                                <label>Party Name</label>
+                                <input type="text" id="partyName" placeholder="Enter party name" required>
+                            </div>
+
+                            <div class="field-group">
+                                <label>Party Symbol</label>
+                                <div class="symbol-grid" id="symbolGrid">
+                                    <button type="button" class="symbol-btn" data-symbol="🗽">🗽</button>
+                                    <button type="button" class="symbol-btn" data-symbol="🌱">🌱</button>
+                                    <button type="button" class="symbol-btn" data-symbol="🤝">🤝</button>
+                                    <button type="button" class="symbol-btn" data-symbol="⭐">⭐</button>
+                                    <button type="button" class="symbol-btn" data-symbol="🎯">🎯</button>
+                                    <button type="button" class="symbol-btn" data-symbol="🔥">🔥</button>
+                                    <button type="button" class="symbol-btn" data-symbol="💡">💡</button>
+                                    <button type="button" class="symbol-btn" data-symbol="🌟">🌟</button>
+                                    <button type="button" class="symbol-btn" data-symbol="🏛️">🏛️</button>
+                                    <button type="button" class="symbol-btn" data-symbol="🦅">🦅</button>
+                                </div>
+                                <input type="hidden" id="symbol" value="">
+                            </div>
+
+                            <div class="field-group">
+                                <label>Description</label>
+                                <input type="text" id="description" placeholder="Brief description of the party">
+                            </div>
+
+                            <div class="field-group">
+                                <label>Manifesto</label>
+                                <textarea id="manifesto" placeholder="Party's main goals and vision"></textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="field-group">
+                                    <label>Email</label>
+                                    <input type="email" id="email">
+                                </div>
+                                <div class="field-group">
+                                    <label>Password</label>
+                                    <input type="password" id="password">
+                                </div>
+                            </div>
+
+                            <div class="actions">
+                                <button type="button" class="btn-secondary">Cancel</button>
+                                <button type="submit" class="btn-primary">Register Party</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+    </main>
+
+    <script src="register-party.js"></script>
+
+</body>
+
+</html>

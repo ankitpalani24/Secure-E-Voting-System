@@ -1,0 +1,25 @@
+# Node Modules
+node_modules/
+server/node_modules/
+
+# Environment Variables
+.env
+server/.env
+
+# Logs and OS files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+
+# Python scripts (from our edits)
+apply_theme.py
+apply_brutalism.py
+apply_soft.py
+apply_mini_icons.py
+hide_scrollbars.py
+hide_universal.py
+mobile_nav.py
+*.pyc

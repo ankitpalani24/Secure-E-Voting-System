@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="../styles/loading.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <header class="top-header">
+        <div class="header-left">
+            <h1>Admin Dashboard</h1>
+            <p>Welcome, System Administrator</p>
+        </div>
+        <!-- <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button> -->
+        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i>
+            Logout</a>
+    </header>
+
+    <main class="container">
+        <nav class="tab-nav">
+            <a href="../../admin/dashboard/dashboard.html" id="dashboardactive" class="tab active"><i
+                    class="fas fa-chart-line"></i> Overview</a>
+            <a href="../../admin/voters/voters.html" class="tab"><i class="fas fa-users"></i> Voters
+                (0)</a>
+            <a href="../../admin/parties/parties.html" class="tab"><i class="fas fa-building"></i>
+                Parties (0)</a>
+            <a href="../../admin/results/results.html" class="tab"><i class="fas fa-poll"></i> Results</a>
+            <a href="../../admin/register-voter/register-voter.html" class="tab"><i
+                    class="fas fa-user-plus"></i> Register Voter</a>
+            <a href="../../admin/register-party/register-party.html" class="tab"><i
+                    class="fas fa-plus"></i> Register Party</a>
+        </nav>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div>
+                    <span class="label">Total Voters</span>
+                    <h2 class="value">0</h2>
+                </div>
+                <div class="icon-box blue"><i class="fas fa-users"></i></div>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <span class="label">Total Votes</span>
+                    <h2 class="value">0</h2>
+                </div>
+                <div class="icon-box green"><i class="fas fa-arrow-trend-up"></i></div>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <span class="label">Total Parties</span>
+                    <h2 class="value">0</h2>
+                </div>
+                <div class="icon-box purple"><i class="fas fa-landmark"></i></div>
+            </div>
+            <!-- <div class="stat-card">
+                <div>
+                    <span class="label">Turnout</span>
+                    <h2 class="value">0%</h2>
+                </div>
+                <div class="icon-box orange"><i class="fas fa-chart-line"></i></div>
+            </div> -->
+        </section>
+
+        <section class="overview-list">
+            <h3>System Overview</h3>
+            <div class="list-item">
+                <div class="list-info">
+                    <strong>Registered Voters</strong>
+                    <p>Total eligible voters in the system</p>
+                </div>
+                <span class="list-count blue-text">0</span>
+            </div>
+            <div class="list-item">
+                <div class="list-info">
+                    <strong>Votes Cast</strong>
+                    <p>Total number of votes recorded</p>
+                </div>
+                <span class="list-count green-text">0</span>
+            </div>
+            <div class="list-item">
+                <div class="list-info">
+                    <strong>Pending Votes</strong>
+                    <p>Voters who haven't voted yet</p>
+                </div>
+                <span class="list-count orange-text">0</span>
+            </div>
+        </section>
+    </main>
+
+    <script src="dashboard.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Face Registration</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    video { border: 2px solid black; }
+  </style>
+</head>
+<body>
+
+<h2>Face Registration</h2>
+<video id="video" width="400" height="300" autoplay></video>
+<br><br>
+<button onclick="captureFace()">Capture Face</button>
+
+<script>
+const video = document.getElementById('video');
+
+async function loadModels() {
+  await faceapi.nets.tinyFaceDetector.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models');
+  await faceapi.nets.faceLandmark68Net.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models');
+  await faceapi.nets.faceRecognitionNet.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models');
+  startVideo();
+}
+
+function startVideo() {
+  navigator.mediaDevices.getUserMedia({ video: {} })
+    .then(stream => video.srcObject = stream)
+    .catch(err => console.error(err));
+}
+
+async function captureFace() {
+  const detection = await faceapi
+    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+    .withFaceLandmarks()
+    .withFaceDescriptor();
+
+  if (!detection) {
+    alert("Face not detected. Try again.");
+    return;
+  }
+
+  const descriptor = Array.from(detection.descriptor);
+  console.log("Face Descriptor:", descriptor);
+  alert("Face captured! Open console (F12) and copy the descriptor array.");
+}
+
+loadModels();
+</script>
+
+</body>
+</html>

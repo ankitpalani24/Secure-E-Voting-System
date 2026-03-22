@@ -1,0 +1,5 @@
+Total voters: 4
+Email: test@gmail.com, Descriptor length: 0, hasVoted: false
+Email: het@voter, Descriptor length: 0, hasVoted: false
+Email: yaxitdesai@gmail.com@voter, Descriptor length: 0, hasVoted: false
+Email: ankitpalani24@voter@voter, Descriptor length: 128, hasVoted: false

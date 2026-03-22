@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verify Face</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+</head>
+<body>
+  <h2>Face Verification</h2>
+  <video id="video" width="400" height="300" autoplay></video>
+  <button onclick="verifyFace()">Verify Face</button>
+
+  <script>
+    const video = document.getElementById('video');
+
+    Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights'),
+      faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights'),
+      faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights')
+    ]).then(startVideo);
+
+    function startVideo() {
+      navigator.mediaDevices.getUserMedia({ video: {} })
+        .then(stream => video.srcObject = stream);
+    }
+
+    async function verifyFace() {
+      const detection = await faceapi.detectSingleFace(
+        video,
+        new faceapi.TinyFaceDetectorOptions()
+      ).withFaceLandmarks().withFaceDescriptor();
+
+      const liveDescriptor = detection.descriptor;
+
+      // Fetch stored descriptor from backend later
+      console.log("Live descriptor ready for comparison");
+    }
+  </script>
+</body>
+</html>

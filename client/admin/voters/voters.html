@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="voters.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="top-header">
+        <div class="header-left">
+            <h1>Admin Dashboard</h1>
+            <p>Welcome, System Administrator</p>
+        </div>
+        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </header>
+
+    <main class="container">
+        <nav class="tab-nav">
+            <a href="../../admin/dashboard/dashboard.html" class="tab"><i class="fas fa-chart-line"></i> Overview</a>
+            <a href="../../admin/voters/voters.html" class="tab active"><i class="fas fa-users"></i> Voters (0)</a>
+            <a href="../../admin/parties/parties.html" class="tab"><i class="fas fa-building"></i> Parties (0)</a>
+            <a href="../../admin/results/results.html" class="tab"><i class="fas fa-poll"></i> Results</a>
+            <a href="../../admin/register-voter/register-voter.html" class="tab"><i class="fas fa-user-plus"></i> Register Voter</a>
+            <a href="../../admin/register-party/register-party.html" class="tab"><i class="fas fa-plus"></i> Register Party</a>
+        </nav>
+
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="voterSearch" placeholder="Search voter by full name..." class="search-box">
+        </div>
+
+        <section class="overview-list">
+            <h3>Voters List :</h3>
+            <div class="list-item">
+                <div class="list-info">
+                    
+                </div>
+                
+            </div>
+            <div class="list-item">
+                <div class="list-info">
+                    
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-info">
+                    
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="voters.js"></script>
+
+</body>
+</html>

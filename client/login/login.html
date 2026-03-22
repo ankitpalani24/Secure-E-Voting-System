@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="login.css">
+
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
+
+    <title>Login To E-Voting System</title>
+</head>
+
+<body>
+
+
+    <div class="l-form">
+
+        <!-- <div id="title">
+            E-Voting
+        </div> -->
+
+        <div class="shape1"></div>
+        <div class="shape2"></div>
+
+        <div class="login">
+
+            <div id="svg">
+                <img src="../pics/ballot.png" class=icon alt="ballot" class="form__img">
+                <img src="../pics/news.png" class=icon alt="news" class="form__img">
+                <img src="../pics/polling.png" class=icon alt="polling" class="form__img">
+                <img src="../pics/raise-hand.png" class=icon alt="raise-hand" class="form__img">
+                <img src="../pics/vote.png" class=icon alt="vote" class="form__img">
+                <img src="../pics/voting.png" class=icon alt="vote" class="form__img">
+            </div>
+
+            <div class="v-line"></div>
+
+            <div class="form">
+
+
+                <form action="" class="form__content">
+                    <h1 class="form__title">Welcome</h1>
+
+                    <div class="form__div form__div-one">
+                        <div class="form__icon">
+                            <i class='bx bx-user-circle'></i>
+                        </div>
+
+                        <div class="form__div-input">
+                            <label for="username" class="form__label">Username</label>
+                            <input type="text" id="username" class="form__input">
+                        </div>
+                    </div>
+
+                    <div class="form__div">
+                        <div class="form__icon">
+                            <i class='bx bx-lock'></i>
+                        </div>
+
+                        <div class="form__div-input">
+                            <label for="password" class="form__label">Password</label>
+                            <input type="password" id="password" class="form__input">
+                        </div>
+                    </div>
+                    <a href="#" class="form__forgot">Forgot Password?</a>
+
+<select id="role" class="form__select">
+<option value="admin">Admin</option>
+<option value="voter">Voter</option>
+<option value="party">Party</option>
+</select>
+<input type="submit" class="form__button" value="Login">
+
+
+
+                </form>
+            </div>
+        </div>
+
+
+    </div>
+
+    <script src="login.js"></script>
+</body>
+
+</html>
