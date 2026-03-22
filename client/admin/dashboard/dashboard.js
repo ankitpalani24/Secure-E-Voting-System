@@ -13,7 +13,7 @@ async function loadDashboardData() {
     // The loading text wipe has been removed to preserve the stat-card HTML elements
     
     try {
-        const res = await fetch('http://localhost:5000/api/admin/stats', {
+        const res = await fetch('/api/admin/stats', {
             headers: { Authorization: `Bearer ${token}` }
         });
 

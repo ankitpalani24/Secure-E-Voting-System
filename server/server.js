@@ -47,12 +47,17 @@ mongoose
   .then(() => {
     console.log("MongoDB Connected Successfully");
 
-    // Start server only after DB connects
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    // Start server locally ONLY if not in Vercel production
+    if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+      const PORT = process.env.PORT || 5000;
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    }
   })
   .catch((err) => {
     console.error("MongoDB Connection Failed:", err);
   });
+
+// Export Express app for Vercel Serverless execution
+module.exports = app;

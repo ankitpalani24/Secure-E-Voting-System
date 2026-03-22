@@ -7,7 +7,7 @@ async function loadParties() {
         statsGrid.innerHTML = '<div class="loading"><span class="spinner"></span>Searching parties...</div>';
         
         try {
-            const res = await fetch('http://localhost:5000/api/admin/parties', {
+            const res = await fetch('/api/admin/parties', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const parties = await res.json();
@@ -32,7 +32,7 @@ async function loadParties() {
 
         // Fetch global stats to update nav tabs
         try {
-            const statsRes = await fetch('http://localhost:5000/api/admin/stats', { headers: { Authorization: `Bearer ${token}` }});
+            const statsRes = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` }});
             if (statsRes.ok) {
                 const stats = await statsRes.json();
                 const voterTab = document.querySelector('a[href*="/voters/"]');

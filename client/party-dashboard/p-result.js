@@ -4,7 +4,7 @@ async function loadResults() {
     if (!token) return window.location.href = '../../login/login.html';
     
     try {
-        const res = await fetch('http://localhost:5000/api/results', {
+        const res = await fetch('/api/results', {
             headers: { Authorization: `Bearer ${token}` }
         });
         const results = await res.json();

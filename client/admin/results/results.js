@@ -3,14 +3,14 @@ async function loadResults() {
     const token = localStorage.getItem('token');
     
     try {
-        const res = await fetch('http://localhost:5000/api/results', {
+        const res = await fetch('/api/results', {
             headers: { Authorization: `Bearer ${token}` }
         });
         const results = await res.json();
 
         // Fetch global stats to update nav tabs
         try {
-            const statsRes = await fetch('http://localhost:5000/api/admin/stats', { headers: { Authorization: `Bearer ${token}` }});
+            const statsRes = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` }});
             if (statsRes.ok) {
                 const stats = await statsRes.json();
                 const voterTab = document.querySelector('a[href*="/voters/"]');

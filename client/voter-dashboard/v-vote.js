@@ -8,7 +8,7 @@ async function loadVoterParties() {
         const headerP = document.querySelector('.header-left p');
         if (headerP) headerP.textContent = `Welcome, ${userName}`;
 
-        const profileRes = await fetch('http://localhost:5000/api/voter/profile', {
+        const profileRes = await fetch('/api/voter/profile', {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (profileRes.ok) {
@@ -24,7 +24,7 @@ async function loadVoterParties() {
             }
         }
         // Use party route to get all available parties
-        const res = await fetch('http://localhost:5000/api/party', { 
+        const res = await fetch('/api/party', { 
             headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -125,7 +125,7 @@ async function performFaceVerification() {
 
                             try {
                                 const descriptor = Array.from(detection.descriptor);
-                                const res = await fetch('http://localhost:5000/api/voter/face-verify', {
+                                const res = await fetch('/api/voter/face-verify', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -172,7 +172,7 @@ async function voteForParty(partyId) {
         return;
     }
 
-    const res = await fetch('http://localhost:5000/api/voter/vote', {
+    const res = await fetch('/api/voter/vote', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

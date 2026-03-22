@@ -41,7 +41,7 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     }
 
     const token = localStorage.getItem('token');
-    const res = await fetch('http://localhost:5000/api/admin/add-voter', {
+    const res = await fetch('/api/admin/add-voter', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -181,7 +181,7 @@ async function updateNavCounts() {
     try {
         const token = localStorage.getItem("token");
         if (!token) return;
-        const statsRes = await fetch("http://localhost:5000/api/admin/stats", { headers: { Authorization: `Bearer ${token}` } });
+        const statsRes = await fetch("/api/admin/stats", { headers: { Authorization: `Bearer ${token}` } });
         if (statsRes.ok) {
             const stats = await statsRes.json();
             const voterTab = document.querySelector('a[href*="/voters/"]');

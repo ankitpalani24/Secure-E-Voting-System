@@ -10,14 +10,14 @@ async function loadVoters() {
     container.innerHTML = '<div class="loading"><span class="spinner"></span>Searching voters...</div>';
     
     try {
-        const res = await fetch('http://localhost:5000/api/admin/voters', {
+        const res = await fetch('/api/admin/voters', {
             headers: { Authorization: `Bearer ${token}` }
         });
         allVoters = await res.json(); // Persist all loaded voters
 
         // Fetch global stats to update nav tabs
         try {
-            const statsRes = await fetch('http://localhost:5000/api/admin/stats', { headers: { Authorization: `Bearer ${token}` }});
+            const statsRes = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` }});
             if (statsRes.ok) {
                 const stats = await statsRes.json();
                 const voterTab = document.querySelector('a[href*="/voters/"]');

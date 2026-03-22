@@ -44,7 +44,7 @@ document.querySelector('.form__content').addEventListener('submit', async functi
         else if (role === 'voter') endpoint = '/api/auth/voter-login';
         else if (role === 'party') endpoint = '/api/auth/party-login';
         
-        const res = await fetch(`http://localhost:5000${endpoint}`, {
+        const res = await fetch(`${endpoint}`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({username, password})  // voter uses email, but backend handles

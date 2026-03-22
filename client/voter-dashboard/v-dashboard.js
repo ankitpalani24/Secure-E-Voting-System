@@ -10,7 +10,7 @@ async function loadVoterDashboard() {
         infoSection.innerHTML = '<div class="loading"><span class="spinner"></span>Searching voter profile...</div>';
         
         // Get voter profile
-        const profileRes = await fetch('http://localhost:5000/api/voter/profile', {
+        const profileRes = await fetch('/api/voter/profile', {
             headers: { Authorization: `Bearer ${token}` }
         });
         const profile = await profileRes.json();

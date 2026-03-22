@@ -7,7 +7,7 @@ async function loadPartyParties() {
         statsGrid.innerHTML = '<div class="loading"><span class="spinner"></span>Searching parties...</div>';
         
         try {
-            const res = await fetch('http://localhost:5000/api/party', {
+            const res = await fetch('/api/party', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const parties = await res.json();
