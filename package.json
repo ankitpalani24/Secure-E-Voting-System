@@ -4,8 +4,7 @@
   "description": "Secure Voting System Deployment",
   "main": "server/server.js",
   "scripts": {
-    "start": "node server/server.js",
-    "build": "echo 'No build step required for static frontend'"
+    "start": "node server/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
