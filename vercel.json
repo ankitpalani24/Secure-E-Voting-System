@@ -10,14 +10,10 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/server/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/client/$1"
+      "source": "/api/(.*)",
+      "destination": "/server/server.js"
     }
   ]
 }
