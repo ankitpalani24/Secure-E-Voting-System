@@ -46,7 +46,9 @@ exports.faceVerify = async (req, res) => {
     console.log('Face distance:', distance);
 
     if (distance < 0.55) {
-      if (voter.hasVoted) {
+      // Dynamically verify they don't already have an active ballot
+      const voteExists = await Vote.findOne({ voterId: voter._id });
+      if (voteExists) {
         return res.status(400).json({ message: "Already voted" });
       }
       res.json({ verified: true, distance });
@@ -66,9 +68,9 @@ exports.castVote = async (req, res) => {
     const voterId = req.user.id; // from JWT
     const { partyId } = req.body;
 
-    // Check if voter already voted using hasVoted flag
-    const voter = await Voter.findById(voterId);
-    if (voter.hasVoted) {
+    // Check if voter already voted using dynamic ballot collection check
+    const voteExists = await Vote.findOne({ voterId });
+    if (voteExists) {
       return res.status(400).json({ message: "You have already voted" });
     }
 
@@ -78,9 +80,7 @@ exports.castVote = async (req, res) => {
       partyId,
     });
 
-    // Update voter status
-    voter.hasVoted = true;
-    await voter.save();
+    // Stagnant DB boolean omitted because the actual Vote collection existence dominates.
 
     // Log action
     await AuditLog.create({
