@@ -81,8 +81,21 @@ exports.addParty = async (req, res) => {
 
 // ================= VIEW ALL VOTERS =================
 exports.getVoters = async (req, res) => {
-  const voters = await Voter.find();
-  res.json(voters);
+  try {
+    const voters = await Voter.find().lean();
+    
+    // Dynamically sync status exclusively from the actual `Vote` collection
+    const castedVotes = await Vote.find({}, 'voterId').lean();
+    const votedVoterIds = new Set(castedVotes.map(v => v.voterId.toString()));
+    
+    voters.forEach(voter => {
+        voter.hasVoted = votedVoterIds.has(voter._id.toString());
+    });
+    
+    res.json(voters);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // ================= VIEW ALL PARTIES =================

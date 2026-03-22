@@ -12,10 +12,15 @@ function euclideanDistance(vecA, vecB) {
 exports.getProfile = async (req, res) => {
   try {
     const voterId = req.user.id;
-    const voter = await Voter.findById(voterId).select('-password');
+    let voter = await Voter.findById(voterId).select('-password').lean();
     if (!voter) {
       return res.status(404).json({ message: "Voter not found" });
     }
+
+    // Dynamically sync hasVoted status based on the strict presence of an actual ballot
+    const voteExists = await Vote.findOne({ voterId });
+    voter.hasVoted = !!voteExists;
+
     res.json(voter);
   } catch (err) {
     res.status(500).json({ message: err.message });
