@@ -18,6 +18,17 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: "Voter not found" });
     }
 
+    const voteExists = await Vote.findOne({ voterId: new mongoose.Types.ObjectId(voterId) });
+    
+    // Strict Bi-Directional DB Sync
+    if (voteExists && !voter.hasVoted) {
+      await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
+      voter.hasVoted = true;
+    } else if (!voteExists && voter.hasVoted) {
+      await Voter.findByIdAndUpdate(voterId, { hasVoted: false });
+      voter.hasVoted = false;
+    }
+
     res.json(voter);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -43,13 +54,14 @@ exports.faceVerify = async (req, res) => {
     console.log('Face distance:', distance);
 
     if (distance < 0.55) {
-      // Direct static check
-      if (voter.hasVoted) {
+      // Strict Bi-Directional DB Sync
+      const voteExists = await Vote.findOne({ voterId: voter._id });
+      if (voteExists) {
+        if (!voter.hasVoted) await Voter.findByIdAndUpdate(voter._id, { hasVoted: true });
         return res.status(400).json({ message: "Already voted" });
+      } else {
+        if (voter.hasVoted) await Voter.findByIdAndUpdate(voter._id, { hasVoted: false });
       }
-
-      // Reverse-Heal: If hasVoted is false (e.g., manually reset in DB), ensure we clear old Vote documents
-      await Vote.deleteMany({ voterId: voter._id });
       res.json({ verified: true, distance });
     } else {
       console.log('Face mismatch detected. Distance:', distance);
@@ -67,15 +79,14 @@ exports.castVote = async (req, res) => {
     const voterId = req.user.id; // from JWT
     const { partyId } = req.body;
 
-    // Check static DB boolean
-    const voter = await Voter.findById(voterId);
-    if (voter.hasVoted) {
+    // Strict Bi-Directional DB Sync
+    const voteExists = await Vote.findOne({ voterId: new mongoose.Types.ObjectId(voterId) });
+    if (voteExists) {
+      if (!voter.hasVoted) await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
       return res.status(400).json({ message: "You have already voted" });
+    } else {
+      if (voter.hasVoted) await Voter.findByIdAndUpdate(voterId, { hasVoted: false });
     }
-
-    // Reverse-Heal: If hasVoted is false, clear any stray votes before creating the new one
-    // This prevents the duplicate key error (11000) when a user's DB flag is manually reset for testing
-    await Vote.deleteMany({ voterId: new mongoose.Types.ObjectId(voterId) });
 
     // Create vote (DB also prevents duplicate using unique voterId)
     await Vote.create({

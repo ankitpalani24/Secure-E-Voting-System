@@ -92,8 +92,18 @@ exports.getVoters = async (req, res) => {
     });
     
     voters.forEach(voter => {
-        if (voteMap[voter._id.toString()]) {
+        const hasActualVote = !!voteMap[voter._id.toString()];
+        voter.hasVoted = hasActualVote;
+        
+        if (hasActualVote) {
             voter.voteTimestamp = voteMap[voter._id.toString()];
+        }
+        
+        // Background heal the underlying database if out of sync
+        if (hasActualVote && !voter.hasVoted) {
+            Voter.findByIdAndUpdate(voter._id, { hasVoted: true }).exec();
+        } else if (!hasActualVote && voter.hasVoted) {
+            Voter.findByIdAndUpdate(voter._id, { hasVoted: false }).exec();
         }
     });
     
