@@ -51,9 +51,16 @@ function displayVoters(votersArray) {
     votersArray.forEach(voter => {
         const item = document.createElement('div');
         item.className = 'list-item';
+        
+        let dateStr = '';
+        if (voter.hasVoted && voter.voteTimestamp) {
+            const d = new Date(voter.voteTimestamp);
+            dateStr = `<span style="font-size: 0.85em; color: #888; font-weight: normal; margin-left: 10px;">(Voted: ${d.toLocaleString()})</span>`;
+        }
+
         item.innerHTML = `
             <div class="list-info">
-                <strong>${voter.name}</strong>
+                <strong>${voter.name} ${dateStr}</strong>
                 <p>${voter.email} | ID: ${voter._id.slice(-6)} | Voted: ${voter.hasVoted ? 'Yes' : 'No'}</p>
             </div>
             <span class="list-count ${voter.hasVoted ? 'green-text' : 'orange-text'}">${voter.hasVoted ? 'VOTED' : 'PENDING'}</span>

@@ -1,6 +1,7 @@
 const Vote = require("../models/Vote");
 const Voter = require("../models/Voter");
 const AuditLog = require("../models/AuditLog");
+const mongoose = require("mongoose");
 
 // Euclidean distance for face descriptors
 function euclideanDistance(vecA, vecB) {
@@ -15,15 +16,6 @@ exports.getProfile = async (req, res) => {
     let voter = await Voter.findById(voterId).select('-password').lean();
     if (!voter) {
       return res.status(404).json({ message: "Voter not found" });
-    }
-
-    // Self-heal missing database boolean for legacy votes
-    if (!voter.hasVoted) {
-      const voteExists = await Vote.findOne({ voterId });
-      if (voteExists) {
-        await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
-        voter.hasVoted = true;
-      }
     }
 
     res.json(voter);
@@ -51,13 +43,13 @@ exports.faceVerify = async (req, res) => {
     console.log('Face distance:', distance);
 
     if (distance < 0.55) {
-      // Dynamically verify they don't already have an active ballot
-      const voteExists = await Vote.findOne({ voterId: voter._id });
-      if (voteExists) {
-        // Self-heal
-        if (!voter.hasVoted) await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
+      // Direct static check
+      if (voter.hasVoted) {
         return res.status(400).json({ message: "Already voted" });
       }
+
+      // Reverse-Heal: If hasVoted is false (e.g., manually reset in DB), ensure we clear old Vote documents
+      await Vote.deleteMany({ voterId: voter._id });
       res.json({ verified: true, distance });
     } else {
       console.log('Face mismatch detected. Distance:', distance);
@@ -75,12 +67,15 @@ exports.castVote = async (req, res) => {
     const voterId = req.user.id; // from JWT
     const { partyId } = req.body;
 
-    // Check if voter already voted using dynamic ballot collection check
-    const voteExists = await Vote.findOne({ voterId });
-    if (voteExists) {
-      await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
+    // Check static DB boolean
+    const voter = await Voter.findById(voterId);
+    if (voter.hasVoted) {
       return res.status(400).json({ message: "You have already voted" });
     }
+
+    // Reverse-Heal: If hasVoted is false, clear any stray votes before creating the new one
+    // This prevents the duplicate key error (11000) when a user's DB flag is manually reset for testing
+    await Vote.deleteMany({ voterId: new mongoose.Types.ObjectId(voterId) });
 
     // Create vote (DB also prevents duplicate using unique voterId)
     await Vote.create({
@@ -100,9 +95,8 @@ exports.castVote = async (req, res) => {
     res.json({ message: "Vote casted successfully" });
 
   } catch (err) {
-    // If duplicate vote attempted
+    // If duplicate vote attempted (e.g., they manually cleared the boolean but forgot to delete the Vote doc)
     if (err.code === 11000) {
-      await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
       return res.status(400).json({ message: "Vote already recorded" });
     }
 

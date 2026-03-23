@@ -83,6 +83,20 @@ exports.addParty = async (req, res) => {
 exports.getVoters = async (req, res) => {
   try {
     const voters = await Voter.find().lean();
+    
+    // Fetch vote timestamps to display on the dashboard
+    const castedVotes = await Vote.find({}, 'voterId timestamp').lean();
+    const voteMap = {};
+    castedVotes.forEach(v => {
+        voteMap[v.voterId.toString()] = v.timestamp;
+    });
+    
+    voters.forEach(voter => {
+        if (voteMap[voter._id.toString()]) {
+            voter.voteTimestamp = voteMap[voter._id.toString()];
+        }
+    });
+    
     res.json(voters);
   } catch (err) {
     res.status(500).json({ message: err.message });
