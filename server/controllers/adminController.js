@@ -83,15 +83,6 @@ exports.addParty = async (req, res) => {
 exports.getVoters = async (req, res) => {
   try {
     const voters = await Voter.find().lean();
-    
-    // Dynamically sync status exclusively from the actual `Vote` collection
-    const castedVotes = await Vote.find({}, 'voterId').lean();
-    const votedVoterIds = new Set(castedVotes.map(v => v.voterId.toString()));
-    
-    voters.forEach(voter => {
-        voter.hasVoted = votedVoterIds.has(voter._id.toString());
-    });
-    
     res.json(voters);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -101,6 +101,14 @@ async function performFaceVerification() {
         let detectInterval;
 
         function detectVerifyFace() {
+            const gestures = ['turn_left', 'turn_right', 'look_up', 'look_down'];
+            let currentChallenge = gestures[Math.floor(Math.random() * gestures.length)];
+            let livenessPassed = false;
+            let baselineX = 0;
+            let baselineY = 0;
+            let initialFrames = 0;
+            let challengeHoldFrames = 0;
+
             detectInterval = setInterval(async () => {
                 // Stop scanning if they already clicked verify
                 if (isVerifying) return;
@@ -111,53 +119,114 @@ async function performFaceVerification() {
                     if (isVerifying) return; // double check
 
                     if (detection) {
-                        statusEl.textContent = 'Face detected!';
-                        statusEl.style.color = 'green';
-                        verifyBtn.disabled = false;
-                        
-                        verifyBtn.onclick = async () => {
-                            if (isVerifying) return;
-                            isVerifying = true;
-                            clearInterval(detectInterval);
-                            
-                            verifyBtn.textContent = 'Verifying...';
-                            verifyBtn.disabled = true;
+                        const box = detection.detection.box;
+                        const noseTip = detection.landmarks.getNose()[3];
+                        const relX = (noseTip.x - box.x) / box.width;
+                        const relY = (noseTip.y - box.y) / box.height;
 
-                            try {
-                                const descriptor = Array.from(detection.descriptor);
-                                const res = await fetch('/api/voter/face-verify', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${token}`
-                                    },
-                                    body: JSON.stringify({ descriptor })
-                                });
-                                
-                                const data = await res.json();
-                                popup.remove();
-                                if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
-                                
-                                if (!res.ok) {
-                                    alert(data.message || 'Face verification failed');
-                                }
-                                resolve(res.ok);
-                            } catch (err) {
-                                console.error('Verification error:', err);
-                                popup.remove();
-                                if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
-                                alert('Network error during verification');
-                                resolve(false);
+                        if (initialFrames < 5) {
+                            baselineX += relX;
+                            baselineY += relY;
+                            initialFrames++;
+                            statusEl.textContent = 'Hold still, initializing (' + initialFrames + '/5)...';
+                            statusEl.style.color = 'orange';
+                            verifyBtn.disabled = true;
+                            
+                            if (initialFrames === 5) {
+                                baselineX /= 5; // Average over 5 frames
+                                baselineY /= 5;
                             }
-                        };
+                            return;
+                        }
+                        
+                        if (!livenessPassed) {
+                            verifyBtn.disabled = true;
+                            let challengeMetCurrentFrame = false;
+                            
+                            if (currentChallenge === 'turn_left' && relX < baselineX - 0.10) challengeMetCurrentFrame = true;
+                            else if (currentChallenge === 'turn_right' && relX > baselineX + 0.10) challengeMetCurrentFrame = true;
+                            else if (currentChallenge === 'look_up' && relY < baselineY - 0.08) challengeMetCurrentFrame = true;
+                            else if (currentChallenge === 'look_down' && relY > baselineY + 0.08) challengeMetCurrentFrame = true;
+                            
+                            if (challengeMetCurrentFrame) {
+                                challengeHoldFrames++;
+                                if (challengeHoldFrames >= 3) {
+                                    livenessPassed = true;
+                                    statusEl.textContent = 'Challenge passed! Now look straight.';
+                                    statusEl.style.color = 'green';
+                                } else {
+                                    statusEl.textContent = 'Hold position... (' + challengeHoldFrames + '/3)';
+                                    statusEl.style.color = 'blue';
+                                }
+                            } else {
+                                challengeHoldFrames = 0; // Reset if they flinch or it was a jitter
+                                const msgs = {
+                                    'turn_left': 'Please turn your head slowly LEFT',
+                                    'turn_right': 'Please turn your head slowly RIGHT',
+                                    'look_up': 'Please tilt your head slowly UP',
+                                    'look_down': 'Please tilt your head slowly DOWN'
+                                };
+                                statusEl.textContent = "Liveness: " + msgs[currentChallenge];
+                                statusEl.style.color = 'orange';
+                            }
+                        } else {
+                            // Check if returned to looking straight
+                            if (Math.abs(relX - baselineX) < 0.06 && Math.abs(relY - baselineY) < 0.06) {
+                                statusEl.textContent = 'Face detected and ready!';
+                                statusEl.style.color = 'green';
+                                verifyBtn.disabled = false;
+                                
+                                verifyBtn.onclick = async () => {
+                                    if (isVerifying) return;
+                                    isVerifying = true;
+                                    clearInterval(detectInterval);
+                                    
+                                    verifyBtn.textContent = 'Verifying...';
+                                    verifyBtn.disabled = true;
+
+                                    try {
+                                        const descriptor = Array.from(detection.descriptor);
+                                        const res = await fetch('/api/voter/face-verify', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'Authorization': `Bearer ${token}`
+                                            },
+                                            body: JSON.stringify({ descriptor })
+                                        });
+                                        
+                                        const data = await res.json();
+                                        popup.remove();
+                                        if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+                                        
+                                        if (!res.ok) {
+                                            alert(data.message || 'Face verification failed');
+                                        }
+                                        resolve(res.ok);
+                                    } catch (err) {
+                                        console.error('Verification error:', err);
+                                        popup.remove();
+                                        if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+                                        alert('Network error during verification');
+                                        resolve(false);
+                                    }
+                                };
+                            } else {
+                                statusEl.textContent = 'Please look straight at the camera';
+                                statusEl.style.color = 'orange';
+                                verifyBtn.disabled = true;
+                                verifyBtn.onclick = null;
+                            }
+                        }
                     } else {
                         statusEl.textContent = 'No face - look at camera';
                         statusEl.style.color = 'orange';
                         verifyBtn.disabled = true;
                         verifyBtn.onclick = null;
+                        challengeHoldFrames = 0; // Reset on face loss
                     }
                 }
-            }, 500);
+            }, 200);
         }
     });
 }

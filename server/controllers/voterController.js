@@ -17,9 +17,14 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: "Voter not found" });
     }
 
-    // Dynamically sync hasVoted status based on the strict presence of an actual ballot
-    const voteExists = await Vote.findOne({ voterId });
-    voter.hasVoted = !!voteExists;
+    // Self-heal missing database boolean for legacy votes
+    if (!voter.hasVoted) {
+      const voteExists = await Vote.findOne({ voterId });
+      if (voteExists) {
+        await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
+        voter.hasVoted = true;
+      }
+    }
 
     res.json(voter);
   } catch (err) {
@@ -49,6 +54,8 @@ exports.faceVerify = async (req, res) => {
       // Dynamically verify they don't already have an active ballot
       const voteExists = await Vote.findOne({ voterId: voter._id });
       if (voteExists) {
+        // Self-heal
+        if (!voter.hasVoted) await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
         return res.status(400).json({ message: "Already voted" });
       }
       res.json({ verified: true, distance });
@@ -71,6 +78,7 @@ exports.castVote = async (req, res) => {
     // Check if voter already voted using dynamic ballot collection check
     const voteExists = await Vote.findOne({ voterId });
     if (voteExists) {
+      await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
       return res.status(400).json({ message: "You have already voted" });
     }
 
@@ -80,7 +88,8 @@ exports.castVote = async (req, res) => {
       partyId,
     });
 
-    // Stagnant DB boolean omitted because the actual Vote collection existence dominates.
+    // Update the DB boolean to ensure consistency across endpoints (like login)
+    await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
 
     // Log action
     await AuditLog.create({
@@ -93,6 +102,7 @@ exports.castVote = async (req, res) => {
   } catch (err) {
     // If duplicate vote attempted
     if (err.code === 11000) {
+      await Voter.findByIdAndUpdate(voterId, { hasVoted: true });
       return res.status(400).json({ message: "Vote already recorded" });
     }
 
