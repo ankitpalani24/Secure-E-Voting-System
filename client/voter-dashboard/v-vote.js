@@ -143,8 +143,8 @@ async function performFaceVerification() {
                             verifyBtn.disabled = true;
                             let challengeMetCurrentFrame = false;
                             
-                            if (currentChallenge === 'turn_left' && relX < baselineX - 0.10) challengeMetCurrentFrame = true;
-                            else if (currentChallenge === 'turn_right' && relX > baselineX + 0.10) challengeMetCurrentFrame = true;
+                            if (currentChallenge === 'turn_left' && relX > baselineX + 0.10) challengeMetCurrentFrame = true;
+                            else if (currentChallenge === 'turn_right' && relX < baselineX - 0.10) challengeMetCurrentFrame = true;
                             else if (currentChallenge === 'look_up' && relY < baselineY - 0.08) challengeMetCurrentFrame = true;
                             else if (currentChallenge === 'look_down' && relY > baselineY + 0.08) challengeMetCurrentFrame = true;
                             

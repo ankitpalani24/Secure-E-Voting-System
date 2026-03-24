@@ -53,7 +53,7 @@ exports.faceVerify = async (req, res) => {
     const distance = euclideanDistance(descriptor, voter.faceDescriptor);
     console.log('Face distance:', distance);
 
-    if (distance < 0.55) {
+    if (distance < 0.60) {
       // Strict Bi-Directional DB Sync
       const voteExists = await Vote.findOne({ voterId: voter._id });
       if (voteExists) {
