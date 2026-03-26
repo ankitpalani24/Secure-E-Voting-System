@@ -15,7 +15,7 @@ let faceDescriptor = null;
 
 // Load face-api models
 Promise.all([
-    faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
+    faceapi.nets.ssdMobilenetv1.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
     faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
     faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
 ]).then(() => console.log('Face-api models loaded'));
@@ -142,18 +142,18 @@ function detectFaces() {
     setInterval(async () => {
         if (videoEl.readyState === 4) {
             console.log('Video ready, detecting...');
-            const detections = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+            const detections = await faceapi.detectSingleFace(videoEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.8 })).withFaceLandmarks().withFaceDescriptor();
             const statusEl = document.getElementById('faceStatus');
             const captureBtn = document.getElementById('captureBtn');
 
             if (detections) {
-                statusEl.textContent = 'Face detected! Ready to capture.';
+                statusEl.textContent = 'High-quality face detected! Ready to capture.';
                 statusEl.style.color = 'green';
                 captureBtn.disabled = false;
                 captureBtn.onclick = () => captureFace(detections.descriptor);
                 console.log('Face found!');
             } else {
-                statusEl.textContent = 'No face detected. Adjust position.';
+                statusEl.textContent = 'Looking for a clear face (adjust lighting/position).';
                 statusEl.style.color = 'orange';
                 captureBtn.disabled = true;
             }

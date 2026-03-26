@@ -53,7 +53,8 @@ exports.faceVerify = async (req, res) => {
     const distance = euclideanDistance(descriptor, voter.faceDescriptor);
     console.log('Face distance:', distance);
 
-    if (distance < 0.60) {
+    // Tightened threshold from 0.60 to 0.55 due to the more accurate SsdMobilenetv1 embeddings
+    if (distance < 0.55) {
       // Strict Bi-Directional DB Sync
       const voteExists = await Vote.findOne({ voterId: voter._id });
       if (voteExists) {
