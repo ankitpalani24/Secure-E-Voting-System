@@ -20,7 +20,7 @@ exports.verifyToken = (req, res, next) => {
 // ===== Check Admin Role =====
 exports.isAdmin = (req, res, next) => {
   if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Admin access required" });
+    return res.status(403).json({ message: "Unauthorized access" });
   }
   next();
 };
@@ -28,7 +28,7 @@ exports.isAdmin = (req, res, next) => {
 // ===== Check Voter Role =====
 exports.isVoter = (req, res, next) => {
   if (req.user.role !== "voter") {
-    return res.status(403).json({ message: "Voter access required" });
+    return res.status(403).json({ message: "Unauthorized access" });
   }
   next();
 };

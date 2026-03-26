@@ -24,7 +24,7 @@ exports.adminLogin = async (req, res) => {
     const token = jwt.sign(
       { id: admin._id, role: "admin" },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "1h" }
     );
 
     await AuditLog.create({
@@ -56,7 +56,7 @@ exports.voterLogin = async (req, res) => {
     const token = jwt.sign(
       { id: voter._id, role: "voter" },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "1h" }
     );
 
     await AuditLog.create({
@@ -93,7 +93,7 @@ exports.partyLogin = async (req, res) => {
     const token = jwt.sign(
       { id: party._id, role: "party" },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "1h" }
     );
 
     await AuditLog.create({
