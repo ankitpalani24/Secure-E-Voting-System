@@ -41,10 +41,16 @@ document.querySelector('.form__content').addEventListener('submit', async functi
     
     try {
         showSpinner("Logging in...");
-        const res = await fetch('/api/auth/login', {
+        
+        let endpoint;
+        if (role === 'admin') endpoint = '/api/auth/admin-login';
+        else if (role === 'voter') endpoint = '/api/auth/voter-login';
+        else if (role === 'party') endpoint = '/api/auth/party-login';
+        
+        const res = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, role })
+            body: JSON.stringify({ username, password })
         });
 
         const data = await res.json();
