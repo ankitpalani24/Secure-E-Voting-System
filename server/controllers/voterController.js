@@ -80,6 +80,11 @@ exports.castVote = async (req, res) => {
     const voterId = req.user.id; // from JWT
     const { partyId } = req.body;
 
+    const voter = await Voter.findById(voterId);
+    if (!voter) {
+      return res.status(404).json({ message: "Voter not found" });
+    }
+
     // Strict Bi-Directional DB Sync
     const voteExists = await Vote.findOne({ voterId: new mongoose.Types.ObjectId(voterId) });
     if (voteExists) {
