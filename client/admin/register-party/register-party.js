@@ -95,6 +95,8 @@ async function registerParty() {
         });
 
         const data = await res.json();
+        hideSpinner();
+        
         if (res.ok) {
             showToast('Party registered successfully!', 'success');
             document.getElementById("partyForm").reset();
