@@ -55,11 +55,13 @@ async function loadVoterParties() {
 // Face verification
 async function performFaceVerification() {
     // Load models
+    showSpinner("Loading Facial Recognition Engine...");
     await Promise.all([
         faceapi.nets.ssdMobilenetv1.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
         faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
         faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
     ]);
+    hideSpinner();
 
     const token = localStorage.getItem('token');
     const decoded = JSON.parse(atob(token.split('.')[1]));
@@ -185,6 +187,7 @@ async function performFaceVerification() {
                                     verifyBtn.disabled = true;
 
                                     try {
+                                        showSpinner("Verifying Face Data...");
                                         const descriptor = Array.from(detection.descriptor);
                                         const res = await fetch('/api/voter/face-verify', {
                                             method: 'POST',
@@ -196,6 +199,8 @@ async function performFaceVerification() {
                                         });
                                         
                                         const data = await res.json();
+                                        hideSpinner();
+                                        
                                         popup.remove();
                                         if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
                                         
@@ -205,6 +210,7 @@ async function performFaceVerification() {
                                         resolve(res.ok);
                                     } catch (err) {
                                         console.error('Verification error:', err);
+                                        hideSpinner();
                                         popup.remove();
                                         if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
                                         showToast('Network error during verification', 'error');
@@ -241,21 +247,29 @@ async function voteForParty(partyId) {
         return;
     }
 
-    const res = await fetch('/api/voter/vote', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ partyId })
-    });
+    showSpinner("Casting Vote securely...");
+    try {
+        const res = await fetch('/api/voter/vote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ partyId })
+        });
 
-    const data = await res.json();
-    if (res.ok) {
-        showToast('Vote cast successfully!', 'success');
-        setTimeout(() => window.location.href = 'v-result.html', 1500);
-    } else {
-        showToast(data.message || 'Vote failed!', 'error');
+        const data = await res.json();
+        hideSpinner();
+        
+        if (res.ok) {
+            showToast('Vote cast successfully!', 'success');
+            setTimeout(() => window.location.href = 'v-result.html', 1500);
+        } else {
+            showToast(data.message || 'Vote failed!', 'error');
+        }
+    } catch (err) {
+        hideSpinner();
+        showToast("Network error: " + err.message, "error");
     }
 }
 

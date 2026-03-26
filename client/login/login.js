@@ -37,21 +37,19 @@ document.querySelector('.form__content').addEventListener('submit', async functi
         alert('Please fill all fields');
         return;
     }
+
     
     try {
-        let endpoint;
-        if (role === 'admin') endpoint = '/api/auth/admin-login';
-        else if (role === 'voter') endpoint = '/api/auth/voter-login';
-        else if (role === 'party') endpoint = '/api/auth/party-login';
-        
-        const res = await fetch(`${endpoint}`, {
+        showSpinner("Logging in...");
+        const res = await fetch('/api/auth/login', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({username, password})  // voter uses email, but backend handles
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, role })
         });
-        
+
         const data = await res.json();
-        
+        hideSpinner();
+
         if (res.ok) {
             localStorage.setItem('token', data.token);
             localStorage.setItem('role', data.role);
@@ -70,6 +68,7 @@ document.querySelector('.form__content').addEventListener('submit', async functi
             showToast(data.message || 'Login failed', 'error');
         }
     } catch (err) {
+        hideSpinner();
         showToast('Login failed: ' + err.message, 'error');
     }
 });

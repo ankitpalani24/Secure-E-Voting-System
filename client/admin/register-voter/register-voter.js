@@ -14,11 +14,15 @@ cancelBtn.addEventListener('click', function () {
 let faceDescriptor = null;
 
 // Load face-api models
+showSpinner("Loading AI Models...");
 Promise.all([
     faceapi.nets.ssdMobilenetv1.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
     faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
     faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
-]).then(() => console.log('Face-api models loaded'));
+]).then(() => {
+    console.log('Face-api models loaded');
+    hideSpinner();
+});
 
 document.getElementById("registerForm").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -40,32 +44,38 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         return;
     }
 
-    const token = localStorage.getItem('token');
-    const res = await fetch('/api/admin/add-voter', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-            name: fullName,
-            email: email + '@voter',
-            password,
-            voterId,
-            faceDescriptor: faceDescriptor
-        })
-    });
+    showSpinner("Registering Voter...");
+    try {
+        const res = await fetch('/api/admin/add-voter', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                name: fullName,
+                email: email + '@voter',
+                password,
+                voterId,
+                faceDescriptor: faceDescriptor
+            })
+        });
 
-    const data = await res.json();
+        const data = await res.json();
+        hideSpinner();
 
-    if (res.ok) {
+        if (res.ok) {
         showToast('Voter registered with face data!', 'success');
         document.getElementById("registerForm").reset();
         faceDescriptor = null;
         addVoterDiv.classList.add('hidden');
         window.location.href = '../dashboard/dashboard.html';
-    } else {
-        showToast(data.message, 'error');
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        hideSpinner();
+        showToast("Network error: " + err.message, "error");
     }
 });
 

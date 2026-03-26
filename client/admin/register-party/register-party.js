@@ -84,21 +84,14 @@ async function registerParty() {
     }
 
     try {
+        showSpinner("Registering Party...");
         const res = await fetch("/api/admin/add-party", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
+                Authorization: `Bearer ${token}`
             },
-            body: JSON.stringify({
-                partyName,
-                symbol,
-                description,
-                manifesto,
-                email,
-                username: email,  // backend expects username
-                password
-            })
+            body: JSON.stringify({ partyName, symbol, description, manifesto, email: email + "@party", username: email + "@party", password })
         });
 
         const data = await res.json();
@@ -111,7 +104,8 @@ async function registerParty() {
             showToast(data.message, 'error');
         }
     } catch (err) {
-        alert("Network error: " + err.message);
+        hideSpinner();
+        showToast("Network error: " + err.message, "error");
     }
 }
 

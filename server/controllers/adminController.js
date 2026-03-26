@@ -32,7 +32,7 @@ exports.addVoter = async (req, res) => {
             const distance = euclideanDistance(faceDescriptor, voterObj.faceDescriptor);
             console.log(`Checking against ${voterObj.name}: Distance = ${distance}`);
             if (distance < 0.55) {
-                return res.status(400).json({ message: `Face already registered to voter: ${voterObj.name} (${voterObj.email})` });
+                return res.status(400).json({ message: "Face is already registered" });
             }
         }
     }
