@@ -16,9 +16,9 @@ let faceDescriptor = null;
 // Load face-api models
 showSpinner("Loading AI Models...");
 Promise.all([
-    faceapi.nets.ssdMobilenetv1.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
-    faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
-    faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'),
+    faceapi.nets.ssdMobilenetv1.loadFromUri('../../models'),
+    faceapi.nets.faceLandmark68Net.loadFromUri('../../models'),
+    faceapi.nets.faceRecognitionNet.loadFromUri('../../models'),
 ]).then(() => {
     console.log('Face-api models loaded');
     hideSpinner();
