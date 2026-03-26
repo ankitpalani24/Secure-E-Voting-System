@@ -76,5 +76,15 @@ logoutBtn.addEventListener("mouseout", () => {
     logoutBtn.style.color = "inherit";
     logoutBtn.style.transform = "scale(1)";
 });
-
 loadResults();
+
+// ================== REAL-TIME WEBSOCKETS ==================
+const socket = window.io ? window.io('http://localhost:5000') : null;
+
+if (socket) {
+    socket.on('newVote', (voteData) => {
+        console.log('Real-time vote received! Updating admin result cards...', voteData);
+        // We re-fetch to ensure rankings are correctly re-sorted.
+        loadResults();
+    });
+}

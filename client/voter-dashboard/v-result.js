@@ -68,3 +68,13 @@ logoutBtn.addEventListener("mouseout", () => {
 
 loadResults();
 
+// ================== REAL-TIME WEBSOCKETS ==================
+const socket = window.io ? window.io('http://localhost:5000') : null;
+
+if (socket) {
+    socket.on('newVote', (voteData) => {
+        console.log('Real-time vote received! Updating ranks and counts...', voteData);
+        // We re-fetch to ensure the ranks are sorted perfectly if an upset occurs
+        loadResults();
+    });
+}

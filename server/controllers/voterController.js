@@ -109,6 +109,12 @@ exports.castVote = async (req, res) => {
       userId: voterId,
     });
 
+    // Emit real-time event via Socket.io
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('newVote', { partyId, voterId });
+    }
+
     res.json({ message: "Vote casted successfully" });
 
   } catch (err) {

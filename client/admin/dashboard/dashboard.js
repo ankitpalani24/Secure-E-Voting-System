@@ -107,3 +107,36 @@ if (logoutBtn) {
 // Initialize
 loadDashboardData();
 
+// ================== REAL-TIME WEBSOCKETS ==================
+const socket = window.io ? window.io('http://localhost:5000') : null;
+
+if (socket) {
+    socket.on('newVote', (voteData) => {
+        console.log('Real-time vote received:', voteData);
+        
+        // Increment global counter
+        data.votesCount++;
+        
+        // Update Total Votes card (Index 1)
+        const votesValueEl = document.querySelectorAll('.stat-card .value')[1];
+        if (votesValueEl) {
+            votesValueEl.textContent = data.votesCount;
+            
+            // Flash animation
+            votesValueEl.style.transition = 'color 0.3s, transform 0.3s';
+            votesValueEl.style.color = '#10b981'; // green flash
+            votesValueEl.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                votesValueEl.style.color = 'inherit';
+                votesValueEl.style.transform = 'scale(1)';
+            }, 600);
+        }
+        
+        // Update List counts
+        const listCounts = document.querySelectorAll('.overview-list .list-count');
+        if (listCounts.length >= 3) {
+            listCounts[1].textContent = data.votesCount;
+            listCounts[2].textContent = Math.max(0, data.votersCount - data.votesCount);
+        }
+    });
+}

@@ -9,6 +9,16 @@ dotenv.config();
 
 // ================== APP INIT ==================
 const app = express();
+const http = require("http");
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server, { cors: { origin: "*" } });
+app.set("io", io);
+
+io.on("connection", (socket) => {
+    console.log("Real-time client connected");
+    socket.on("disconnect", () => console.log("Real-time client disconnected"));
+});
 
 // ================== MIDDLEWARE ==================
 app.use(cors());
@@ -50,8 +60,8 @@ mongoose
     // Start server locally ONLY if not in Vercel production
     if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
       const PORT = process.env.PORT || 5000;
-      app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+      server.listen(PORT, () => {
+        console.log(`Server running on port ${PORT} with WebSockets`);
       });
     }
   })
