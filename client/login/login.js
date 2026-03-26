@@ -67,12 +67,9 @@ document.querySelector('.form__content').addEventListener('submit', async functi
                 window.location.href = '../party-dashboard/p-parties.html';
             }
         } else {
-            alert(data.message);
+            showToast(data.message || 'Login failed', 'error');
         }
     } catch (err) {
-        alert('Login failed: ' + err.message);
+        showToast('Login failed: ' + err.message, 'error');
     }
 });
-
-
-

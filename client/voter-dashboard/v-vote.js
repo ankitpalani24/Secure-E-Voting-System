@@ -200,14 +200,14 @@ async function performFaceVerification() {
                                         if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
                                         
                                         if (!res.ok) {
-                                            alert(data.message || 'Face verification failed');
+                                            showToast(data.message || 'Face verification failed', 'error');
                                         }
                                         resolve(res.ok);
                                     } catch (err) {
                                         console.error('Verification error:', err);
                                         popup.remove();
                                         if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
-                                        alert('Network error during verification');
+                                        showToast('Network error during verification', 'error');
                                         resolve(false);
                                     }
                                 };
@@ -237,7 +237,7 @@ async function voteForParty(partyId) {
     // Face verification first
     const verified = await performFaceVerification();
     if (!verified) {
-        alert('Face verification failed or already voted!');
+        showToast('Face verification failed or already voted!', 'error');
         return;
     }
 
@@ -252,10 +252,10 @@ async function voteForParty(partyId) {
 
     const data = await res.json();
     if (res.ok) {
-        alert('Vote cast successfully!');
-        window.location.href = 'v-result.html';
+        showToast('Vote cast successfully!', 'success');
+        setTimeout(() => window.location.href = 'v-result.html', 1500);
     } else {
-        alert(data.message || 'Vote failed!');
+        showToast(data.message || 'Vote failed!', 'error');
     }
 }
 

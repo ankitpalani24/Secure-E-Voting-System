@@ -72,8 +72,8 @@ async function registerParty() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    if (!partyName || !symbol || !email || !password) {
-        alert("Please fill required fields: name, symbol, email, password");
+    if (!partyName || !symbol || !email || !password || !description || !manifesto) {
+        showToast("Please fill all fields!", "error");
         return;
     }
 
@@ -103,12 +103,12 @@ async function registerParty() {
 
         const data = await res.json();
         if (res.ok) {
-            alert("Party registered successfully!");
+            showToast('Party registered successfully!', 'success');
             document.getElementById("partyForm").reset();
             document.getElementById("symbol").value = "";
             document.querySelectorAll('.symbol-btn').forEach(btn => btn.classList.remove('selected'));
         } else {
-            alert(data.message || "Registration failed");
+            showToast(data.message, 'error');
         }
     } catch (err) {
         alert("Network error: " + err.message);

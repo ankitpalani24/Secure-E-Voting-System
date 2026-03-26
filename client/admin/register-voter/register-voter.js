@@ -24,7 +24,7 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     e.preventDefault();
 
     if (!faceDescriptor) {
-        alert("Please capture face first!");
+        showToast("Please capture face first!", "error");
         return;
     }
 
@@ -36,7 +36,7 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     const address = document.getElementById("address").value;
 
     if (!fullName || !voterId || !email || !password || !dob || !address) {
-        alert("Please fill all fields!");
+        showToast("Please fill all fields!", "error");
         return;
     }
 
@@ -59,13 +59,13 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     const data = await res.json();
 
     if (res.ok) {
-        alert('Voter registered with face data!');
+        showToast('Voter registered with face data!', 'success');
         document.getElementById("registerForm").reset();
         faceDescriptor = null;
         addVoterDiv.classList.add('hidden');
         window.location.href = '../dashboard/dashboard.html';
     } else {
-        alert(data.message);
+        showToast(data.message, 'error');
     }
 });
 
