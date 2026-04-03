@@ -79,7 +79,7 @@ logoutBtn.addEventListener("mouseout", () => {
 loadResults();
 
 // ================== REAL-TIME WEBSOCKETS ==================
-const socket = window.io ? window.io('http://localhost:5000') : null;
+const socket = window.io ? window.io(window.location.origin) : null;
 
 if (socket) {
     socket.on('newVote', (voteData) => {
