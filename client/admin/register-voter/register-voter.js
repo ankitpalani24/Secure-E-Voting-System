@@ -44,6 +44,13 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         return;
     }
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showToast('Session expired. Please log in again.', 'error');
+        setTimeout(() => window.location.href = '../../login/login.html', 1500);
+        return;
+    }
+
     showSpinner("Registering Voter...");
     try {
         const res = await fetch('/api/admin/add-voter', {
