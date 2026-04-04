@@ -63,9 +63,7 @@ async function performFaceVerification() {
     ]);
     hideSpinner();
 
-    const token = localStorage.getItem('token');
-    const decoded = JSON.parse(atob(token.split('.')[1]));
-    const voterEmail = decoded.email;
+    // Token is read inside verifyBtn.onclick to avoid scope issues
 
     return new Promise((resolve) => {
         const popup = document.createElement('div');
@@ -189,11 +187,21 @@ async function performFaceVerification() {
                                     try {
                                         showSpinner("Verifying Face Data...");
                                         const descriptor = Array.from(detection.descriptor);
+                                        const authToken = localStorage.getItem('token');
+                                        if (!authToken) {
+                                            hideSpinner();
+                                            popup.remove();
+                                            if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+                                            showToast('Session expired. Please log in again.', 'error');
+                                            setTimeout(() => window.location.href = '../../login/login.html', 1500);
+                                            resolve(false);
+                                            return;
+                                        }
                                         const res = await fetch('/api/voter/face-verify', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json',
-                                                'Authorization': `Bearer ${token}`
+                                                'Authorization': `Bearer ${authToken}`
                                             },
                                             body: JSON.stringify({ descriptor })
                                         });
