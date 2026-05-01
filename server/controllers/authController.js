@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const Voter = require("../models/Voter");
 const Admin = require("../models/Admin");
 const Party = require("../models/Party");
+const Vote = require("../models/Vote");
 const AuditLog = require("../models/AuditLog");
 
 // ================= ADMIN LOGIN =================
@@ -30,6 +31,7 @@ exports.adminLogin = async (req, res) => {
     await AuditLog.create({
       action: "Admin Logged In",
       userId: admin._id,
+      userRole: "admin",
     });
 
     res.json({ token, role: "admin" });
@@ -59,16 +61,20 @@ exports.voterLogin = async (req, res) => {
       { expiresIn: "1h" }
     );
 
+    // Derive hasVoted from the Vote collection — single source of truth
+    const hasVoted = !!(await Vote.exists({ voterId: voter._id }));
+
     await AuditLog.create({
       action: "Voter Logged In",
       userId: voter._id,
+      userRole: "voter",
     });
 
     res.json({
       token,
       role: "voter",
       name: voter.name,
-      hasVoted: voter.hasVoted,
+      hasVoted,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -99,6 +105,7 @@ exports.partyLogin = async (req, res) => {
     await AuditLog.create({
       action: "Party Logged In",
       userId: party._id,
+      userRole: "party",
     });
 
     res.json({ token, role: "party" });

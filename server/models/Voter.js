@@ -15,11 +15,7 @@ const voterSchema = new mongoose.Schema({
     required: true,
   },
   faceDescriptor: {
-    type: [Number], // face recognition data
-  },
-  hasVoted: {
-    type: Boolean,
-    default: false,
+    type: [Number], // 128-element face recognition embedding
   },
   role: {
     type: String,

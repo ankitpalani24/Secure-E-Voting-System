@@ -13,6 +13,14 @@ const app = express();
 // ================== MIDDLEWARE ==================
 app.use(cors());
 app.use(express.json());
+const path = require("path");
+
+// ================== STATIC FILES (Local Dev) ==================
+// When running locally, serve frontend files
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  app.use("/client", express.static(path.join(__dirname, "../client")));
+  app.use("/models", express.static(path.join(__dirname, "../models")));
+}
 
 // ================== ROUTES IMPORT ==================
 const authRoutes = require("./routes/authRoutes");
