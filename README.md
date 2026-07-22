@@ -92,7 +92,7 @@ The system enforces a strict **one-person-one-vote** policy at the database leve
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                     CLIENT (Browser)                     │
+│                     CLIENT (Browser)                    │
 │                                                         │
 │  ┌──────────┐  ┌──────────────┐  ┌───────────────────┐  │
 │  │  Login   │  │ Admin Panel  │  │  Voter Dashboard  │  │
@@ -107,7 +107,7 @@ The system enforces a strict **one-person-one-vote** policy at the database leve
 └──────────────────────────┼──────────────────────────────┘
                            │ HTTPS / WebSocket
 ┌──────────────────────────┼──────────────────────────────┐
-│                     SERVER (Node.js)                     │
+│                     SERVER (Node.js)                    │
 │                          │                              │
 │  ┌───────────────────────┴───────────────────────────┐  │
 │  │              Express REST API                     │  │
@@ -118,19 +118,19 @@ The system enforces a strict **one-person-one-vote** policy at the database leve
 │  │  /api/results → Aggregated Vote Results           │  │
 │  └───────────────────────┬───────────────────────────┘  │
 │                          │                              │
-│  ┌───────────┐  ┌────────┴────────┐  ┌──────────────┐  │
-│  │ JWT Auth  │  │   Controllers   │  │  Socket.io   │  │
-│  │ Middleware│  │  + Face Utils   │  │  (Real-time) │  │
-│  └───────────┘  └────────┬────────┘  └──────────────┘  │
+│  ┌───────────┐  ┌────────┴────────┐  ┌──────────────┐   │
+│  │ JWT Auth  │  │   Controllers   │  │  Socket.io   │   │
+│  │ Middleware│  │  + Face Utils   │  │  (Real-time) │   │
+│  └───────────┘  └────────┬────────┘  └──────────────┘   │
 └──────────────────────────┼──────────────────────────────┘
                            │
 ┌──────────────────────────┼──────────────────────────────┐
 │                  MongoDB Atlas                          │
 │                          │                              │
-│  ┌────────┐ ┌────────┐ ┌┴───────┐ ┌────────┐ ┌───────┐ │
-│  │ Admins │ │ Voters │ │ Votes  │ │Parties │ │Audit  │ │
-│  │        │ │ +face  │ │(unique)│ │        │ │ Logs  │ │
-│  └────────┘ └────────┘ └────────┘ └────────┘ └───────┘ │
+│  ┌────────┐ ┌────────┐ ┌┴───────┐ ┌────────┐ ┌───────┐  │
+│  │ Admins │ │ Voters │ │ Votes  │ │Parties │ │Audit  │  │
+│  │        │ │ +face  │ │(unique)│ │        │ │ Logs  │  │
+│  └────────┘ └────────┘ └────────┘ └────────┘ └───────┘  │
 └─────────────────────────────────────────────────────────┘
 ```
 
