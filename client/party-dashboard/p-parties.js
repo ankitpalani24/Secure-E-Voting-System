@@ -16,52 +16,62 @@ async function loadPartyList() {
     const partyUserEl = document.getElementById('partyUserName');
     if (partyUserEl) partyUserEl.textContent = userName;
 
+    const container = document.getElementById('partyCatalogContainer') || document.querySelector('.party-list');
+    if (!container) return;
+
+    container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 32px;"><i class="fas fa-spinner fa-spin"></i> Retrieving candidate catalog...</div>';
+
     try {
         const res = await fetch('/api/party', {
             headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
-
-        const partyList = document.querySelector('.party-list');
-        if (!partyList) return;
-        partyList.innerHTML = '';
+        container.innerHTML = '';
 
         if (!Array.isArray(data) || data.length === 0) {
-            partyList.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">No accredited parties registered in the electoral directory.</p>';
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                    <i class="fas fa-landmark" style="font-size: 3rem; margin-bottom: 12px; opacity: 0.5;"></i>
+                    <h3 style="color: var(--text-primary); margin-bottom: 6px;">No Accredited Parties Found</h3>
+                    <p style="font-size: 0.9rem;">No political party slates are currently certified for this election.</p>
+                </div>
+            `;
             return;
         }
 
+        const grid = document.createElement('div');
+        grid.className = 'candidates-grid';
+        grid.style.marginTop = '0';
+
         data.forEach((party) => {
             const card = document.createElement('div');
-            card.className = 'stat-card';
-            card.style.marginBottom = '12px';
+            card.className = 'kpi-card';
+            card.style.flexDirection = 'column';
+            card.style.alignItems = 'flex-start';
+            card.style.gap = '14px';
 
-            const contentDiv = document.createElement('div');
-            const labelSpan = document.createElement('span');
-            labelSpan.className = 'label';
-            labelSpan.textContent = party.partyName || 'Unknown Party';
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                    <div style="font-size: 2.8rem; line-height: 1;">${party.symbol || '🗳️'}</div>
+                    <span class="status-badge live" style="font-size: 0.75rem;"><i class="fas fa-check-circle"></i> Certified</span>
+                </div>
+                <div style="width: 100%;">
+                    <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 4px; font-weight: 700;">${party.partyName || 'Unknown Party'}</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">${party.description || 'Accredited political party slate.'}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 10px;">
+                        <span><i class="fas fa-shield-alt"></i> Certified Candidate</span>
+                        <span style="font-family: monospace;">ID: ${party._id ? party._id.slice(-6).toUpperCase() : 'N/A'}</span>
+                    </div>
+                </div>
+            `;
 
-            const valueH2 = document.createElement('h2');
-            valueH2.className = 'value';
-            valueH2.textContent = `${party.symbol || '🗳️'} ${party.description ? '- ' + party.description : ''}`;
-            valueH2.style.fontSize = '1.15rem';
-            valueH2.style.fontWeight = '500';
-
-            contentDiv.appendChild(labelSpan);
-            contentDiv.appendChild(valueH2);
-
-            const iconBox = document.createElement('div');
-            iconBox.className = 'icon-box purple';
-            const icon = document.createElement('i');
-            icon.className = 'fas fa-landmark';
-            iconBox.appendChild(icon);
-
-            card.appendChild(contentDiv);
-            card.appendChild(iconBox);
-            partyList.appendChild(card);
+            grid.appendChild(card);
         });
+
+        container.appendChild(grid);
     } catch (err) {
         console.error('Party load error:', err);
+        container.innerHTML = '<div style="text-align: center; color: var(--danger-text); padding: 32px;"><i class="fas fa-exclamation-triangle"></i> Unable to load party slates. Please try again.</div>';
     }
 }
 

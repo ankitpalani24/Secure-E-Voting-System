@@ -1,20 +1,20 @@
 /* ==========================================================================
-   SECUREVOTE CIVIC TECHNOLOGY DESIGN SYSTEM
-   Theme: Official Olive Green Civic & Democratic Institution
+   SECUREVOTE ENTERPRISE CIVIC DESIGN SYSTEM
+   Theme: Official Olive Green Democratic & Civic Institution Platform
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    /* Olive Green Primary Brand Tokens */
+    /* Olive Green Primary Brand Palette */
     --primary: #667A3E;
-    --primary-hover: #5A6D35;
+    --primary-hover: #546532;
     --primary-dark: #4F612F;
     --primary-light: #8A9B5A;
     --primary-subtle: #F0F4E8;
     --primary-border: #C8D6B0;
     
-    /* Semantic Status Colors */
+    /* Semantic Status Accents */
     --success: #2F7D32;
     --success-hover: #256628;
     --success-light: #E8F5E9;
@@ -34,15 +34,16 @@
     --info: #2E6B8E;
     --info-light: #EBF5FB;
     --info-text: #1B4F72;
+    --info-border: #AED6F1;
     
-    /* Neutral Canvas & Surfaces */
+    /* Neutral Backgrounds & Surfaces */
     --background: #F6F7F2;
     --surface: #FFFFFF;
     --surface-muted: #EEF0E8;
     --surface-secondary: #EEF0E8;
     --surface-hover: #E4E8DC;
     
-    /* Neutral Typography */
+    /* Typography Colors */
     --text: #20251A;
     --text-primary: #20251A;
     --text-secondary: #68705D;
@@ -53,27 +54,27 @@
     --border-strong: #C4CCA0;
     --border-focus: #667A3E;
     
-    /* Elevation & Soft Shadows */
+    /* Shadows & Depths */
     --shadow-xs: 0 1px 2px 0 rgba(32, 37, 26, 0.04);
     --shadow-sm: 0 1px 3px 0 rgba(32, 37, 26, 0.06), 0 1px 2px -1px rgba(32, 37, 26, 0.04);
     --shadow-md: 0 4px 6px -1px rgba(32, 37, 26, 0.07), 0 2px 4px -2px rgba(32, 37, 26, 0.04);
     --shadow-lg: 0 10px 15px -3px rgba(32, 37, 26, 0.08), 0 4px 6px -4px rgba(32, 37, 26, 0.03);
     --shadow-xl: 0 20px 25px -5px rgba(32, 37, 26, 0.09), 0 8px 10px -6px rgba(32, 37, 26, 0.03);
     
-    /* Corner Radii */
+    /* Radii */
     --radius-sm: 6px;
     --radius-md: 8px;
     --radius-lg: 12px;
     --radius-xl: 16px;
     --radius-full: 9999px;
     
-    /* Layout Dimensions */
+    /* Layout Constants */
     --sidebar-width: 260px;
     --header-height: 68px;
 }
 
 /* ==========================================================================
-   RESET & BASE TYPOGRAPHY
+   RESET & TYPOGRAPHY HIERARCHY
    ========================================================================== */
 
 *, *::before, *::after {
@@ -84,12 +85,19 @@
 
 html, body {
     height: 100%;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--background);
     color: var(--text-primary);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
 }
+
+h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+h4 { font-size: 0.95rem; font-weight: 600; }
+p { font-size: 0.9rem; color: var(--text-secondary); }
+small { font-size: 0.8rem; color: var(--text-muted); }
 
 a {
     color: var(--primary);
@@ -101,8 +109,19 @@ a:hover {
     color: var(--primary-dark);
 }
 
+/* Accessible Focus States */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Utility Hidden Class */
+.hidden {
+    display: none !important;
+}
+
 /* ==========================================================================
-   APP SHELL LAYOUT (SIDEBAR + TOPBAR + MAIN)
+   APP SHELL (STICKY SIDEBAR + TOPBAR + MAIN)
    ========================================================================== */
 
 .app-shell {
@@ -112,7 +131,7 @@ a:hover {
     overflow-x: hidden;
 }
 
-/* Olive Sidebar */
+/* Sidebar */
 .app-sidebar {
     width: var(--sidebar-width);
     background-color: var(--surface);
@@ -124,7 +143,7 @@ a:hover {
     top: 0;
     height: 100vh;
     z-index: 50;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-header {
@@ -335,6 +354,7 @@ a:hover {
     border-radius: var(--radius-full);
     font-size: 0.8rem;
     font-weight: 600;
+    line-height: 1.2;
 }
 
 .status-badge.live {
@@ -631,7 +651,7 @@ a:hover {
 }
 
 /* ==========================================================================
-   CANDIDATE SELECTION GRID
+   CANDIDATE SELECTION GRID & CARDS
    ========================================================================== */
 
 .candidates-grid {
@@ -874,13 +894,14 @@ a:hover {
 }
 
 /* ==========================================================================
-   DATA TABLES (ADMIN & AUDIT)
+   DATA TABLES (ADMIN & AUDIT) WITH MOBILE RESPONSIVE CARDS
    ========================================================================== */
 
 .data-table-wrapper {
     overflow-x: auto;
     border-radius: var(--radius-md);
     border: 1px solid var(--border);
+    background-color: var(--surface);
 }
 
 .data-table {
@@ -925,13 +946,18 @@ a:hover {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
     box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover, .submit-btn:hover {
     background-color: var(--primary-hover);
     box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active, .submit-btn:active {
+    transform: translateY(0);
 }
 
 .btn-secondary, .cancel-btn {
@@ -992,7 +1018,7 @@ a:hover {
 }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN BREAKPOINTS
+   RESPONSIVE DESIGN BREAKPOINTS & MOBILE CARD TABLES
    ========================================================================== */
 
 @media (max-width: 1024px) {
@@ -1042,5 +1068,41 @@ a:hover {
 
     .step-divider {
         display: none;
+    }
+
+    .data-table-wrapper {
+        border: none;
+        background: transparent;
+    }
+
+    /* Mobile Table-to-Cards */
+    .data-table, .data-table tbody, .data-table tr, .data-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .data-table thead {
+        display: none;
+    }
+
+    .data-table tr {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        margin-bottom: 14px;
+        padding: 14px 16px;
+        box-shadow: var(--shadow-xs);
+    }
+
+    .data-table td {
+        padding: 8px 0;
+        border-bottom: 1px dashed var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .data-table td:last-child {
+        border-bottom: none;
     }
 }

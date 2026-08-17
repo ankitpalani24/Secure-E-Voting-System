@@ -64,9 +64,9 @@ async function loadVoterParties() {
                 const ballotCard = document.getElementById('ballotSelectionCard');
                 if (ballotCard) {
                     ballotCard.innerHTML = `
-                        <div style="text-align: center; padding: 36px 20px;">
-                            <div style="font-size: 3rem; margin-bottom: 12px;">🗳️✅</div>
-                            <h2 style="color: var(--success-text); font-size: 1.5rem; margin-bottom: 8px;">Ballot Successfully Recorded</h2>
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <div style="font-size: 3rem; margin-bottom: 12px; color: var(--success);"><i class="fas fa-check-circle"></i></div>
+                            <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 8px;">Ballot Successfully Recorded</h2>
                             <p style="color: var(--text-secondary); max-width: 480px; margin: 0 auto 24px auto;">Your vote has been cryptographically committed to the decentralized ballot box. Double voting is strictly prevented.</p>
                             <a href="v-result.html" class="btn-primary"><i class="fas fa-poll"></i> View Certified Results</a>
                         </div>
@@ -95,7 +95,11 @@ async function loadVoterParties() {
         parties.forEach(party => {
             const card = document.createElement('div');
             card.className = 'candidate-card';
-            card.onclick = () => showVoteConfirmationModal(party._id, party.partyName, party.symbol, party.description);
+            card.onclick = () => {
+                document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                showVoteConfirmationModal(party._id, party.partyName, party.symbol, party.description);
+            };
 
             card.innerHTML = `
                 <div class="candidate-symbol">${party.symbol || '🗳️'}</div>
@@ -120,7 +124,7 @@ function showVoteConfirmationModal(partyId, partyName, partySymbol, partyDesc) {
     modal.id = 'voteReviewModal';
     modal.innerHTML = `
         <div class="review-modal-card">
-            <h2 style="font-size: 1.45rem; margin-bottom: 6px; color: var(--text-primary);">Review Your Ballot Selection</h2>
+            <h2 style="font-size: 1.35rem; margin-bottom: 6px; color: var(--text-primary);">Review Your Ballot Selection</h2>
             <p style="color: var(--text-secondary); font-size: 0.9rem;">Please verify your chosen candidate before initiating facial identity verification.</p>
             
             <div class="review-choice-box">
@@ -149,6 +153,7 @@ function showVoteConfirmationModal(partyId, partyName, partySymbol, partyDesc) {
 
     document.getElementById('cancelVoteBtn').onclick = () => {
         modal.remove();
+        document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
         updateStepper(1);
     };
 
@@ -174,7 +179,7 @@ async function performFaceVerification() {
         popup.innerHTML = `
             <div class="review-modal-card" style="max-width: 440px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="font-size: 1.15rem; color: var(--text-primary);"><i class="fas fa-camera"></i> Identity Verification</h3>
+                    <h3 style="font-size: 1.15rem; color: var(--text-primary);"><i class="fas fa-camera"></i> Biometric Identity Verification</h3>
                     <button id="closeVerify" style="background:none; border:none; font-size: 1.5rem; color: var(--text-muted); cursor:pointer;">×</button>
                 </div>
                 
@@ -200,6 +205,7 @@ async function performFaceVerification() {
         document.getElementById('closeVerify').onclick = () => {
             popup.remove();
             if (videoEl && videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+            document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
             updateStepper(1);
             resolve(null);
         };
@@ -371,6 +377,7 @@ async function proceedWithBiometricsAndVote(partyId, partyName) {
     const biometricToken = await performFaceVerification();
     if (!biometricToken) {
         showToast('Biometric verification was cancelled or failed.', 'error');
+        document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
         updateStepper(1);
         return;
     }
@@ -401,11 +408,13 @@ async function proceedWithBiometricsAndVote(partyId, partyName) {
             });
         } else {
             showToast(data.message || 'Ballot submission failed!', 'error');
+            document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
             updateStepper(1);
         }
     } catch (err) {
         hideSpinner();
         showToast("Network error: " + err.message, "error");
+        document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
         updateStepper(1);
     }
 }
@@ -426,8 +435,10 @@ function displayReceiptCard(receipt) {
             <div class="receipt-header-badge">
                 <i class="fas fa-check-circle"></i> Official Cryptographic Ballot Receipt
             </div>
-            <h2 style="color: var(--text-primary); font-size: 1.6rem; margin-bottom: 8px;">Ballot Successfully Recorded</h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; max-width: 480px; margin: 0 auto 20px auto;">Your ballot has been committed anonymously to the decentralized tally box. Your individual voter ID is zero-linked from this receipt.</p>
+            <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 8px;">Vote Successfully Recorded</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; max-width: 500px; margin: 0 auto 16px auto;">
+                This receipt confirms that your ballot was recorded. It does not reveal your selected party.
+            </p>
 
             <div class="receipt-hash-container">
                 <span id="receiptHashText">${hash}</span>
@@ -442,7 +453,7 @@ function displayReceiptCard(receipt) {
 
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                 <button class="btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> Print Receipt</button>
-                <a href="v-result.html" class="btn-primary"><i class="fas fa-chart-pie"></i> View Live Results</a>
+                <a href="v-result.html" class="btn-primary"><i class="fas fa-chart-pie"></i> View Certified Results</a>
             </div>
         </div>
     `;
