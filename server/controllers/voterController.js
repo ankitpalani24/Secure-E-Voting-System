@@ -194,20 +194,22 @@ exports.castVote = async (req, res) => {
       .digest("hex");
 
     // 7. Insert Decoupled Participation Record (Compound unique index { voterId, electionId } prevents double voting)
+    // Coarse timestamp (rounded to hourly epoch) prevents millisecond side-channel correlation
+    const coarseTimestamp = new Date(Math.floor(Date.now() / 3600000) * 3600000);
     await VoterParticipation.create({
       voterId,
       electionId: election._id,
-      participatedAt: new Date(),
+      participatedAt: coarseTimestamp,
       verificationMethod: "FACE_BIOMETRIC",
     });
 
-    // 8. Insert Anonymous Ballot (Contains ZERO voter identity)
+    // 8. Insert Anonymous Ballot with cryptographically random UUID primary key (ZERO voter identity & NO millisecond timing)
     await AnonymousBallot.create({
+      _id: crypto.randomUUID(),
       electionId: election._id,
       partyId,
       candidateId: candidateId || null,
       ballotCommitmentHash,
-      castAt: new Date(),
     });
 
     // 9. Chained Audit Logging (NEVER records partyId, candidateId, or ballotCommitmentHash to eliminate database correlation)

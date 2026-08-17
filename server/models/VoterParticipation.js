@@ -3,7 +3,11 @@ const mongoose = require("mongoose");
 /**
  * Tracks THAT a voter has participated in a specific election,
  * WITHOUT storing or linking WHAT candidate or party they voted for.
- * This guarantees strict one-person-one-vote while preserving 100% ballot secrecy.
+ * 
+ * PRIVACY & INTEGRITY CONTROLS:
+ * - Strict compound unique index on { voterId, electionId } enforces one-person-one-vote.
+ * - Coarse timestamping prevents millisecond side-channel correlation with the anonymous ballot collection.
+ * - Automatically disallows storage of partyId, candidateId, or ballot identifiers.
  */
 const voterParticipationSchema = new mongoose.Schema(
   {
@@ -19,7 +23,7 @@ const voterParticipationSchema = new mongoose.Schema(
     },
     participatedAt: {
       type: Date,
-      default: Date.now,
+      default: () => new Date(Math.floor(Date.now() / 3600000) * 3600000), // Hourly coarse bucket
     },
     verificationMethod: {
       type: String,
@@ -28,7 +32,8 @@ const voterParticipationSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true,
+    timestamps: false,
+    versionKey: false,
   }
 );
 
