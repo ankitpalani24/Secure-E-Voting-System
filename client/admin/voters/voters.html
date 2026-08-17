@@ -1,20 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Manage Voters - Secure E-Voting Platform</title>
+    <link rel="stylesheet" href="../../styles/main.css">
     <link rel="stylesheet" href="voters.css">
+    <link rel="stylesheet" href="../../shared/toast.css">
+    <link rel="stylesheet" href="../../shared/spinner.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
 
     <header class="top-header">
         <div class="header-left">
             <h1>Admin Dashboard</h1>
-            <p>Welcome, System Administrator</p>
+            <p>Voter Registry & Identity Directory</p>
         </div>
-        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
     </header>
 
     <main class="container">
@@ -29,31 +34,18 @@
 
         <div class="search-container">
             <i class="fas fa-search search-icon"></i>
-            <input type="text" id="voterSearch" placeholder="Search voter by full name..." class="search-box">
+            <input type="text" id="voterSearch" placeholder="Search registered voters by full name or ID..." class="search-box">
         </div>
 
         <section class="overview-list">
-            <h3>Voters List :</h3>
-            <div class="list-item">
-                <div class="list-info">
-                    
-                </div>
-                
-            </div>
-            <div class="list-item">
-                <div class="list-info">
-                    
-                </div>
-            </div>
-            <div class="list-item">
-                <div class="list-info">
-                    
-                </div>
-            </div>
+            <h3>Registered Citizen Directory</h3>
+            <!-- Voters injected dynamically by voters.js with safe DOM nodes -->
         </section>
     </main>
 
+    <script src="../../shared/spinner.js"></script>
+    <script src="../../shared/toast.js"></script>
     <script src="voters.js"></script>
-
 </body>
+
 </html>

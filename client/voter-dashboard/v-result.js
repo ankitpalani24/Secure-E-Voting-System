@@ -12,10 +12,20 @@ async function loadResults() {
         const results = await res.json();
 
         const partyList = document.querySelector('.party-list');
-        partyList.innerHTML = '<h3>Results :</h3>';
+        partyList.innerHTML = '';
+        const heading = document.createElement('h3');
+        heading.textContent = 'Results :';
+        partyList.appendChild(heading);
+
+        if (!Array.isArray(results) || results.length === 0) {
+            const noResults = document.createElement('p');
+            noResults.textContent = 'No results available yet.';
+            partyList.appendChild(noResults);
+            return;
+        }
 
         // Sort results by total votes descending
-        const sortedResults = results.sort((a, b) => b.totalVotes - a.totalVotes);
+        const sortedResults = results.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
 
         const colors = ['green', 'blue', 'orange', 'purple'];
         const bgs = ['hsla(93, 100%, 75%, 0.5)', 'hsla(220, 100%, 75%, 0.5)', 'hsla(51, 100%, 75%, 0.5)', 'hsla(293, 100%, 75%, 0.5)'];
@@ -33,13 +43,32 @@ async function loadResults() {
             const card = document.createElement('div');
             card.className = 'stat-card';
             card.style.backgroundColor = bgs[colorIndex];
-            card.innerHTML = `
-                <div>
-                    <span class="label">${party.partyName} (${party.symbol}) <strong style="color:#333; background:#eee; padding:2px 8px; border-radius:12px; font-size:0.8em; margin-left:8px;">${rankBadge}</strong></span>
-                    <h2 class="value">${party.totalVotes} Votes</h2>
-                </div>
-                <div class="icon-box ${colors[colorIndex]}"><i class="fas fa-users"></i></div>
-            `;
+
+            const textDiv = document.createElement('div');
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'label';
+            labelSpan.textContent = `${party.partyName || 'Unknown'} (${party.symbol || 'N/A'}) `;
+
+            const badge = document.createElement('strong');
+            badge.style.cssText = 'color:#333; background:#eee; padding:2px 8px; border-radius:12px; font-size:0.8em; margin-left:8px;';
+            badge.textContent = rankBadge;
+            labelSpan.appendChild(badge);
+
+            const valueH2 = document.createElement('h2');
+            valueH2.className = 'value';
+            valueH2.textContent = `${party.totalVotes || 0} Votes`;
+
+            textDiv.appendChild(labelSpan);
+            textDiv.appendChild(valueH2);
+
+            const iconBox = document.createElement('div');
+            iconBox.className = `icon-box ${colors[colorIndex]}`;
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-users';
+            iconBox.appendChild(icon);
+
+            card.appendChild(textDiv);
+            card.appendChild(iconBox);
             partyList.appendChild(card);
         });
     } catch (err) {
@@ -57,14 +86,16 @@ document.querySelectorAll('.stat-card').forEach(card => {
 });
 
 const logoutBtn = document.querySelector(".logout-btn");
-logoutBtn.addEventListener("mouseover", () => {
-    logoutBtn.style.color = "#ff0000";
-    logoutBtn.style.transform = "scale(1.2)";
-});
-logoutBtn.addEventListener("mouseout", () => {
-    logoutBtn.style.color = "inherit";
-    logoutBtn.style.transform = "scale(1)";
-});
+if (logoutBtn) {
+    logoutBtn.addEventListener("mouseover", () => {
+        logoutBtn.style.color = "#ff0000";
+        logoutBtn.style.transform = "scale(1.2)";
+    });
+    logoutBtn.addEventListener("mouseout", () => {
+        logoutBtn.style.color = "inherit";
+        logoutBtn.style.transform = "scale(1)";
+    });
+}
 
 loadResults();
 
@@ -72,9 +103,8 @@ loadResults();
 const socket = window.io ? window.io(window.location.origin) : null;
 
 if (socket) {
-    socket.on('newVote', (voteData) => {
-        console.log('Real-time vote received! Updating ranks and counts...', voteData);
-        // We re-fetch to ensure the ranks are sorted perfectly if an upset occurs
+    socket.on('newVote', () => {
+        // We re-fetch to ensure the ranks are sorted without revealing sensitive info
         loadResults();
     });
 }

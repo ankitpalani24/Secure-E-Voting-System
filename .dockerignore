@@ -1,0 +1,10 @@
+node_modules
+server/node_modules
+.git
+.gitignore
+.env
+server/.env
+*.log
+.vscode
+docs_and_scripts
+client/models/*.shard*

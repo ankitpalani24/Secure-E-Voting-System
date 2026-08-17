@@ -1,68 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voter Dashboard</title>
+    <title>Voter Portal - Secure E-Voting Platform</title>
+    <link rel="stylesheet" href="../styles/main.css">
     <link rel="stylesheet" href="v-dashboard.css">
+    <link rel="stylesheet" href="../shared/toast.css">
+    <link rel="stylesheet" href="../shared/spinner.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
 
     <header class="top-header">
         <div class="header-left">
-            <h1>Voter Dashboard</h1>
-            <p>Welcome, Votername</p>
+            <h1>Citizen Portal</h1>
+            <p>Welcome, Voter</p>
         </div>
-        <a href="../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i>Logout</a>
+        <a href="../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
     </header>
 
     <main class="container">
         <nav class="tab-nav">
-            <a href="../voter-dashboard/v-dashboard.html" id="dashboardactive" class="tab active"><i class="fas fa-chart-line"></i> Overview</a>
-            <a href="../voter-dashboard/v-vote.html" class="tab"><i class="fas fa-users"></i> Vote</a>
-            <a href="../voter-dashboard/v-result.html" class="tab"><i class="fas fa-building"></i> Results</a>
+            <a href="../voter-dashboard/v-dashboard.html" id="dashboardactive" class="tab active"><i class="fas fa-id-card"></i> Voter Status</a>
+            <a href="../voter-dashboard/v-vote.html" class="tab"><i class="fas fa-vote-yea"></i> Cast Ballot</a>
+            <a href="../voter-dashboard/v-result.html" class="tab"><i class="fas fa-poll"></i> Election Results</a>
         </nav>
 
         <section class="personal-info">
-            <h3>Personal Information</h3>
+            <h3>Registered Citizen Credentials</h3>
             <div class="list-item">
                 <div class="list-info">
-                    <strong>Name:</strong>
+                    <strong>Full Legal Name:</strong>
                 </div>
             </div>
             <div class="list-item">
                 <div class="list-info">
-                    <strong>Age:</strong>
+                    <strong>Citizen Age:</strong>
                 </div>
             </div>
             <div class="list-item">
                 <div class="list-info">
-                    <strong>DOB:</strong>
+                    <strong>Date of Birth:</strong>
                 </div>
             </div>
             <div class="list-item">
                 <div class="list-info">
-                    <strong>Voter ID:</strong>
+                    <strong>Voter Registration ID:</strong>
                 </div>
             </div>
-            
         </section>
 
         <section class="stats-grid">
             <div class="stat-card">
                 <div>
-                    <h6 class="value">Vote Status</h6>
-                    <span class="label"></span>
-                    
+                    <h6 class="value" style="font-size: 1.25rem;">Participation Status</h6>
+                    <span class="label">Checking eligibility...</span>
                 </div>
                 <div class="icon-box green"><i class="fas fa-check"></i></div>
             </div>
-            
         </section>
     </main>
 
+    <script src="../shared/spinner.js"></script>
+    <script src="../shared/toast.js"></script>
     <script src="v-dashboard.js"></script>
-
 </body>
+
 </html>

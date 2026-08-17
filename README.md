@@ -50,13 +50,13 @@ The system enforces a strict **one-person-one-vote** policy at the database leve
 | Feature | Description |
 |---|---|
 | 🔐 **Facial Recognition** | Biometric voter verification using `face-api.js` with 128-dimensional face embeddings and Euclidean distance matching (threshold: 0.55) |
-| 🛡️ **JWT Authentication** | Secure token-based auth with role-encoded payloads and 1-hour expiry |
+| 🛡️ **JWT Authentication** | Secure token-based auth with role-encoded payloads and 2-hour expiry |
 | 👥 **Role-Based Access** | Three distinct roles — **Admin**, **Voter**, **Party** — each with dedicated dashboards and permissions |
-| 🗳️ **One-Person-One-Vote** | Enforced via MongoDB unique index on `voterId` in the Vote collection, with duplicate detection at both application and database layers |
+| 🗳️ **One-Person-One-Vote & Decoupled Ballots** | Enforced via compound unique index on `VoterParticipation` and anonymous ballot storage |
 | 📊 **Real-Time Results** | Live vote count updates via Socket.io WebSocket events |
-| 📝 **Audit Logging** | Automatic logging of logins, voter registrations, and vote casts with timestamps and user roles |
-| 🚫 **Duplicate Face Detection** | Prevents the same person from registering twice by comparing face embeddings against all existing voters |
-| ☁️ **Serverless Ready** | Optimized for Vercel deployment with cached MongoDB connections for warm serverless invocations |
+| 📝 **Hashed Audit Logging** | SHA-256 linear hash chaining for tamper-evident audit logs |
+| 🚫 **Duplicate Face Detection** | Prevents the same person from registering twice by comparing face embeddings against existing voters |
+| ☁️ **Serverless Ready & Containerized** | Optimized for Vercel deployment with cached MongoDB connections, plus production Dockerfile |
 
 ---
 
@@ -75,15 +75,15 @@ The system enforces a strict **one-person-one-vote** policy at the database leve
 ### Frontend
 | Technology | Purpose |
 |---|---|
-| **HTML5 / CSS3 / Vanilla JS** | Core UI — no framework dependency |
+| **HTML5 / CSS3 / Vanilla JS** | Core UI — modern light theme design system |
 | **face-api.js** | Browser-based facial recognition (SSD MobileNet v1) |
 | **Font Awesome** | Icon library |
-| **Boxicons** | Additional icon set |
 
 ### Infrastructure
 | Technology | Purpose |
 |---|---|
 | **Vercel** | Serverless hosting & deployment |
+| **Docker** | Containerized deployment |
 | **MongoDB Atlas** | Managed cloud database |
 
 ---
@@ -128,8 +128,8 @@ The system enforces a strict **one-person-one-vote** policy at the database leve
 │                  MongoDB Atlas                          │
 │                          │                              │
 │  ┌────────┐ ┌────────┐ ┌┴───────┐ ┌────────┐ ┌───────┐  │
-│  │ Admins │ │ Voters │ │ Votes  │ │Parties │ │Audit  │  │
-│  │        │ │ +face  │ │(unique)│ │        │ │ Logs  │  │
+│  │ Admins │ │ Voters │ │Ballots │ │Parties │ │Audit  │  │
+│  │        │ │ +face  │ │(anon)  │ │        │ │ Logs  │  │
 │  └────────┘ └────────┘ └────────┘ └────────┘ └───────┘  │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -162,40 +162,20 @@ voting-system/
 │   ├── models/                   # Face recognition model weights
 │   ├── pics/                     # UI image assets
 │   ├── shared/                   # Reusable toast & spinner components
-│   ├── styles/                   # Shared CSS (loading animations)
-│   ├── registerFace.html         # Standalone face registration tool
-│   ├── verifyFace.html           # Standalone face verification tool
-│   └── results.html              # Public results page
+│   └── styles/                   # Unified design system (main.css, loading.css)
 ├── server/
-│   ├── controllers/
-│   │   ├── authController.js     # Login logic for all 3 roles
-│   │   ├── adminController.js    # Voter/Party CRUD + dashboard stats
-│   │   ├── voterController.js    # Profile, face verify, cast vote
-│   │   └── resultsController.js  # Aggregated election results
-│   ├── middleware/
-│   │   └── authMiddleware.js     # JWT verification + role guards
-│   ├── models/
-│   │   ├── Admin.js              # Admin schema
-│   │   ├── Voter.js              # Voter schema (with faceDescriptor)
-│   │   ├── Vote.js               # Vote schema (unique voterId)
-│   │   ├── Party.js              # Party schema (with credentials)
-│   │   └── AuditLog.js           # Audit trail schema
-│   ├── routes/
-│   │   ├── authRoutes.js         # POST /api/auth/*
-│   │   ├── adminRoutes.js        # GET/POST /api/admin/*
-│   │   ├── voterRoutes.js        # GET/POST /api/voter/*
-│   │   ├── partyRoutes.js        # GET /api/party/*
-│   │   └── resultsRoutes.js      # GET /api/results/*
-│   ├── utils/
-│   │   └── faceUtils.js          # Euclidean distance calculator
-│   ├── scripts/                  # Database seed/utility scripts
-│   └── server.js                 # Express app + DB connection + Vercel export
-├── docs_and_scripts/             # TODO lists, improvement notes, helper scripts
-├── .env                          # Environment variables (not committed)
-├── .gitignore
+│   ├── controllers/              # Express route controllers
+│   ├── middleware/               # Auth & security middleware
+│   ├── models/                   # Mongoose schemas (Voter, AnonymousBallot, etc.)
+│   ├── routes/                   # REST API routes
+│   ├── tests/                    # Jest automated unit & security test suite
+│   ├── utils/                    # Face embedding & SHA-256 audit utils
+│   └── server.js                 # Express application & DB connection
+├── Dockerfile                    # Multi-stage production container
+├── .dockerignore
+├── .env.example
 ├── package.json
-├── vercel.json                   # Vercel deployment configuration
-└── index.html                    # Root redirect
+└── vercel.json                   # Vercel deployment configuration
 ```
 
 ---
@@ -219,173 +199,46 @@ voting-system/
 
 2. **Install dependencies**
    ```bash
-   # Root dependencies
    npm install
-
-   # Server dependencies
-   cd server
-   npm install
-   cd ..
+   cd server && npm install && cd ..
    ```
 
 3. **Configure environment variables** (see [Environment Variables](#-environment-variables))
 
-4. **Start the development server**
+4. **Run automated tests**
+   ```bash
+   npm test
+   ```
+
+5. **Start the development server**
    ```bash
    npm start
    ```
    The server will start on `http://localhost:5000`.
 
-5. **Access the application**
-   - Login page: `http://localhost:5000/client/login/login.html`
-   - Admin dashboard: `http://localhost:5000/client/admin/dashboard/dashboard.html`
-
 ---
 
 ## 🔑 Environment Variables
 
-Create a `.env` file in the project root and in the `server/` directory:
+Copy `.env.example` to `.env`:
 
 ```env
-# MongoDB connection string
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>
-
-# Server port (local development)
 PORT=5000
-
-# JWT signing secret (use a strong, random string in production)
 JWT_SECRET=your_super_secret_key_here
 ```
 
-> ⚠️ **Never commit `.env` files to version control.** The `.gitignore` is already configured to exclude them.
-
 ---
 
-## 📡 API Reference
+## 🧪 Testing
 
-### Authentication
-
-| Method | Endpoint | Description | Body |
-|---|---|---|---|
-| `POST` | `/api/auth/admin-login` | Admin login | `{ username, password }` |
-| `POST` | `/api/auth/voter-login` | Voter login | `{ username, password }` |
-| `POST` | `/api/auth/party-login` | Party login | `{ username, password }` |
-
-### Admin (🔒 Requires Admin JWT)
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/admin/add-voter` | Register a new voter with face biometrics |
-| `POST` | `/api/admin/add-party` | Register a new political party |
-| `GET` | `/api/admin/voters` | List all registered voters |
-| `GET` | `/api/admin/parties` | List all registered parties |
-| `GET` | `/api/admin/dashboard-stats` | Get voter, party, and vote counts |
-
-### Voter (🔒 Requires Voter JWT)
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/voter/profile` | Get voter profile & vote status |
-| `POST` | `/api/voter/face-verify` | Verify voter identity via face biometrics |
-| `POST` | `/api/voter/vote` | Cast a vote for a party |
-
-### Results
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/results` | Get aggregated election results |
-
-### Authentication Headers
-
-All protected endpoints require:
+Run the automated test suite with Jest:
+```bash
+npm test
 ```
-Authorization: Bearer <jwt_token>
-```
-
----
-
-## 👤 User Roles
-
-### 🔴 Admin
-- Register and manage voters (with biometric face capture)
-- Register and manage political parties
-- View system-wide dashboard statistics
-- Access election results
-- Full audit trail visibility
-
-### 🟢 Voter
-- Login with email and password
-- Verify identity through facial recognition before voting
-- Cast a single vote (enforced at DB level)
-- View election results
-
-### 🟡 Party
-- Login with party credentials
-- View registered parties
-- View election results
-
----
-
-## 🔒 Security
-
-| Layer | Implementation |
-|---|---|
-| **Authentication** | JWT tokens with 1-hour expiry, role-encoded payloads |
-| **Password Storage** | bcrypt hashing with salt rounds = 10 |
-| **Biometric Verification** | 128-dimensional face embeddings with Euclidean distance matching |
-| **Duplicate Prevention** | MongoDB unique index on `voterId` + application-level checks |
-| **Face Uniqueness** | Duplicate face detection during voter registration |
-| **Role Authorization** | Express middleware guards for admin and voter routes |
-| **Audit Trail** | Timestamped logs for logins, registrations, and votes |
-| **CORS** | Enabled via `cors` middleware |
-| **Error Handling** | Global error handler; no stack traces in production responses |
-
----
-
-## ☁️ Deployment
-
-### Vercel (Recommended)
-
-The project is pre-configured for Vercel deployment:
-
-1. Push your code to GitHub
-2. Import the repository in [Vercel](https://vercel.com)
-3. Set environment variables in the Vercel dashboard:
-   - `MONGO_URI`
-   - `JWT_SECRET`
-4. Deploy — Vercel will use `vercel.json` to route API requests to the serverless function
-
-The `vercel.json` rewrites all `/api/*` requests to the serverless handler:
-```json
-{
-  "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.js"
-    }
-  ]
-}
-```
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ---
 
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).
-
----
-
-<p align="center">
-  Made with ❤️ by <a href="https://github.com/ankitpalani24">Ankit Palani</a>
-</p>

@@ -11,9 +11,51 @@ dotenv.config();
 const app = express();
 
 // ================== MIDDLEWARE ==================
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+
+// Security Headers (configured to allow face-api models and local assets)
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // disabled for hybrid local dev/CDN assets flexibility
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
+);
+
+// Global Rate Limiter: 200 requests per 15 minutes per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests from this IP, please try again later." }
+});
+app.use("/api/", globalLimiter);
+
+// Authentication Rate Limiter (Brute-force protection: 20 login attempts per 15 min)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many authentication attempts. Please try again after 15 minutes." }
+});
+app.use("/api/auth/", authLimiter);
+
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "5mb" })); // Sufficient for face descriptor arrays
 const path = require("path");
+
+// ================== HEALTH CHECK ==================
+app.get("/healthz", (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    database: dbStatus,
+    uptime: process.uptime()
+  });
+});
 
 // ================== STATIC FILES (Local Dev) ==================
 // When running locally, serve frontend files

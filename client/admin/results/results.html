@@ -1,19 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Results</title>
+    <title>Election Results - Secure E-Voting Platform</title>
+    <link rel="stylesheet" href="../../styles/main.css">
     <link rel="stylesheet" href="results.css">
+    <link rel="stylesheet" href="../../shared/toast.css">
+    <link rel="stylesheet" href="../../shared/spinner.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
+
     <header class="top-header">
         <div class="header-left">
             <h1>Admin Dashboard</h1>
-            <p>Welcome, System Administrator</p>
+            <p>Cryptographic Tally & Election Results</p>
         </div>
-        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
     </header>
 
     <main class="container">
@@ -27,38 +33,15 @@
         </nav>
 
         <section class="party-list">
-            <h3>Results :</h3>
-            <div style="background-color: hsla(93, 100%, 75%, 0.5);" class="stat-card">
-                <div>
-                    <span class="label">Party Name</span>
-                    <h2 class="value">0</h2>
-                </div>
-                <div class="icon-box green"><i class="fas fa-users"></i></div>
-            </div>
-            <div style="background-color: hsla(220, 100%, 75%, 0.5);" class="stat-card">
-                <div>
-                    <span class="label">Party Name</span>
-                    <h2 class="value">0</h2>
-                </div>
-                <div class="icon-box blue"><i class="fas fa-users"></i></div>
-            </div>
-            <div style="background-color: hsla(51, 100%, 75%, 0.5);" class="stat-card">
-                <div>
-                    <span class="label">Party Name</span>
-                    <h2 class="value">0</h2>
-                </div>
-                <div class="icon-box orange"><i class="fas fa-users"></i></div>
-            </div>
-            <div style="background-color: hsla(293, 100%, 75%, 0.5);" class="stat-card">
-                <div>
-                    <span class="label">Party Name</span>
-                    <h2 class="value">0</h2>
-                </div>
-                <div class="icon-box purple"><i class="fas fa-users"></i></div>
-            </div>
+            <h3>Certified Ballot Box Tally</h3>
+            <!-- Results cards dynamically injected by results.js -->
         </section>
     </main>
+
+    <script src="../../shared/spinner.js"></script>
+    <script src="../../shared/toast.js"></script>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script src="results.js"></script>
 </body>
+
 </html>

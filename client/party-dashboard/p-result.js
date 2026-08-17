@@ -10,10 +10,20 @@ async function loadResults() {
         const results = await res.json();
 
         const partyList = document.querySelector('.party-list');
-        partyList.innerHTML = '<h3>Results :</h3>';
+        partyList.innerHTML = '';
+        const heading = document.createElement('h3');
+        heading.textContent = 'Results :';
+        partyList.appendChild(heading);
+
+        if (!Array.isArray(results) || results.length === 0) {
+            const noResults = document.createElement('p');
+            noResults.textContent = 'No results available yet.';
+            partyList.appendChild(noResults);
+            return;
+        }
 
         // Sort results by total votes descending
-        const sortedResults = results.sort((a, b) => b.totalVotes - a.totalVotes);
+        const sortedResults = results.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
 
         const colors = ['green', 'blue', 'orange', 'purple'];
         const bgs = ['hsla(93, 100%, 75%, 0.5)', 'hsla(220, 100%, 75%, 0.5)', 'hsla(51, 100%, 75%, 0.5)', 'hsla(293, 100%, 75%, 0.5)'];
@@ -31,13 +41,32 @@ async function loadResults() {
             const card = document.createElement('div');
             card.className = 'stat-card';
             card.style.backgroundColor = bgs[colorIndex];
-            card.innerHTML = `
-                <div>
-                    <span class="label">${party.partyName} (${party.symbol}) <strong style="color:#333; background:#eee; padding:2px 8px; border-radius:12px; font-size:0.8em; margin-left:8px;">${rankBadge}</strong></span>
-                    <h2 class="value">${party.totalVotes} Votes</h2>
-                </div>
-                <div class="icon-box ${colors[colorIndex]}"><i class="fas fa-users"></i></div>
-            `;
+
+            const textDiv = document.createElement('div');
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'label';
+            labelSpan.textContent = `${party.partyName || 'Unknown'} (${party.symbol || 'N/A'}) `;
+
+            const badge = document.createElement('strong');
+            badge.style.cssText = 'color:#333; background:#eee; padding:2px 8px; border-radius:12px; font-size:0.8em; margin-left:8px;';
+            badge.textContent = rankBadge;
+            labelSpan.appendChild(badge);
+
+            const valueH2 = document.createElement('h2');
+            valueH2.className = 'value';
+            valueH2.textContent = `${party.totalVotes || 0} Votes`;
+
+            textDiv.appendChild(labelSpan);
+            textDiv.appendChild(valueH2);
+
+            const iconBox = document.createElement('div');
+            iconBox.className = `icon-box ${colors[colorIndex]}`;
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-users';
+            iconBox.appendChild(icon);
+
+            card.appendChild(textDiv);
+            card.appendChild(iconBox);
             partyList.appendChild(card);
         });
 
@@ -46,17 +75,21 @@ async function loadResults() {
             const originalColor = getComputedStyle(card).backgroundColor;
             card.onmouseover = function() {
                 this.style.backgroundColor = 'rgba(44, 44, 44, 0.18)';
-            }
+            };
             card.onmouseout = function() {
                 this.style.backgroundColor = originalColor;
-            }
+            };
         });
 
     } catch (err) {
         console.error('Results error:', err);
-        document.querySelector('.party-list').innerHTML = '<h3>Error loading results</h3>';
+        const partyList = document.querySelector('.party-list');
+        if (partyList) {
+            partyList.innerHTML = '<h3>Error loading results</h3>';
+        }
     }
 }
+
 loadResults();
 
 // Hover logout

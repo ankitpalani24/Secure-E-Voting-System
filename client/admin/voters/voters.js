@@ -38,13 +38,30 @@ async function loadVoters() {
     }
 }
 
+// Helper to sanitize/escape HTML entities
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // Render voters array into the DOM
 function displayVoters(votersArray) {
     const container = document.querySelector('.overview-list');
-    container.innerHTML = '<h3>Voters List (' + votersArray.length + ')</h3>';
+    container.innerHTML = '';
+    
+    const heading = document.createElement('h3');
+    heading.textContent = `Voters List (${votersArray.length})`;
+    container.appendChild(heading);
 
     if (votersArray.length === 0) {
-        container.innerHTML += '<p>No voters found.</p>';
+        const noVoters = document.createElement('p');
+        noVoters.textContent = 'No voters found.';
+        container.appendChild(noVoters);
         return;
     }
 
@@ -52,19 +69,33 @@ function displayVoters(votersArray) {
         const item = document.createElement('div');
         item.className = 'list-item';
         
-        let dateStr = '';
+        const listInfo = document.createElement('div');
+        listInfo.className = 'list-info';
+
+        const strong = document.createElement('strong');
+        strong.textContent = voter.name || 'Unknown';
+
         if (voter.hasVoted && voter.voteTimestamp) {
             const d = new Date(voter.voteTimestamp);
-            dateStr = `<span style="font-size: 0.85em; color: #888; font-weight: normal; margin-left: 10px;">(Voted: ${d.toLocaleString()})</span>`;
+            const dateSpan = document.createElement('span');
+            dateSpan.style.cssText = 'font-size: 0.85em; color: #888; font-weight: normal; margin-left: 10px;';
+            dateSpan.textContent = `(Voted: ${d.toLocaleString()})`;
+            strong.appendChild(dateSpan);
         }
 
-        item.innerHTML = `
-            <div class="list-info">
-                <strong>${voter.name} ${dateStr}</strong>
-                <p>${voter.email} | ID: ${voter._id.slice(-6)} | Voted: ${voter.hasVoted ? 'Yes' : 'No'}</p>
-            </div>
-            <span class="list-count ${voter.hasVoted ? 'green-text' : 'orange-text'}">${voter.hasVoted ? 'VOTED' : 'PENDING'}</span>
-        `;
+        const p = document.createElement('p');
+        const voterIdShort = voter._id ? voter._id.slice(-6) : 'N/A';
+        p.textContent = `${voter.email || ''} | ID: ${voterIdShort} | Voted: ${voter.hasVoted ? 'Yes' : 'No'}`;
+
+        listInfo.appendChild(strong);
+        listInfo.appendChild(p);
+
+        const countSpan = document.createElement('span');
+        countSpan.className = `list-count ${voter.hasVoted ? 'green-text' : 'orange-text'}`;
+        countSpan.textContent = voter.hasVoted ? 'VOTED' : 'PENDING';
+
+        item.appendChild(listInfo);
+        item.appendChild(countSpan);
         container.appendChild(item);
     });
 }

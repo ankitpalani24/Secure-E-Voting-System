@@ -20,13 +20,27 @@ async function loadParties() {
             const card = document.createElement('div');
             card.className = 'stat-card';
             card.style.backgroundColor = `hsla(${index * 60}, 100%, 75%, 0.5)`;
-            card.innerHTML = `
-                <div>
-                    <span class="label">${party.partyName}</span>
-                    <h2 class="value">${party.symbol}</h2>
-                </div>
-                <div class="icon-box ${color}"><i class="fas fa-building"></i></div>
-            `;
+            
+            const contentDiv = document.createElement('div');
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'label';
+            labelSpan.textContent = party.partyName || '';
+
+            const valueH2 = document.createElement('h2');
+            valueH2.className = 'value';
+            valueH2.textContent = party.symbol || '';
+
+            contentDiv.appendChild(labelSpan);
+            contentDiv.appendChild(valueH2);
+
+            const iconBox = document.createElement('div');
+            iconBox.className = `icon-box ${color}`;
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-building';
+            iconBox.appendChild(icon);
+
+            card.appendChild(contentDiv);
+            card.appendChild(iconBox);
             statsGrid.appendChild(card);
         });
 

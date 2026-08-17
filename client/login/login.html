@@ -4,83 +4,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <title>Secure E-Voting Platform - Sign In</title>
+    <link rel="stylesheet" href="../styles/main.css">
     <link rel="stylesheet" href="login.css">
     <link rel="stylesheet" href="../shared/toast.css">
     <link rel="stylesheet" href="../shared/spinner.css">
-
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
-
-    <title>Login To E-Voting System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
 
-
     <div class="l-form">
-
-        <!-- <div id="title">
-            E-Voting
-        </div> -->
-
+        <!-- Legacy shapes maintained hidden for backward compatibility -->
         <div class="shape1"></div>
         <div class="shape2"></div>
+        <div class="v-line"></div>
+        <div id="svg"></div>
 
         <div class="login">
-
-            <div id="svg">
-                <img src="../pics/ballot.png" class=icon alt="ballot" class="form__img">
-                <img src="../pics/news.png" class=icon alt="news" class="form__img">
-                <img src="../pics/polling.png" class=icon alt="polling" class="form__img">
-                <img src="../pics/raise-hand.png" class=icon alt="raise-hand" class="form__img">
-                <img src="../pics/vote.png" class=icon alt="vote" class="form__img">
-                <img src="../pics/voting.png" class=icon alt="vote" class="form__img">
-            </div>
-
-            <div class="v-line"></div>
-
             <div class="form">
+                <div class="form__header">
+                    <div class="form__badge">
+                        <i class="fas fa-shield-alt"></i> Official Election Portal
+                    </div>
+                    <h1 class="form__title">Sign In</h1>
+                    <p class="form__subtitle">Enter your credentials to access the secure voting system</p>
+                </div>
 
-
-                <form action="" class="form__content">
-                    <h1 class="form__title">Welcome</h1>
-
+                <form class="form__content">
                     <div class="form__div form__div-one">
-                        <div class="form__icon">
-                            <i class='bx bx-user-circle'></i>
-                        </div>
-
+                        <div class="form__icon"><i class="fas fa-user"></i></div>
                         <div class="form__div-input">
-                            <label for="username" class="form__label">Username</label>
-                            <input type="text" id="username" class="form__input">
+                            <label for="username" class="form__label">Username or Voter ID</label>
+                            <input type="text" id="username" class="form__input" placeholder="e.g. voter1@voter or admin" required autocomplete="username">
                         </div>
                     </div>
 
                     <div class="form__div">
-                        <div class="form__icon">
-                            <i class='bx bx-lock'></i>
-                        </div>
-
+                        <div class="form__icon"><i class="fas fa-lock"></i></div>
                         <div class="form__div-input">
                             <label for="password" class="form__label">Password</label>
-                            <input type="password" id="password" class="form__input">
+                            <input type="password" id="password" class="form__input" placeholder="Enter your password" required autocomplete="current-password">
                         </div>
                     </div>
+
+                    <div class="form__div">
+                        <label for="role" class="form__label">Account Role</label>
+                        <select id="role" class="form__select">
+                            <option value="voter">Voter Portal</option>
+                            <option value="admin">System Administrator</option>
+                            <option value="party">Party Representative</option>
+                        </select>
+                    </div>
+
                     <a href="#" class="form__forgot">Forgot Password?</a>
 
-<select id="role" class="form__select">
-<option value="admin">Admin</option>
-<option value="voter">Voter</option>
-<option value="party">Party</option>
-</select>
-<input type="submit" class="form__button" value="Login">
+                    <input type="submit" class="form__button" value="Sign In to Platform">
 
-
-
+                    <div class="form__footer">
+                        <p><i class="fas fa-lock text-muted"></i> 256-bit Encrypted Session & Biometric Verification</p>
+                    </div>
                 </form>
             </div>
         </div>
-
+    </div>
 
     <script src="../shared/spinner.js"></script>
     <script src="../shared/toast.js"></script>
