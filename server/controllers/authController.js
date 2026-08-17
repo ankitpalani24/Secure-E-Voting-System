@@ -13,8 +13,8 @@ exports.adminLogin = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ message: "Username and password required" });
+    if (!username || !password || typeof username !== "string" || typeof password !== "string") {
+      return res.status(400).json({ message: "Username and password required as valid strings" });
     }
 
     const admin = await Admin.findOne({ username: username.trim() });
@@ -24,7 +24,7 @@ exports.adminLogin = async (req, res) => {
         category: "SECURITY_EVENT",
         userRole: "admin",
         status: "DENIED",
-        details: { attemptedUsername: username },
+        details: { attemptedUsername: String(username) },
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
@@ -74,8 +74,8 @@ exports.voterLogin = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+    if (!username || !password || typeof username !== "string" || typeof password !== "string") {
+      return res.status(400).json({ message: "Email and password required as valid strings" });
     }
 
     const voter = await Voter.findOne({ email: username.toLowerCase().trim() });
@@ -85,7 +85,7 @@ exports.voterLogin = async (req, res) => {
         category: "SECURITY_EVENT",
         userRole: "voter",
         status: "DENIED",
-        details: { attemptedEmail: username },
+        details: { attemptedEmail: String(username) },
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
@@ -147,8 +147,8 @@ exports.partyLogin = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ message: "Username and password required" });
+    if (!username || !password || typeof username !== "string" || typeof password !== "string") {
+      return res.status(400).json({ message: "Username and password required as valid strings" });
     }
 
     const party = await Party.findOne({ username: username.toLowerCase().trim() });

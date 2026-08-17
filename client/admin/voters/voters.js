@@ -62,17 +62,27 @@ function renderVotersTable(votersArray) {
 
         // 1. Citizen Name with Avatar Icon
         const nameTd = document.createElement('td');
-        nameTd.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
-                    ${(voter.name || 'V').charAt(0).toUpperCase()}
-                </div>
-                <div>
-                    <strong style="display: block; font-size: 0.9rem; color: var(--text-primary);">${voter.name || 'Unknown Citizen'}</strong>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">Accredited Voter</span>
-                </div>
-            </div>
-        `;
+        const nameWrap = document.createElement('div');
+        nameWrap.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+
+        const avatar = document.createElement('div');
+        avatar.style.cssText = 'width: 32px; height: 32px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;';
+        avatar.textContent = (voter.name || 'V').charAt(0).toUpperCase();
+
+        const nameDetails = document.createElement('div');
+        const nameStrong = document.createElement('strong');
+        nameStrong.style.cssText = 'display: block; font-size: 0.9rem; color: var(--text-primary);';
+        nameStrong.textContent = voter.name || 'Unknown Citizen';
+
+        const subSpan = document.createElement('span');
+        subSpan.style.cssText = 'font-size: 0.75rem; color: var(--text-muted);';
+        subSpan.textContent = 'Accredited Voter';
+
+        nameDetails.appendChild(nameStrong);
+        nameDetails.appendChild(subSpan);
+        nameWrap.appendChild(avatar);
+        nameWrap.appendChild(nameDetails);
+        nameTd.appendChild(nameWrap);
 
         // 2. Email
         const emailTd = document.createElement('td');
@@ -82,7 +92,10 @@ function renderVotersTable(votersArray) {
         // 3. Voter ID / Mongo ID Short
         const idTd = document.createElement('td');
         const idShort = voter.voterId || (voter._id ? `VOT-${voter._id.slice(-6).toUpperCase()}` : 'N/A');
-        idTd.innerHTML = `<span style="font-family: monospace; font-size: 0.82rem; background: var(--surface-muted); padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-weight: 600;">${idShort}</span>`;
+        const idSpan = document.createElement('span');
+        idSpan.style.cssText = 'font-family: monospace; font-size: 0.82rem; background: var(--surface-muted); padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-weight: 600;';
+        idSpan.textContent = idShort;
+        idTd.appendChild(idSpan);
 
         // 4. Biometrics Status
         const bioTd = document.createElement('td');

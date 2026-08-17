@@ -13,8 +13,8 @@ exports.addVoter = async (req, res) => {
   try {
     const { name, email, password, faceDescriptor } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "All registration fields are required" });
+    if (!name || !email || !password || typeof name !== "string" || typeof email !== "string" || typeof password !== "string") {
+      return res.status(400).json({ message: "All registration fields are required as valid strings" });
     }
 
     if (password.length < 6) {
@@ -93,8 +93,17 @@ exports.addParty = async (req, res) => {
   try {
     const { partyName, symbol, description, manifesto, username, password } = req.body;
 
-    if (!partyName || !symbol || !username || !password) {
-      return res.status(400).json({ message: "All required party fields must be provided" });
+    if (
+      !partyName ||
+      !symbol ||
+      !username ||
+      !password ||
+      typeof partyName !== "string" ||
+      typeof symbol !== "string" ||
+      typeof username !== "string" ||
+      typeof password !== "string"
+    ) {
+      return res.status(400).json({ message: "Party name, symbol, username, and password must be valid strings" });
     }
 
     const cleanUsername = username.toLowerCase().trim();

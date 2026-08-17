@@ -2,6 +2,19 @@
  * SECUREVOTE SHARED CLIENT-SIDE AUTH & LAYOUT HELPER
  */
 
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, function(m) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[m];
+    });
+}
+
 function getPortalPrefix() {
     const pathname = window.location.pathname.replace(/\\/g, '/');
     if (pathname.includes('/admin/')) {

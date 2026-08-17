@@ -55,16 +55,16 @@ async function loadParties() {
 
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                    <div style="font-size: 2.8rem; line-height: 1;">${party.symbol || '🗳️'}</div>
+                    <div style="font-size: 2.8rem; line-height: 1;">${escapeHtml(party.symbol || '🗳️')}</div>
                     <span class="status-badge live" style="font-size: 0.75rem;"><i class="fas fa-check-circle"></i> Accredited</span>
                 </div>
                 <div style="width: 100%;">
-                    <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 4px; font-weight: 700;">${party.partyName || 'Unknown Party'}</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">${party.description || 'No description provided.'}</p>
-                    ${party.manifesto ? `<div style="font-size: 0.78rem; color: var(--text-muted); background: var(--surface-muted); padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 10px;"><strong>Manifesto:</strong> ${party.manifesto}</div>` : ''}
+                    <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 4px; font-weight: 700;">${escapeHtml(party.partyName || 'Unknown Party')}</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">${escapeHtml(party.description || 'No description provided.')}</p>
+                    ${party.manifesto ? `<div style="font-size: 0.78rem; color: var(--text-muted); background: var(--surface-muted); padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 10px;"><strong>Manifesto:</strong> ${escapeHtml(party.manifesto)}</div>` : ''}
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 10px;">
-                        <span><i class="fas fa-user-tie"></i> Rep: <strong>${party.username || 'N/A'}</strong></span>
-                        <span style="font-family: monospace;">ID: ${party._id ? party._id.slice(-6).toUpperCase() : 'N/A'}</span>
+                        <span><i class="fas fa-user-tie"></i> Rep: <strong>${escapeHtml(party.username || 'N/A')}</strong></span>
+                        <span style="font-family: monospace;">ID: ${party._id ? escapeHtml(party._id.slice(-6).toUpperCase()) : 'N/A'}</span>
                     </div>
                 </div>
             `;

@@ -193,24 +193,33 @@ exports.castVote = async (req, res) => {
       .update(`${serialNonce}|${election._id}|${partyId}`)
       .digest("hex");
 
-    // 7. Insert Decoupled Participation Record (Compound unique index { voterId, electionId } prevents double voting)
-    // Coarse timestamp (rounded to hourly epoch) prevents millisecond side-channel correlation
+    // 7. Insert Decoupled Participation Record & Anonymous Ballot with atomic rollback resilience
     const coarseTimestamp = new Date(Math.floor(Date.now() / 3600000) * 3600000);
-    await VoterParticipation.create({
-      voterId,
-      electionId: election._id,
-      participatedAt: coarseTimestamp,
-      verificationMethod: "FACE_BIOMETRIC",
-    });
+    let participationRecord = null;
 
-    // 8. Insert Anonymous Ballot with cryptographically random UUID primary key (ZERO voter identity & NO millisecond timing)
-    await AnonymousBallot.create({
-      _id: crypto.randomUUID(),
-      electionId: election._id,
-      partyId,
-      candidateId: candidateId || null,
-      ballotCommitmentHash,
-    });
+    try {
+      participationRecord = await VoterParticipation.create({
+        voterId,
+        electionId: election._id,
+        participatedAt: coarseTimestamp,
+        verificationMethod: "FACE_BIOMETRIC",
+      });
+
+      // 8. Insert Anonymous Ballot with cryptographically random UUID primary key (ZERO voter identity & NO millisecond timing)
+      await AnonymousBallot.create({
+        _id: crypto.randomUUID(),
+        electionId: election._id,
+        partyId,
+        candidateId: candidateId || null,
+        ballotCommitmentHash,
+      });
+    } catch (ballotErr) {
+      // If ballot insertion fails after participation record was created, roll back participation record to prevent permanent voter lockout
+      if (participationRecord && participationRecord._id) {
+        await VoterParticipation.findByIdAndDelete(participationRecord._id).catch(() => {});
+      }
+      throw ballotErr;
+    }
 
     // 9. Chained Audit Logging (NEVER records partyId, candidateId, or ballotCommitmentHash to eliminate database correlation)
     await logAuditEvent({
