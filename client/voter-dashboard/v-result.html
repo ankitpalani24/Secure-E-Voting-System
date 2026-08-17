@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Election Results - Secure E-Voting Platform</title>
+    <title>Certified Election Results - SecureVote</title>
     <link rel="stylesheet" href="../styles/main.css">
     <link rel="stylesheet" href="v-result.css">
     <link rel="stylesheet" href="../shared/toast.css">
@@ -16,42 +16,88 @@
 
 <body>
 
-    <header class="top-header">
-        <div class="header-left">
-            <h1>Citizen Portal</h1>
-            <p>Welcome, Voter</p>
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="v-dashboard.html" class="brand-logo">
+                    <div class="brand-icon"><i class="fas fa-vote-yea"></i></div>
+                    <span>SecureVote</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <span class="nav-section-title">Citizen Portal</span>
+                <a href="v-dashboard.html" class="nav-link">
+                    <i class="fas fa-id-card"></i> <span>Voter Status</span>
+                </a>
+                <a href="v-vote.html" class="nav-link">
+                    <i class="fas fa-vote-yea"></i> <span>Cast Ballot</span>
+                </a>
+                <a href="v-result.html" class="nav-link active">
+                    <i class="fas fa-poll"></i> <span>Election Results</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="../login/login.html" class="logout-nav-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title-group">
+                        <h1>Certified Election Standings</h1>
+                        <p>Live Cryptographic Result Aggregation</p>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="status-badge live" id="voterTotalBadge">
+                        0 Ballots Cast
+                    </div>
+                </div>
+            </header>
+
+            <main class="page-content">
+                <!-- Visual Analytics Grid -->
+                <section class="charts-grid" id="chartsSection">
+                    <div class="chart-card">
+                        <div class="section-header">
+                            <h3><i class="fas fa-chart-pie" style="color: var(--primary);"></i> Vote Share Breakdown</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="voterDoughnutChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="section-header">
+                            <h3><i class="fas fa-chart-bar" style="color: var(--success);"></i> Live Standings</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="voterBarChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-trophy" style="color: var(--warning);"></i> Certified Candidate Leaderboard</h3>
+                    </div>
+                    <div class="party-list" id="voterResultsContainer" style="box-shadow: none; border: none; padding: 0; margin: 0;">
+                        <!-- Injected by v-result.js -->
+                    </div>
+                </div>
+            </main>
         </div>
-        <a href="../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
-    </header>
-
-    <main class="container">
-        <nav class="tab-nav">
-            <a href="v-dashboard.html" class="tab"><i class="fas fa-id-card"></i> Voter Status</a>
-            <a href="v-vote.html" class="tab"><i class="fas fa-vote-yea"></i> Cast Ballot</a>
-            <a href="v-result.html" class="tab active"><i class="fas fa-poll"></i> Election Results</a>
-        </nav>
-
-        <!-- Visual Analytics Grid -->
-        <section class="charts-grid" id="chartsSection">
-            <div class="chart-card">
-                <h4><span><i class="fas fa-chart-pie" style="color: var(--primary);"></i> Vote Share Breakdown</span> <span id="voterTotalBadge" class="list-count blue-text">0 Ballots</span></h4>
-                <div class="chart-container">
-                    <canvas id="voterDoughnutChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-card">
-                <h4><span><i class="fas fa-chart-bar" style="color: var(--success);"></i> Live Standings</span> <span class="list-count green-text">Encrypted Tally</span></h4>
-                <div class="chart-container">
-                    <canvas id="voterBarChart"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <section class="party-list">
-            <h3>Certified Election Tally</h3>
-            <!-- Results dynamically injected by v-result.js -->
-        </section>
-    </main>
+    </div>
 
     <script src="../shared/spinner.js"></script>
     <script src="../shared/toast.js"></script>

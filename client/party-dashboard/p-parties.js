@@ -1,68 +1,68 @@
-// Load all parties for party dashboard
-async function loadPartyParties() {
+// Mobile Sidebar Toggle
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const appSidebar = document.getElementById('appSidebar');
+if (mobileMenuBtn && appSidebar) {
+    mobileMenuBtn.addEventListener('click', () => {
+        appSidebar.classList.toggle('open');
+    });
+}
+
+// Load parties for party representative
+async function loadPartyList() {
     const token = localStorage.getItem('token');
-    if (!token) return window.location.href = '../../../login/login.html';
+    if (!token) return window.location.href = '../login/login.html';
 
-        const statsGrid = document.querySelector('.stats-grid');
-        statsGrid.innerHTML = '<div class="loading"><span class="spinner"></span>Searching parties...</div>';
-        
-        try {
-            const res = await fetch('/api/party', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const parties = await res.json();
-        statsGrid.innerHTML = '';
+    const userName = localStorage.getItem('userName') || 'Party Representative';
+    const partyUserEl = document.getElementById('partyUserName');
+    if (partyUserEl) partyUserEl.textContent = userName;
 
-        parties.forEach((party, index) => {
-            const colors = ['green', 'blue', 'orange', 'purple'];
-            const color = colors[index % colors.length];
-            
+    try {
+        const res = await fetch('/api/party', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const partyList = document.querySelector('.party-list');
+        if (!partyList) return;
+        partyList.innerHTML = '';
+
+        if (!Array.isArray(data) || data.length === 0) {
+            partyList.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">No accredited parties registered in the electoral directory.</p>';
+            return;
+        }
+
+        data.forEach((party) => {
             const card = document.createElement('div');
             card.className = 'stat-card';
-            card.style.backgroundColor = `hsla(${index * 60}, 100%, 75%, 0.5)`;
-            
+            card.style.marginBottom = '12px';
+
             const contentDiv = document.createElement('div');
             const labelSpan = document.createElement('span');
             labelSpan.className = 'label';
-            labelSpan.textContent = party.partyName || '';
+            labelSpan.textContent = party.partyName || 'Unknown Party';
 
             const valueH2 = document.createElement('h2');
             valueH2.className = 'value';
-            valueH2.textContent = party.symbol || '';
+            valueH2.textContent = `${party.symbol || '🗳️'} ${party.description ? '- ' + party.description : ''}`;
+            valueH2.style.fontSize = '1.15rem';
+            valueH2.style.fontWeight = '500';
 
             contentDiv.appendChild(labelSpan);
             contentDiv.appendChild(valueH2);
 
             const iconBox = document.createElement('div');
-            iconBox.className = `icon-box ${color}`;
+            iconBox.className = 'icon-box purple';
             const icon = document.createElement('i');
-            icon.className = 'fas fa-flag-checkered';
+            icon.className = 'fas fa-landmark';
             iconBox.appendChild(icon);
 
             card.appendChild(contentDiv);
             card.appendChild(iconBox);
-            statsGrid.appendChild(card);
+            partyList.appendChild(card);
         });
-
-        // Update nav
-        const nav = document.querySelector('a[href*="/p-parties.html"]');
-        if (nav) nav.innerHTML = `<i class="fas fa-building"></i> Parties (${parties.length})`;
     } catch (err) {
-        console.error(err);
+        console.error('Party load error:', err);
     }
 }
 
-loadPartyParties();
-
-// Hover logout
-const logoutBtn = document.querySelector(".logout-btn");
-if (logoutBtn) {
-    logoutBtn.addEventListener("mouseover", () => {
-        logoutBtn.style.color = "#ff0000";
-        logoutBtn.style.transform = "scale(1.2)";
-    });
-    logoutBtn.addEventListener("mouseout", () => {
-        logoutBtn.style.color = "inherit";
-        logoutBtn.style.transform = "scale(1)";
-    });
-}
+loadPartyList();

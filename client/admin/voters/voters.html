@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Voters - Secure E-Voting Platform</title>
+    <title>Voters Roll - SecureVote Admin</title>
     <link rel="stylesheet" href="../../styles/main.css">
     <link rel="stylesheet" href="voters.css">
     <link rel="stylesheet" href="../../shared/toast.css">
@@ -14,34 +14,81 @@
 
 <body>
 
-    <header class="top-header">
-        <div class="header-left">
-            <h1>Admin Dashboard</h1>
-            <p>Voter Registry & Identity Directory</p>
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="../dashboard/dashboard.html" class="brand-logo">
+                    <div class="brand-icon"><i class="fas fa-vote-yea"></i></div>
+                    <span>SecureVote</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <span class="nav-section-title">Operations</span>
+                <a href="../dashboard/dashboard.html" class="nav-link">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </a>
+                <a href="voters.html" class="nav-link active">
+                    <i class="fas fa-users"></i> <span>Voters Roll</span>
+                </a>
+                <a href="../parties/parties.html" class="nav-link">
+                    <i class="fas fa-landmark"></i> <span>Parties Catalog</span>
+                </a>
+                <a href="../results/results.html" class="nav-link">
+                    <i class="fas fa-poll"></i> <span>Live Results</span>
+                </a>
+
+                <span class="nav-section-title">Registration</span>
+                <a href="../register-voter/register-voter.html" class="nav-link">
+                    <i class="fas fa-user-plus"></i> <span>Register Voter</span>
+                </a>
+                <a href="../register-party/register-party.html" class="nav-link">
+                    <i class="fas fa-plus-circle"></i> <span>Register Party</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="../../login/login.html" class="logout-nav-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title-group">
+                        <h1>Accredited Voters Roll</h1>
+                        <p>Biometrically Registered Citizen Directory</p>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <a href="../register-voter/register-voter.html" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">
+                        <i class="fas fa-user-plus"></i> Add New Voter
+                    </a>
+                </div>
+            </header>
+
+            <main class="page-content">
+                <div class="section-card">
+                    <div style="position: relative; margin-bottom: 20px;">
+                        <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                        <input type="text" id="voterSearch" class="form-control" style="padding-left: 40px;" placeholder="Search voters by full name, ID, or registered email...">
+                    </div>
+
+                    <div class="overview-list" id="votersContainer" style="box-shadow: none; border: none; padding: 0; margin: 0;">
+                        <!-- Injected by voters.js -->
+                    </div>
+                </div>
+            </main>
         </div>
-        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
-    </header>
-
-    <main class="container">
-        <nav class="tab-nav">
-            <a href="../../admin/dashboard/dashboard.html" class="tab"><i class="fas fa-chart-line"></i> Overview</a>
-            <a href="../../admin/voters/voters.html" class="tab active"><i class="fas fa-users"></i> Voters (0)</a>
-            <a href="../../admin/parties/parties.html" class="tab"><i class="fas fa-building"></i> Parties (0)</a>
-            <a href="../../admin/results/results.html" class="tab"><i class="fas fa-poll"></i> Results</a>
-            <a href="../../admin/register-voter/register-voter.html" class="tab"><i class="fas fa-user-plus"></i> Register Voter</a>
-            <a href="../../admin/register-party/register-party.html" class="tab"><i class="fas fa-plus"></i> Register Party</a>
-        </nav>
-
-        <div class="search-container">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" id="voterSearch" placeholder="Search registered voters by full name or ID..." class="search-box">
-        </div>
-
-        <section class="overview-list">
-            <h3>Registered Citizen Directory</h3>
-            <!-- Voters injected dynamically by voters.js with safe DOM nodes -->
-        </section>
-    </main>
+    </div>
 
     <script src="../../shared/spinner.js"></script>
     <script src="../../shared/toast.js"></script>

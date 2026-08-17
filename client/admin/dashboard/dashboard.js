@@ -1,5 +1,14 @@
 let allAuditLogs = [];
 
+// ================== SIDEBAR MOBILE TOGGLE ==================
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const appSidebar = document.getElementById('appSidebar');
+if (mobileMenuBtn && appSidebar) {
+    mobileMenuBtn.addEventListener('click', () => {
+        appSidebar.classList.toggle('open');
+    });
+}
+
 // ================== ELECTION COUNTDOWN CLOCK ==================
 function startElectionClock() {
     let remainingSeconds = 12 * 3600 + 45 * 60; // 12h 45m simulation
@@ -49,7 +58,7 @@ function renderAuditLogs(logs) {
     tbody.innerHTML = '';
 
     if (!Array.isArray(logs) || logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No audit events recorded yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No security events found.</td></tr>';
         return;
     }
 
@@ -59,10 +68,11 @@ function renderAuditLogs(logs) {
         const timeTd = document.createElement('td');
         timeTd.textContent = log.time ? new Date(log.time).toLocaleTimeString() : 'N/A';
         timeTd.style.whiteSpace = 'nowrap';
+        timeTd.style.fontWeight = '500';
 
         const catTd = document.createElement('td');
         const catBadge = document.createElement('span');
-        catBadge.className = 'list-count ' + (log.category === 'SECURITY_EVENT' ? 'orange-text' : 'blue-text');
+        catBadge.className = 'status-badge ' + (log.category === 'SECURITY_EVENT' ? 'pending' : 'live');
         catBadge.textContent = log.category || 'AUDIT_EVENT';
         catTd.appendChild(catBadge);
 
@@ -76,8 +86,8 @@ function renderAuditLogs(logs) {
 
         const hashTd = document.createElement('td');
         const hashBadge = document.createElement('span');
-        hashBadge.className = 'chain-badge';
-        const hashStr = log.currentHash ? log.currentHash.substring(0, 16) + '...' : 'Genesis';
+        hashBadge.style.cssText = 'font-family: monospace; font-size: 0.78rem; background: var(--surface-secondary); padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border);';
+        const hashStr = log.currentHash ? log.currentHash.substring(0, 16) + '...' : 'Genesis Block';
         hashBadge.textContent = hashStr;
         hashBadge.title = log.currentHash || 'Genesis Block';
         hashTd.appendChild(hashBadge);
@@ -100,7 +110,7 @@ async function verifyAuditChain() {
     if (!banner || !btn) return;
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying SHA-256 Chain...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
 
     try {
         const res = await fetch('/api/admin/audit-verify', {
@@ -112,21 +122,21 @@ async function verifyAuditChain() {
         if (data.valid) {
             banner.style.backgroundColor = 'var(--success-light)';
             banner.style.color = 'var(--success-text)';
-            banner.style.border = '1px solid #86EFAC';
-            banner.innerHTML = `<i class="fas fa-check-circle"></i> <strong>Cryptographic Chain Intact:</strong> Validated all ${data.totalRecords || 0} audit records. Zero tampering or sequence breaks detected.`;
+            banner.style.border = '1px solid var(--success-border)';
+            banner.innerHTML = `<i class="fas fa-check-circle"></i> <strong>✓ Audit Chain Verified:</strong> Validated all ${data.totalRecords || 0} audit records sequentially with 0 broken links.`;
             showToast('Audit hash chain verified: 100% intact!', 'success');
         } else {
             banner.style.backgroundColor = 'var(--danger-light)';
             banner.style.color = 'var(--danger-text)';
-            banner.style.border = '1px solid #FCA5A5';
-            banner.innerHTML = `<i class="fas fa-exclamation-circle"></i> <strong>Integrity Alert:</strong> Chain break detected at record #${data.brokenAt}. Possible retroactive modification.`;
+            banner.style.border = '1px solid var(--danger-border)';
+            banner.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>⚠ Audit Chain Integrity Failure:</strong> Break detected at record #${data.brokenAt}.`;
             showToast('Audit integrity warning!', 'error');
         }
     } catch (err) {
         showToast('Chain verification network error: ' + err.message, 'error');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-shield-alt"></i> Verify Hash Chain';
+        btn.innerHTML = '<i class="fas fa-link"></i> Verify Hash Chain';
     }
 }
 
@@ -134,6 +144,10 @@ async function verifyAuditChain() {
 async function loadDashboardStats() {
     const token = localStorage.getItem('token');
     if (!token) return window.location.href = '../../login/login.html';
+
+    const userName = localStorage.getItem('userName') || 'Electoral Admin';
+    const adminUserEl = document.getElementById('adminUserName');
+    if (adminUserEl) adminUserEl.textContent = userName;
 
     try {
         const res = await fetch('/api/admin/stats', {
@@ -143,39 +157,39 @@ async function loadDashboardStats() {
 
         const data = await res.json();
 
-        // 1. Update Stat Cards
-        const statCards = document.querySelectorAll('.stat-card .value');
-        if (statCards.length >= 3) {
-            statCards[0].textContent = data.votersCount || 0;
-            statCards[1].textContent = data.votesCount || 0;
-            statCards[2].textContent = data.partiesCount || 0;
-        }
-
-        // 2. Update Turnout Progress Bar
+        // 1. Update KPI Values
         const votersCount = data.votersCount || 0;
         const votesCount = data.votesCount || 0;
-        const turnoutPct = votersCount > 0 ? ((votesCount / votersCount) * 100).toFixed(1) : 0;
+        const partiesCount = data.partiesCount || 0;
 
+        const vEl = document.getElementById('votersCountVal');
+        const voEl = document.getElementById('votesCountVal');
+        const pEl = document.getElementById('partiesCountVal');
+
+        if (vEl) vEl.textContent = votersCount.toLocaleString();
+        if (voEl) voEl.textContent = votesCount.toLocaleString();
+        if (pEl) pEl.textContent = partiesCount.toLocaleString();
+
+        // Also update standard .stat-card .value if present
+        const statCards = document.querySelectorAll('.stat-card .value');
+        if (statCards.length >= 3) {
+            statCards[0].textContent = votersCount;
+            statCards[1].textContent = votesCount;
+            statCards[2].textContent = partiesCount;
+        }
+
+        // 2. Turnout Calculations
+        const turnoutPct = votersCount > 0 ? ((votesCount / votersCount) * 100).toFixed(1) : "0.0";
+
+        const turnoutRateValue = document.getElementById('turnoutRateValue');
+        const turnoutRatioText = document.getElementById('turnoutRatioText');
         const turnoutText = document.getElementById('turnoutPercentage');
         const turnoutBar = document.getElementById('turnoutProgressBar');
 
+        if (turnoutRateValue) turnoutRateValue.textContent = `${turnoutPct}%`;
+        if (turnoutRatioText) turnoutRatioText.textContent = `${votesCount} / ${votersCount} participated`;
         if (turnoutText) turnoutText.textContent = `${turnoutPct}% Turnout (${votesCount} / ${votersCount})`;
-        if (turnoutBar) turnoutBar.style.width = `${Math.min(turnoutPct, 100)}%`;
-
-        // 3. Update Overview List Counts
-        const listCounts = document.querySelectorAll('.overview-list .list-count');
-        if (listCounts.length >= 3) {
-            listCounts[0].textContent = votersCount;
-            listCounts[1].textContent = votesCount;
-            listCounts[2].textContent = Math.max(0, votersCount - votesCount);
-        }
-
-        // 4. Update Nav Tab Counts
-        const voterTab = document.querySelector('a[href*="/voters/"]');
-        if (voterTab) voterTab.innerHTML = `<i class="fas fa-users"></i> Voters (${votersCount})`;
-
-        const partyTab = document.querySelector('a[href*="/parties/"]');
-        if (partyTab) partyTab.innerHTML = `<i class="fas fa-building"></i> Parties (${data.partiesCount || 0})`;
+        if (turnoutBar) turnoutBar.style.width = `${Math.min(parseFloat(turnoutPct), 100)}%`;
 
     } catch (err) {
         console.error('Stats error:', err);

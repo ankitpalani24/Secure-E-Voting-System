@@ -1,3 +1,12 @@
+// Mobile Sidebar Toggle
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const appSidebar = document.getElementById('appSidebar');
+if (mobileMenuBtn && appSidebar) {
+    mobileMenuBtn.addEventListener('click', () => {
+        appSidebar.classList.toggle('open');
+    });
+}
+
 let partyDoughnutInstance = null;
 let partyBarInstance = null;
 
@@ -7,7 +16,7 @@ function renderPartyCharts(parties, voteCounts) {
     if (!doughnutCtx || !barCtx || !window.Chart) return;
 
     const palette = [
-        '#2563EB', '#16A34A', '#D97706', '#7E22CE', '#0284C7',
+        '#1D4ED8', '#16A34A', '#D97706', '#7E22CE', '#0284C7',
         '#DC2626', '#EA580C', '#4F46E5', '#0D9488', '#E11D48'
     ];
 
@@ -78,50 +87,30 @@ function renderPartyCharts(parties, voteCounts) {
 // Load election results for party
 async function loadPartyResults() {
     const token = localStorage.getItem('token');
+    if (!token) return window.location.href = '../login/login.html';
     
     try {
-        const userName = localStorage.getItem('userName') || 'Party Representative';
-        const headerP = document.querySelector('.header-left p');
-        if (headerP) headerP.textContent = `Welcome, ${userName}`;
-
         const res = await fetch('/api/results', {
             headers: { Authorization: `Bearer ${token}` }
         });
         const results = await res.json();
 
-        // Update Nav Tab for Parties Count
-        try {
-            const partiesRes = await fetch('/api/party', { headers: { Authorization: `Bearer ${token}` } });
-            if (partiesRes.ok) {
-                const partiesData = await partiesRes.json();
-                const partyTab = document.querySelector('a[href*="/p-parties.html"]');
-                if (partyTab) partyTab.innerHTML = `<i class="fas fa-building"></i> Registered Parties (${partiesData.length || 0})`;
-            }
-        } catch (e) {
-            console.error('Party tab count error:', e);
-        }
-
         const partyList = document.querySelector('.party-list');
+        if (!partyList) return;
         partyList.innerHTML = '';
-        const heading = document.createElement('h3');
-        heading.textContent = 'Certified Election Tally :';
-        partyList.appendChild(heading);
 
         if (!Array.isArray(results) || results.length === 0) {
-            const noResults = document.createElement('p');
-            noResults.textContent = 'No election results recorded yet.';
-            partyList.appendChild(noResults);
+            partyList.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">No certified election results recorded in the ballot box yet.</p>';
             const chartsSec = document.getElementById('chartsSection');
             if (chartsSec) chartsSec.style.display = 'none';
             return;
         }
 
-        // Sort results by total votes descending
         const sortedResults = results.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
         const totalVotesCount = sortedResults.reduce((sum, p) => sum + (p.totalVotes || 0), 0);
 
         const totalBadge = document.getElementById('partyTotalBadge');
-        if (totalBadge) totalBadge.textContent = `${totalVotesCount} Ballots Cast`;
+        if (totalBadge) totalBadge.textContent = `${totalVotesCount.toLocaleString()} Ballots Cast`;
 
         const chartsSec = document.getElementById('chartsSection');
         if (chartsSec) chartsSec.style.display = 'grid';
@@ -139,6 +128,7 @@ async function loadPartyResults() {
 
             const card = document.createElement('div');
             card.className = 'stat-card';
+            card.style.marginBottom = '12px';
 
             const textDiv = document.createElement('div');
             const labelSpan = document.createElement('span');
@@ -152,7 +142,7 @@ async function loadPartyResults() {
 
             const valueH2 = document.createElement('h2');
             valueH2.className = 'value';
-            valueH2.textContent = `${party.totalVotes || 0} Votes (${percentage}%)`;
+            valueH2.textContent = `${(party.totalVotes || 0).toLocaleString()} Votes (${percentage}%)`;
 
             textDiv.appendChild(labelSpan);
             textDiv.appendChild(valueH2);

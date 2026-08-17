@@ -1,3 +1,12 @@
+// Mobile Sidebar Toggle
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const appSidebar = document.getElementById('appSidebar');
+if (mobileMenuBtn && appSidebar) {
+    mobileMenuBtn.addEventListener('click', () => {
+        appSidebar.classList.toggle('open');
+    });
+}
+
 // Stepper Progress Manager
 function updateStepper(activeStep) {
     for (let i = 1; i <= 4; i++) {
@@ -18,46 +27,29 @@ function updateStepper(activeStep) {
     }
 }
 
-// Load parties for voter voting - Protected endpoint with safe DOM rendering
+// Load parties for voter voting
 async function loadVoterParties() {
     const token = localStorage.getItem('token');
-    if (!token) return window.location.href = '../../login/login.html';
+    if (!token) return window.location.href = '../login/login.html';
 
     try {
-        const userName = localStorage.getItem('userName') || 'Voter';
-        const headerP = document.querySelector('.header-left p');
-        if (headerP) headerP.textContent = `Welcome, ${userName}`;
-
         const profileRes = await fetch('/api/voter/profile', {
             headers: { Authorization: `Bearer ${token}` }
         });
+
         if (profileRes.ok) {
             const profile = await profileRes.json();
-            const voteStatus = document.querySelector('.vstat-card');
-            if (voteStatus) {
-                const valEl = voteStatus.querySelector('.value');
-                if (valEl) valEl.textContent = profile.hasVoted ? 'VOTED' : 'PENDING';
-
-                const lblEl = voteStatus.querySelector('.label');
-                if (lblEl) lblEl.textContent = profile.hasVoted ? 'Vote Submitted' : 'Ready to Vote';
-
-                const icon = voteStatus.querySelector('.icon-box i');
-                if (icon) icon.className = profile.hasVoted ? 'fas fa-check-circle' : 'fas fa-clock';
-
-                const iconBox = voteStatus.querySelector('.icon-box');
-                if (iconBox) iconBox.className = profile.hasVoted ? 'icon-box green' : 'icon-box orange';
-            }
 
             if (profile.hasVoted) {
                 updateStepper(4);
-                const partyList = document.querySelector('.party-list');
-                if (partyList) {
-                    partyList.innerHTML = `
-                        <div class="card" style="text-align: center; border-color: var(--success); background-color: var(--success-light);">
-                            <div style="font-size: 2.5rem; margin-bottom: var(--space-2);">🗳️✅</div>
-                            <h2 style="color: var(--success-text);">Ballot Successfully Recorded</h2>
-                            <p style="color: #166534; margin: var(--space-2) 0 var(--space-4) 0;">Your vote has been cryptographically committed and decoupled from your identity to ensure complete secrecy.</p>
-                            <a href="v-result.html" class="btn-primary" style="display: inline-flex; margin: 0 auto;"><i class="fas fa-poll"></i> View Live Results</a>
+                const ballotCard = document.getElementById('ballotSelectionCard');
+                if (ballotCard) {
+                    ballotCard.innerHTML = `
+                        <div style="text-align: center; padding: 36px 20px;">
+                            <div style="font-size: 3rem; margin-bottom: 12px;">🗳️✅</div>
+                            <h2 style="color: var(--success-text); font-size: 1.5rem; margin-bottom: 8px;">Ballot Successfully Recorded</h2>
+                            <p style="color: var(--text-secondary); max-width: 480px; margin: 0 auto 24px auto;">Your vote has been cryptographically committed to the decentralized ballot box. Double voting is strictly prevented.</p>
+                            <a href="v-result.html" class="btn-primary"><i class="fas fa-poll"></i> View Certified Results</a>
                         </div>
                     `;
                 }
@@ -67,64 +59,41 @@ async function loadVoterParties() {
 
         updateStepper(1);
 
-        // Fetch available parties
-        const res = await fetch('/api/party', { 
+        const res = await fetch('/api/party', {
             headers: { Authorization: `Bearer ${token}` }
         });
-        const data = await res.json();
+        const parties = await res.json();
 
-        const partyList = document.querySelector('.party-list');
-        partyList.innerHTML = '';
-        const heading = document.createElement('h3');
-        heading.textContent = 'Select a Political Party to Review & Cast Your Ballot:';
-        partyList.appendChild(heading);
+        const container = document.getElementById('partiesContainer');
+        if (!container) return;
+        container.innerHTML = '';
 
-        if (!Array.isArray(data) || data.length === 0) {
-            const noParties = document.createElement('p');
-            noParties.textContent = 'No registered political parties available at this time.';
-            partyList.appendChild(noParties);
+        if (!Array.isArray(parties) || parties.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">No accredited parties available for this election.</p>';
             return;
         }
 
-        data.forEach((party) => {
+        parties.forEach(party => {
             const card = document.createElement('div');
-            card.className = 'stat-card';
-            card.style.cursor = 'pointer';
-            card.onclick = () => showVoteConfirmationModal(party._id, party.partyName, party.symbol);
+            card.className = 'candidate-card';
+            card.onclick = () => showVoteConfirmationModal(party._id, party.partyName, party.symbol, party.description);
 
-            const contentDiv = document.createElement('div');
-            const labelSpan = document.createElement('span');
-            labelSpan.className = 'label';
-            labelSpan.textContent = party.partyName || '';
+            card.innerHTML = `
+                <div class="candidate-symbol">${party.symbol || '🗳️'}</div>
+                <h3 class="candidate-name">${party.partyName}</h3>
+                <p class="candidate-desc">${party.description || 'Accredited electoral candidate party'}</p>
+                <div class="select-indicator"><i class="fas fa-vote-yea"></i> Select Candidate</div>
+            `;
 
-            const valueH2 = document.createElement('h2');
-            valueH2.className = 'value';
-            valueH2.textContent = party.symbol || '';
-
-            contentDiv.appendChild(labelSpan);
-            contentDiv.appendChild(valueH2);
-
-            const iconBox = document.createElement('div');
-            iconBox.className = 'icon-box green';
-            const icon = document.createElement('i');
-            icon.className = 'fas fa-vote-yea';
-            iconBox.appendChild(icon);
-
-            card.appendChild(contentDiv);
-            card.appendChild(iconBox);
-            partyList.appendChild(card);
+            container.appendChild(card);
         });
     } catch (err) {
-        const partyList = document.querySelector('.party-list');
-        if (partyList) {
-            partyList.innerHTML = '<h3>No parties available or network error</h3>';
-        }
         console.error('Parties load error:', err);
     }
 }
 
-// Review and Confirmation Modal
-function showVoteConfirmationModal(partyId, partyName, partySymbol) {
+// Step 2: Review and Confirmation Modal
+function showVoteConfirmationModal(partyId, partyName, partySymbol, partyDesc) {
     updateStepper(2);
 
     const modal = document.createElement('div');
@@ -132,25 +101,27 @@ function showVoteConfirmationModal(partyId, partyName, partySymbol) {
     modal.id = 'voteReviewModal';
     modal.innerHTML = `
         <div class="review-modal-card">
-            <h2 style="margin-bottom: var(--space-2); color: var(--text-primary);">Review Your Ballot Selection</h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">Please verify your chosen candidate before proceeding to biometric authorization.</p>
+            <h2 style="font-size: 1.45rem; margin-bottom: 6px; color: var(--text-primary);">Review Your Ballot Selection</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Please verify your chosen candidate before initiating facial identity verification.</p>
             
-            <div class="review-party-box">
-                <div class="review-party-symbol">${partySymbol || '🗳️'}</div>
-                <div class="review-party-details">
-                    <span style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Selected Party</span>
-                    <h3 style="color: var(--text-primary); font-size: 1.25rem;">${partyName}</h3>
+            <div class="review-choice-box">
+                <div class="review-choice-symbol">${partySymbol || '🗳️'}</div>
+                <div class="review-choice-details">
+                    <span style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Selected Candidate</span>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; margin-top: 2px;">${partyName}</h3>
                 </div>
             </div>
 
             <div class="warning-callout">
-                <i class="fas fa-exclamation-triangle" style="font-size: 1.1rem; flex-shrink: 0;"></i>
-                <span>Notice: Your ballot choice is permanent and cannot be modified or re-cast after submission.</span>
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.2rem; flex-shrink: 0;"></i>
+                <span><strong>Permanent Action:</strong> Once confirmed and sealed, your ballot choice is immutable and cannot be changed or re-cast.</span>
             </div>
 
-            <div class="actions" style="justify-content: center; gap: var(--space-4);">
-                <button type="button" class="btn-secondary" id="cancelVoteBtn">Change Selection</button>
-                <button type="button" class="btn-primary" id="confirmVoteBtn"><i class="fas fa-camera"></i> Confirm & Face Verify</button>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" class="btn-secondary" id="cancelVoteBtn">← Change Choice</button>
+                <button type="button" class="btn-primary" id="confirmVoteBtn">
+                    <i class="fas fa-camera"></i> Confirm & Face Verify &rarr;
+                </button>
             </div>
         </div>
     `;
@@ -169,9 +140,9 @@ function showVoteConfirmationModal(partyId, partyName, partySymbol) {
     };
 }
 
-// Face verification issuing server-validated biometric token
+// Step 3: Face Verification Process
 async function performFaceVerification() {
-    showSpinner("Loading Facial Recognition Engine...");
+    showSpinner("Loading Biometric Recognition Engine...");
     await Promise.all([
         faceapi.nets.ssdMobilenetv1.loadFromUri('../models'),
         faceapi.nets.faceLandmark68Net.loadFromUri('../models'),
@@ -182,18 +153,27 @@ async function performFaceVerification() {
     return new Promise((resolve) => {
         const popup = document.createElement('div');
         popup.id = 'verifyPopup';
+        popup.className = 'modal-backdrop';
         popup.innerHTML = `
-            <div class="face-modal">
-                <div class="face-header">
-                    <h3>Biometric Identity Verification</h3>
-                    <button id="closeVerify" class="close-btn">×</button>
+            <div class="review-modal-card" style="max-width: 440px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="font-size: 1.15rem; color: var(--text-primary);"><i class="fas fa-camera"></i> Identity Verification</h3>
+                    <button id="closeVerify" style="background:none; border:none; font-size: 1.5rem; color: var(--text-muted); cursor:pointer;">×</button>
                 </div>
-                <video id="verifyVideo" width="320" height="240" autoplay muted style="transform: scaleX(-1);"></video>
-                <div id="verifyStatus">Initializing camera stream...</div>
-                <button id="verifyBtn" disabled>Verify Identity & Authorize Ballot ✅</button>
+                
+                <div style="position: relative; width: 320px; height: 240px; margin: 0 auto 16px auto; border-radius: var(--radius-md); overflow: hidden; background-color: #000; border: 2px solid var(--border);">
+                    <video id="verifyVideo" width="320" height="240" autoplay muted style="transform: scaleX(-1); object-fit: cover;"></video>
+                </div>
+
+                <div id="verifyStatus" style="font-size: 0.85rem; font-weight: 600; min-height: 24px; margin-bottom: 16px; color: var(--warning-text);">
+                    Initializing camera stream...
+                </div>
+
+                <button id="verifyBtn" class="btn-primary" style="width: 100%; padding: 12px; background-color: var(--success);" disabled>
+                    <i class="fas fa-check-circle"></i> Verify Identity & Cast Ballot
+                </button>
             </div>
         `;
-        popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;display:flex;align-items:center;justify-content:center;';
         document.body.appendChild(popup);
 
         const videoEl = document.getElementById('verifyVideo');
@@ -212,10 +192,11 @@ async function performFaceVerification() {
             videoEl.onloadedmetadata = detectVerifyFace;
         }).catch((err) => {
             console.error("Camera access error:", err);
-            statusEl.textContent = "Camera permission denied or not available.";
+            statusEl.textContent = "Camera permission denied or camera device unavailable.";
+            statusEl.style.color = "var(--danger-text)";
             resolve(null);
         });
-        
+
         let isVerifying = false;
         let detectInterval;
 
@@ -233,7 +214,7 @@ async function performFaceVerification() {
 
                 if (videoEl.readyState === 4) {
                     const detection = await faceapi.detectSingleFace(videoEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.8 })).withFaceLandmarks().withFaceDescriptor();
-                    
+
                     if (isVerifying) return;
 
                     if (detection) {
@@ -246,63 +227,63 @@ async function performFaceVerification() {
                             baselineX += relX;
                             baselineY += relY;
                             initialFrames++;
-                            statusEl.textContent = 'Hold still, calibrating baseline (' + initialFrames + '/5)...';
-                            statusEl.style.color = 'orange';
+                            statusEl.textContent = `Hold still, calibrating baseline (${initialFrames}/5)...`;
+                            statusEl.style.color = 'var(--warning-text)';
                             verifyBtn.disabled = true;
-                            
+
                             if (initialFrames === 5) {
                                 baselineX /= 5;
                                 baselineY /= 5;
                             }
                             return;
                         }
-                        
+
                         if (!livenessPassed) {
                             verifyBtn.disabled = true;
                             let challengeMetCurrentFrame = false;
-                            
+
                             if (currentChallenge === 'turn_left' && relX > baselineX + 0.09) challengeMetCurrentFrame = true;
                             else if (currentChallenge === 'turn_right' && relX < baselineX - 0.09) challengeMetCurrentFrame = true;
                             else if (currentChallenge === 'look_up' && relY < baselineY - 0.07) challengeMetCurrentFrame = true;
                             else if (currentChallenge === 'look_down' && relY > baselineY + 0.07) challengeMetCurrentFrame = true;
-                            
+
                             if (challengeMetCurrentFrame) {
                                 challengeHoldFrames++;
                                 if (challengeHoldFrames >= 3) {
                                     livenessPassed = true;
-                                    statusEl.textContent = 'Liveness challenge confirmed! Please look directly at the lens.';
-                                    statusEl.style.color = 'green';
+                                    statusEl.textContent = '✓ Liveness confirmed! Please look directly at the lens.';
+                                    statusEl.style.color = 'var(--success-text)';
                                 } else {
-                                    statusEl.textContent = 'Hold pose... (' + challengeHoldFrames + '/3)';
-                                    statusEl.style.color = 'blue';
+                                    statusEl.textContent = `Hold pose... (${challengeHoldFrames}/3)`;
+                                    statusEl.style.color = 'var(--primary)';
                                 }
                             } else {
                                 challengeHoldFrames = 0;
                                 const msgs = {
-                                    'turn_left': 'Liveness: Please turn your head slightly LEFT',
-                                    'turn_right': 'Liveness: Please turn your head slightly RIGHT',
-                                    'look_up': 'Liveness: Please tilt your head slightly UP',
-                                    'look_down': 'Liveness: Please tilt your head slightly DOWN'
+                                    'turn_left': 'Liveness Challenge: Please turn head slightly LEFT',
+                                    'turn_right': 'Liveness Challenge: Please turn head slightly RIGHT',
+                                    'look_up': 'Liveness Challenge: Please tilt head slightly UP',
+                                    'look_down': 'Liveness Challenge: Please tilt head slightly DOWN'
                                 };
                                 statusEl.textContent = msgs[currentChallenge];
-                                statusEl.style.color = 'orange';
+                                statusEl.style.color = 'var(--warning-text)';
                             }
                         } else {
                             if (Math.abs(relX - baselineX) < 0.07 && Math.abs(relY - baselineY) < 0.07) {
-                                statusEl.textContent = 'Identity match ready! Click button to confirm authorization.';
-                                statusEl.style.color = 'green';
+                                statusEl.textContent = '✓ Biometric identity matched! Click to authorize ballot.';
+                                statusEl.style.color = 'var(--success-text)';
                                 verifyBtn.disabled = false;
-                                
+
                                 verifyBtn.onclick = async () => {
                                     if (isVerifying) return;
                                     isVerifying = true;
                                     clearInterval(detectInterval);
-                                    
-                                    verifyBtn.textContent = 'Verifying with Security Service...';
+
+                                    verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying with Security Service...';
                                     verifyBtn.disabled = true;
 
                                     try {
-                                        showSpinner("Verifying Facial Biometric Signature...");
+                                        showSpinner("Verifying Facial Signature against Electoral Record...");
                                         const descriptor = Array.from(detection.descriptor);
                                         const authToken = localStorage.getItem('token');
                                         if (!authToken) {
@@ -310,10 +291,11 @@ async function performFaceVerification() {
                                             popup.remove();
                                             if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
                                             showToast('Session expired. Please log in again.', 'error');
-                                            setTimeout(() => window.location.href = '../../login/login.html', 1500);
+                                            setTimeout(() => window.location.href = '../login/login.html', 1500);
                                             resolve(null);
                                             return;
                                         }
+
                                         const res = await fetch('/api/voter/face-verify', {
                                             method: 'POST',
                                             headers: {
@@ -322,62 +304,58 @@ async function performFaceVerification() {
                                             },
                                             body: JSON.stringify({ descriptor })
                                         });
-                                        
+
                                         const data = await res.json();
                                         hideSpinner();
-                                        
+
                                         popup.remove();
                                         if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
-                                        
+
                                         if (!res.ok) {
-                                            showToast(data.message || 'Face verification failed', 'error');
+                                            showToast(data.message || 'Face verification mismatch', 'error');
                                             resolve(null);
                                         } else {
                                             showToast('Biometric identity confirmed!', 'success');
-                                            resolve(data.biometricToken || 'verified');
+                                            resolve(data.biometricToken);
                                         }
                                     } catch (err) {
-                                        console.error('Verification error:', err);
                                         hideSpinner();
                                         popup.remove();
                                         if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
-                                        showToast('Network error during biometric verification', 'error');
+                                        showToast('Network error during biometric verification: ' + err.message, 'error');
                                         resolve(null);
                                     }
                                 };
                             } else {
                                 statusEl.textContent = 'Please align face center to camera';
-                                statusEl.style.color = 'orange';
+                                statusEl.style.color = 'var(--warning-text)';
                                 verifyBtn.disabled = true;
-                                verifyBtn.onclick = null;
                             }
                         }
                     } else {
-                        statusEl.textContent = 'No face detected — position yourself in front of camera';
-                        statusEl.style.color = 'orange';
+                        statusEl.textContent = 'Position face inside the camera frame';
+                        statusEl.style.color = 'var(--warning-text)';
                         verifyBtn.disabled = true;
-                        verifyBtn.onclick = null;
                         challengeHoldFrames = 0;
                     }
                 }
-            }, 200);
+            }, 250);
         }
     });
 }
 
-// Proceed to submit vote after biometric verification
+// Step 4: Submit Ballot with Mandatory Biometric Token
 async function proceedWithBiometricsAndVote(partyId, partyName) {
     const token = localStorage.getItem('token');
 
-    // 1. Execute Biometric Verification
     const biometricToken = await performFaceVerification();
     if (!biometricToken) {
-        showToast('Biometric verification cancelled or unsuccessful.', 'error');
+        showToast('Biometric verification was cancelled or failed.', 'error');
         updateStepper(1);
         return;
     }
 
-    showSpinner("Sealing & Committing Anonymous Ballot...");
+    showSpinner("Cryptographically Sealing & Committing Ballot...");
     try {
         const res = await fetch('/api/voter/vote', {
             method: 'POST',
@@ -387,20 +365,18 @@ async function proceedWithBiometricsAndVote(partyId, partyName) {
             },
             body: JSON.stringify({
                 partyId,
-                biometricToken: typeof biometricToken === 'string' ? biometricToken : undefined
+                biometricToken
             })
         });
 
         const data = await res.json();
         hideSpinner();
-        
+
         if (res.ok) {
             updateStepper(4);
-            showToast('Ballot cast successfully and anonymized!', 'success');
-            
-            // Render Cryptographic Receipt
+            showToast('✓ Ballot committed and decoupled successfully!', 'success');
             displayReceiptCard(data.receipt || {
-                ballotCommitment: 'SHA256:' + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2),
+                ballotCommitment: 'SHA256:' + Math.random().toString(36).substring(2),
                 timestamp: new Date().toISOString()
             });
         } else {
@@ -414,36 +390,37 @@ async function proceedWithBiometricsAndVote(partyId, partyName) {
     }
 }
 
-// Display Cryptographic Receipt Card
+// Display Official Receipt Card
 function displayReceiptCard(receipt) {
-    const partyList = document.querySelector('.party-list');
-    if (partyList) partyList.style.display = 'none';
+    const ballotCard = document.getElementById('ballotSelectionCard');
+    if (ballotCard) ballotCard.style.display = 'none';
 
     const container = document.getElementById('receiptContainer');
     if (!container) return;
 
     container.className = '';
-    const timestamp = receipt.timestamp ? new Date(receipt.timestamp).toLocaleString() : new Date().toLocaleString();
     const hash = receipt.ballotCommitment || 'E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855';
 
     container.innerHTML = `
         <div class="receipt-card">
-            <div class="receipt-header-badge"><i class="fas fa-check-circle"></i> Official Voter Receipt</div>
-            <h2 style="color: var(--text-primary); margin-bottom: var(--space-2);">Vote Cryptographically Sealed</h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">Your ballot has been committed anonymously to the decentralized tally box.</p>
+            <div class="receipt-header-badge">
+                <i class="fas fa-check-circle"></i> Official Cryptographic Ballot Receipt
+            </div>
+            <h2 style="color: var(--text-primary); font-size: 1.6rem; margin-bottom: 8px;">Ballot Successfully Recorded</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; max-width: 480px; margin: 0 auto 20px auto;">Your ballot has been committed anonymously to the decentralized tally box. Your individual voter ID is zero-linked from this receipt.</p>
 
             <div class="receipt-hash-container">
                 <span id="receiptHashText">${hash}</span>
-                <button class="copy-hash-btn" id="copyHashBtn"><i class="fas fa-copy"></i> Copy</button>
+                <button class="copy-hash-btn" id="copyHashBtn"><i class="fas fa-copy"></i> Copy Hash</button>
             </div>
 
-            <div class="qr-code-placeholder">
-                <i class="fas fa-qrcode" style="font-size: 3.5rem; color: #0F172A;"></i>
+            <div class="receipt-qr-wrapper">
+                <i class="fas fa-qrcode" style="font-size: 4rem; color: #0F172A;"></i>
             </div>
 
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: var(--space-6);">Recorded at: <strong>${timestamp}</strong> | Algorithm: SHA-256 Chained Commitment</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 24px;">Verification Standard: <strong>SHA-256 Chained Commitment</strong></p>
 
-            <div style="display: flex; gap: var(--space-3); justify-content: center;">
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                 <button class="btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> Print Receipt</button>
                 <a href="v-result.html" class="btn-primary"><i class="fas fa-chart-pie"></i> View Live Results</a>
             </div>
@@ -452,7 +429,7 @@ function displayReceiptCard(receipt) {
 
     document.getElementById('copyHashBtn').onclick = () => {
         navigator.clipboard.writeText(hash);
-        showToast('Receipt commitment hash copied to clipboard!', 'info');
+        showToast('Receipt hash copied to clipboard!', 'info');
     };
 }
 

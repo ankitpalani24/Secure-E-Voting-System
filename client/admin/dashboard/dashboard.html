@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Secure E-Voting Platform</title>
+    <title>Election Control Center - SecureVote Admin</title>
     <link rel="stylesheet" href="../../styles/main.css">
     <link rel="stylesheet" href="dashboard.css">
     <link rel="stylesheet" href="../../shared/toast.css">
@@ -14,146 +14,215 @@
 
 <body>
 
-    <header class="top-header">
-        <div class="header-left">
-            <h1>Admin Dashboard</h1>
-            <p>Electoral Operations & Cryptographic Security Control Center</p>
-        </div>
-        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
-    </header>
+    <div class="app-shell">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="brand-logo">
+                    <div class="brand-icon"><i class="fas fa-vote-yea"></i></div>
+                    <span>SecureVote</span>
+                </a>
+            </div>
 
-    <main class="container">
-        <!-- Live Election Status & Countdown Banner -->
-        <div class="election-banner">
-            <div>
-                <h2>🏛️ National General Election 2026</h2>
-                <p><i class="fas fa-circle" style="color: #4ADE80; font-size: 0.65rem;"></i> Phase: <strong>VOTING (ACTIVE)</strong> | Multi-District Ballot Box</p>
-            </div>
-            <div class="countdown-box">
-                <div class="countdown-pill">
-                    <span id="timerHours">12</span>
-                    <small>Hours</small>
-                </div>
-                <div class="countdown-pill">
-                    <span id="timerMins">45</span>
-                    <small>Mins</small>
-                </div>
-                <div class="countdown-pill">
-                    <span id="timerSecs">00</span>
-                    <small>Secs</small>
-                </div>
-            </div>
-        </div>
+            <nav class="sidebar-nav">
+                <span class="nav-section-title">Operations</span>
+                <a href="dashboard.html" class="nav-link active">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </a>
+                <a href="../voters/voters.html" class="nav-link">
+                    <i class="fas fa-users"></i> <span>Voters Roll</span>
+                </a>
+                <a href="../parties/parties.html" class="nav-link">
+                    <i class="fas fa-landmark"></i> <span>Parties Catalog</span>
+                </a>
+                <a href="../results/results.html" class="nav-link">
+                    <i class="fas fa-poll"></i> <span>Live Results</span>
+                </a>
 
-        <nav class="tab-nav">
-            <a href="../../admin/dashboard/dashboard.html" id="dashboardactive" class="tab active"><i class="fas fa-chart-line"></i> Overview</a>
-            <a href="../../admin/voters/voters.html" class="tab"><i class="fas fa-users"></i> Voters (0)</a>
-            <a href="../../admin/parties/parties.html" class="tab"><i class="fas fa-building"></i> Parties (0)</a>
-            <a href="../../admin/results/results.html" class="tab"><i class="fas fa-poll"></i> Results</a>
-            <a href="../../admin/register-voter/register-voter.html" class="tab"><i class="fas fa-user-plus"></i> Register Voter</a>
-            <a href="../../admin/register-party/register-party.html" class="tab"><i class="fas fa-plus"></i> Register Party</a>
-        </nav>
+                <span class="nav-section-title">Registration</span>
+                <a href="../register-voter/register-voter.html" class="nav-link">
+                    <i class="fas fa-user-plus"></i> <span>Register Voter</span>
+                </a>
+                <a href="../register-party/register-party.html" class="nav-link">
+                    <i class="fas fa-plus-circle"></i> <span>Register Party</span>
+                </a>
+            </nav>
 
-        <section class="stats-grid">
-            <div class="stat-card">
-                <div>
-                    <span class="label">Total Registered Voters</span>
-                    <h2 class="value">0</h2>
+            <div class="sidebar-footer">
+                <div class="user-profile-badge">
+                    <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
+                    <div class="user-info-text">
+                        <strong id="adminUserName">Electoral Admin</strong>
+                        <span>Administrator</span>
+                    </div>
                 </div>
-                <div class="icon-box blue"><i class="fas fa-users"></i></div>
+                <a href="../../login/login.html" class="logout-nav-btn" id="sidebarLogoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
             </div>
-            <div class="stat-card">
-                <div>
-                    <span class="label">Total Votes Cast</span>
-                    <h2 class="value">0</h2>
-                </div>
-                <div class="icon-box green"><i class="fas fa-vote-yea"></i></div>
-            </div>
-            <div class="stat-card">
-                <div>
-                    <span class="label">Accredited Parties</span>
-                    <h2 class="value">0</h2>
-                </div>
-                <div class="icon-box purple"><i class="fas fa-landmark"></i></div>
-            </div>
-        </section>
+        </aside>
 
-        <!-- Turnout Progress Gauge -->
-        <div class="card" style="margin-bottom: var(--space-6); max-width: 100%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
-                <strong style="color: var(--text-primary); font-size: 0.95rem;"><i class="fas fa-chart-pie" style="color: var(--primary);"></i> Voter Turnout Gauge</strong>
-                <span id="turnoutPercentage" class="list-count blue-text" style="font-size: 0.9rem;">0.0% Participated</span>
-            </div>
-            <div style="width: 100%; height: 12px; background-color: var(--surface-secondary); border-radius: var(--radius-full); overflow: hidden; border: 1px solid var(--border);">
-                <div id="turnoutProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #2563EB, #16A34A); transition: width 0.5s ease;"></div>
-            </div>
-        </div>
-
-        <section class="overview-list">
-            <h3>System Status & Metrics</h3>
-            <div class="list-item">
-                <div class="list-info">
-                    <strong>Registered Voters</strong>
-                    <p>Total eligible citizens registered with biometric embeddings</p>
-                </div>
-                <span class="list-count blue-text">0</span>
-            </div>
-            <div class="list-item">
-                <div class="list-info">
-                    <strong>Ballots Recorded</strong>
-                    <p>Total anonymous votes securely committed to the decentralized ballot box</p>
-                </div>
-                <span class="list-count green-text">0</span>
-            </div>
-            <div class="list-item">
-                <div class="list-info">
-                    <strong>Pending Participation</strong>
-                    <p>Eligible citizens who have not yet cast their ballot</p>
-                </div>
-                <span class="list-count orange-text">0</span>
-            </div>
-        </section>
-
-        <!-- Audit Log Explorer & SHA-256 Chain Verifier -->
-        <section class="audit-explorer">
-            <div class="audit-toolbar">
-                <div>
-                    <h3 style="border: none; margin: 0; padding: 0;">🛡️ Cryptographic Audit Log Explorer</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Immutable SHA-256 linear hash-chained election ledger</p>
-                </div>
-                <div style="display: flex; gap: var(--space-3); align-items: center;">
-                    <select id="auditCategoryFilter" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
-                        <option value="ALL">All Categories</option>
-                        <option value="AUDIT_EVENT">Audit Events</option>
-                        <option value="SECURITY_EVENT">Security Events</option>
-                        <option value="SYSTEM_EVENT">System Events</option>
-                    </select>
-                    <button id="verifyChainBtn" class="btn-verify-chain">
-                        <i class="fas fa-shield-alt"></i> Verify Hash Chain
+        <!-- Main Workspace -->
+        <div class="app-main">
+            <!-- Topbar Header -->
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
+                        <i class="fas fa-bars"></i>
                     </button>
+                    <div class="page-title-group">
+                        <h1>Election Operations Center</h1>
+                        <p>Real-Time Surveillance, Identity Metrics & Audit Integrity</p>
+                    </div>
                 </div>
-            </div>
 
-            <div id="chainVerificationBanner" class="hidden" style="margin-bottom: var(--space-4); padding: 12px 16px; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 500;"></div>
+                <div class="topbar-right">
+                    <div class="status-badge live" id="electionPhaseBadge">
+                        Voting Phase: ACTIVE
+                    </div>
+                    <a href="../../login/login.html" class="logout-nav-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+            </header>
 
-            <div class="audit-table-wrapper">
-                <table class="audit-table">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Category</th>
-                            <th>Action</th>
-                            <th>Role</th>
-                            <th>Cryptographic Hash</th>
-                        </tr>
-                    </thead>
-                    <tbody id="auditTableBody">
-                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading audit logs...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
+            <!-- Page Content -->
+            <main class="page-content">
+                <!-- Election Countdown Hero Card -->
+                <div class="election-hero-card">
+                    <div class="election-hero-title">
+                        <h2>🏛️ National General Election 2026</h2>
+                        <p><i class="fas fa-shield-alt"></i> Certified Decentralized Ballot Box | Multi-District Encrypted Tally</p>
+                    </div>
+                    <div class="hero-countdown-wrapper">
+                        <div class="countdown-box">
+                            <span id="timerHours">12</span>
+                            <small>Hours</small>
+                        </div>
+                        <div class="countdown-box">
+                            <span id="timerMins">45</span>
+                            <small>Mins</small>
+                        </div>
+                        <div class="countdown-box">
+                            <span id="timerSecs">00</span>
+                            <small>Secs</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Metric Cards Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card stat-card">
+                        <div>
+                            <span class="kpi-label">Registered Voters</span>
+                            <div class="kpi-value value" id="votersCountVal">0</div>
+                            <span class="kpi-subtext">Biometric verified</span>
+                        </div>
+                        <div class="kpi-icon blue"><i class="fas fa-users"></i></div>
+                    </div>
+
+                    <div class="kpi-card stat-card">
+                        <div>
+                            <span class="kpi-label">Votes Committed</span>
+                            <div class="kpi-value value" id="votesCountVal">0</div>
+                            <span class="kpi-subtext">Decoupled ballots</span>
+                        </div>
+                        <div class="kpi-icon green"><i class="fas fa-vote-yea"></i></div>
+                    </div>
+
+                    <div class="kpi-card stat-card">
+                        <div>
+                            <span class="kpi-label">Accredited Parties</span>
+                            <div class="kpi-value value" id="partiesCountVal">0</div>
+                            <span class="kpi-subtext">Certified candidates</span>
+                        </div>
+                        <div class="kpi-icon purple"><i class="fas fa-landmark"></i></div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div>
+                            <span class="kpi-label">Turnout Rate</span>
+                            <div class="kpi-value" id="turnoutRateValue">0.0%</div>
+                            <span class="kpi-subtext" id="turnoutRatioText">0 / 0 participated</span>
+                        </div>
+                        <div class="kpi-icon amber"><i class="fas fa-chart-pie"></i></div>
+                    </div>
+                </div>
+
+                <!-- Turnout Progress Gauge Bar -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-percentage" style="color: var(--primary);"></i> Civic Participation Progress</h3>
+                        <span class="status-badge live" id="turnoutPercentage">0.0% Participated</span>
+                    </div>
+                    <div style="width: 100%; height: 14px; background-color: var(--surface-secondary); border-radius: var(--radius-full); overflow: hidden; border: 1px solid var(--border);">
+                        <div id="turnoutProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #1D4ED8, #16A34A); transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                    </div>
+                </div>
+
+                <!-- Quick Administrative Actions -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-bolt" style="color: var(--warning);"></i> Quick Management Actions</h3>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 14px;">
+                        <a href="../register-voter/register-voter.html" class="btn-primary">
+                            <i class="fas fa-user-plus"></i> Enroll New Voter
+                        </a>
+                        <a href="../register-party/register-party.html" class="btn-secondary">
+                            <i class="fas fa-plus-circle"></i> Register Political Party
+                        </a>
+                        <a href="../results/results.html" class="btn-secondary">
+                            <i class="fas fa-chart-bar"></i> View Live Results
+                        </a>
+                        <a href="../voters/voters.html" class="btn-secondary">
+                            <i class="fas fa-id-card"></i> Inspect Voter Roll
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Cryptographic Audit Log Explorer -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <div>
+                            <h3><i class="fas fa-shield-alt" style="color: var(--primary);"></i> Immutable Audit Log Explorer</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Linear SHA-256 hash-chained security event ledger</p>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <select id="auditCategoryFilter" class="form-control" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                                <option value="ALL">All Categories</option>
+                                <option value="AUDIT_EVENT">Audit Events</option>
+                                <option value="SECURITY_EVENT">Security Events</option>
+                                <option value="SYSTEM_EVENT">System Events</option>
+                            </select>
+                            <button id="verifyChainBtn" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">
+                                <i class="fas fa-link"></i> Verify Hash Chain
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="chainVerificationBanner" class="hidden" style="margin-bottom: 16px; padding: 14px 18px; border-radius: var(--radius-md); font-size: 0.9rem; font-weight: 500;"></div>
+
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Event Timestamp</th>
+                                    <th>Category</th>
+                                    <th>Action</th>
+                                    <th>Role Claim</th>
+                                    <th>Cryptographic Hash Block</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditTableBody">
+                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">Loading audit ledger records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
 
     <script src="../../shared/spinner.js"></script>
     <script src="../../shared/toast.js"></script>

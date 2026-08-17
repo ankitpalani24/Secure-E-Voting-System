@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Party - Secure E-Voting Platform</title>
+    <title>Accredit Political Party - SecureVote Admin</title>
     <link rel="stylesheet" href="../../styles/main.css">
     <link rel="stylesheet" href="register-party.css">
     <link rel="stylesheet" href="../../shared/toast.css">
@@ -14,93 +14,134 @@
 
 <body>
 
-    <header class="top-header">
-        <div class="header-left">
-            <h1>Admin Dashboard</h1>
-            <p>Party Accreditation & Candidate Slate Registration</p>
-        </div>
-        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
-    </header>
-
-    <main class="container">
-        <nav class="tab-nav">
-            <a href="../../admin/dashboard/dashboard.html" class="tab"><i class="fas fa-chart-line"></i> Overview</a>
-            <a href="../../admin/voters/voters.html" class="tab"><i class="fas fa-users"></i> Voters (0)</a>
-            <a href="../../admin/parties/parties.html" class="tab"><i class="fas fa-building"></i> Parties (0)</a>
-            <a href="../../admin/results/results.html" class="tab"><i class="fas fa-poll"></i> Results</a>
-            <a href="../../admin/register-voter/register-voter.html" class="tab"><i class="fas fa-user-plus"></i> Register Voter</a>
-            <a href="../../admin/register-party/register-party.html" class="tab active"><i class="fas fa-plus"></i> Register Party</a>
-        </nav>
-
-        <section class="stats-grid">
-            <div class="rstat-card" style="cursor: pointer;">
-                <div>
-                    <span class="label">Party Accreditation</span>
-                    <h2 class="value" style="font-size: 1.3rem;">Register New Political Party</h2>
-                </div>
-                <button class="icon-box purple" title="Open Registration Form"><i class="fas fa-plus"></i></button>
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="../dashboard/dashboard.html" class="brand-logo">
+                    <div class="brand-icon"><i class="fas fa-vote-yea"></i></div>
+                    <span>SecureVote</span>
+                </a>
             </div>
-        </section>
 
-        <div id="addparty" class="hidden">
-            <div class="card">
-                <div style="margin-bottom: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border);">
-                    <h2>Register Political Party</h2>
-                    <p>Accredit a new party and assign official electoral ballot symbols</p>
+            <nav class="sidebar-nav">
+                <span class="nav-section-title">Operations</span>
+                <a href="../dashboard/dashboard.html" class="nav-link">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </a>
+                <a href="../voters/voters.html" class="nav-link">
+                    <i class="fas fa-users"></i> <span>Voters Roll</span>
+                </a>
+                <a href="../parties/parties.html" class="nav-link">
+                    <i class="fas fa-landmark"></i> <span>Parties Catalog</span>
+                </a>
+                <a href="../results/results.html" class="nav-link">
+                    <i class="fas fa-poll"></i> <span>Live Results</span>
+                </a>
+
+                <span class="nav-section-title">Registration</span>
+                <a href="../register-voter/register-voter.html" class="nav-link">
+                    <i class="fas fa-user-plus"></i> <span>Register Voter</span>
+                </a>
+                <a href="register-party.html" class="nav-link active">
+                    <i class="fas fa-plus-circle"></i> <span>Register Party</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="../../login/login.html" class="logout-nav-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title-group">
+                        <h1>Political Party Accreditation</h1>
+                        <p>Candidate Registration, Electoral Symbol Assignment & Credentials</p>
+                    </div>
                 </div>
 
-                <form id="partyForm">
-                    <div class="field-group">
-                        <label for="partyName">Official Party Name</label>
-                        <input type="text" id="partyName" placeholder="e.g. Democratic Alliance" required>
+                <div class="topbar-right">
+                    <a href="../parties/parties.html" class="btn-secondary" style="padding: 8px 14px; font-size: 0.85rem;">
+                        <i class="fas fa-arrow-left"></i> Back to Catalog
+                    </a>
+                </div>
+            </header>
+
+            <main class="page-content">
+                <div class="section-card" style="max-width: 720px; margin: 0 auto;">
+                    <div class="section-header">
+                        <h3><i class="fas fa-landmark" style="color: var(--primary);"></i> Party & Candidate Information</h3>
                     </div>
 
-                    <div class="field-group">
-                        <label>Official Ballot Symbol</label>
-                        <div class="symbol-grid" id="symbolGrid">
-                            <button type="button" class="symbol-btn" data-symbol="🗽" title="Liberty">🗽</button>
-                            <button type="button" class="symbol-btn" data-symbol="🌱" title="Ecology">🌱</button>
-                            <button type="button" class="symbol-btn" data-symbol="🤝" title="Solidarity">🤝</button>
-                            <button type="button" class="symbol-btn" data-symbol="⭐" title="Progress">⭐</button>
-                            <button type="button" class="symbol-btn" data-symbol="🎯" title="Focus">🎯</button>
-                            <button type="button" class="symbol-btn" data-symbol="🔥" title="Energy">🔥</button>
-                            <button type="button" class="symbol-btn" data-symbol="💡" title="Innovation">💡</button>
-                            <button type="button" class="symbol-btn" data-symbol="🌟" title="Excellence">🌟</button>
-                            <button type="button" class="symbol-btn" data-symbol="🏛️" title="Constitution">🏛️</button>
-                            <button type="button" class="symbol-btn" data-symbol="🦅" title="Sovereignty">🦅</button>
+                    <form id="partyForm">
+                        <div class="form-group">
+                            <label for="partyName">Official Party Name</label>
+                            <input type="text" id="partyName" class="form-control" placeholder="e.g. Democratic Alliance Party" required>
                         </div>
-                        <input type="hidden" id="symbol" value="">
-                    </div>
 
-                    <div class="field-group">
-                        <label for="description">Short Description / Motto</label>
-                        <input type="text" id="description" placeholder="e.g. For Transparent Governance and Economic Growth">
-                    </div>
-
-                    <div class="field-group">
-                        <label for="manifesto">Party Platform / Manifesto Summary</label>
-                        <textarea id="manifesto" placeholder="Core legislative priorities and constitutional commitments"></textarea>
-                    </div>
-
-                    <div class="row">
-                        <div class="field-group">
-                            <label for="email">Party Portal Handle</label>
-                            <input type="text" id="email" placeholder="e.g. alliance (auto-formats as alliance@party)" required>
+                        <!-- Symbol Selector -->
+                        <div class="form-group">
+                            <label>Ballot Symbol (Select or Type Custom Emoji / Icon)</label>
+                            <input type="text" id="symbol" class="form-control" style="font-size: 1.3rem; text-align: center; margin-bottom: 8px;" placeholder="🗳️" required maxlength="8">
+                            <div class="symbol-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 8px;">
+                                <button type="button" class="symbol-btn" data-symbol="⭐">⭐</button>
+                                <button type="button" class="symbol-btn" data-symbol="🦅">🦅</button>
+                                <button type="button" class="symbol-btn" data-symbol="🕊️">🕊️</button>
+                                <button type="button" class="symbol-btn" data-symbol="🦁">🦁</button>
+                                <button type="button" class="symbol-btn" data-symbol="🌾">🌾</button>
+                                <button type="button" class="symbol-btn" data-symbol="⚡">⚡</button>
+                                <button type="button" class="symbol-btn" data-symbol="🛡️">🛡️</button>
+                                <button type="button" class="symbol-btn" data-symbol="⚖️">⚖️</button>
+                                <button type="button" class="symbol-btn" data-symbol="🔥">🔥</button>
+                                <button type="button" class="symbol-btn" data-symbol="🌲">🌲</button>
+                            </div>
                         </div>
-                        <div class="field-group">
-                            <label for="password">Portal Password</label>
-                            <input type="password" id="password" placeholder="Min. 8 characters" required>
-                        </div>
-                    </div>
 
-                    <div class="actions">
-                        <button type="button" class="btn-secondary">Cancel</button>
-                        <button type="submit" class="btn-primary"><i class="fas fa-check"></i> Register Party</button>
-                    </div>
-                </form>
-            </div>
+                        <div class="form-group">
+                            <label for="description">Party Motto / Short Summary</label>
+                            <input type="text" id="description" class="form-control" placeholder="e.g. Progress, Equality and Transparency">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manifesto">Electoral Manifesto / Objectives</label>
+                            <textarea id="manifesto" class="form-control" placeholder="Key policy priorities and candidate vision..." rows="3"></textarea>
+                        </div>
+
+                        <div style="background-color: var(--surface-secondary); padding: 18px; border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: 20px;">
+                            <strong style="display: block; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 12px;">
+                                <i class="fas fa-key"></i> Representative Portal Access Credentials
+                            </strong>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label for="username">Portal Username</label>
+                                    <input type="text" id="username" class="form-control" placeholder="e.g. alliance_rep" required>
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label for="password">Portal Password</label>
+                                    <input type="password" id="password" class="form-control" placeholder="Minimum 6 characters" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="button-group" style="display: flex; gap: 12px; justify-content: flex-end;">
+                            <button type="button" class="btn-secondary" onclick="window.location.href='../parties/parties.html'">Cancel</button>
+                            <button type="submit" class="btn-primary" id="addparty">
+                                <i class="fas fa-check-circle"></i> Accredit & Register Party
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </main>
         </div>
-    </main>
+    </div>
 
     <script src="../../shared/spinner.js"></script>
     <script src="../../shared/toast.js"></script>

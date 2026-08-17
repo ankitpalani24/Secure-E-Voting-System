@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure E-Voting Platform - Sign In</title>
+    <title>SecureVote - Official Election Access Portal</title>
     <link rel="stylesheet" href="../styles/main.css">
     <link rel="stylesheet" href="login.css">
     <link rel="stylesheet" href="../shared/toast.css">
@@ -14,57 +14,107 @@
 
 <body>
 
-    <div class="l-form">
-        <!-- Legacy shapes maintained hidden for backward compatibility -->
-        <div class="shape1"></div>
-        <div class="shape2"></div>
-        <div class="v-line"></div>
-        <div id="svg"></div>
+    <div class="login-layout">
+        <!-- Left Brand & Security Column -->
+        <div class="login-hero-panel">
+            <div class="hero-brand">
+                <div class="brand-icon"><i class="fas fa-vote-yea"></i></div>
+                <span class="hero-brand-text">SecureVote</span>
+            </div>
 
-        <div class="login">
-            <div class="form">
-                <div class="form__header">
-                    <div class="form__badge">
-                        <i class="fas fa-shield-alt"></i> Official Election Portal
+            <div class="hero-content">
+                <div class="status-badge live" style="margin-bottom: 20px; align-self: flex-start;">
+                    Electoral Commission Certified
+                </div>
+                <h1>Secure Digital Elections Platform</h1>
+                <p>Official cryptographic voting and identity verification portal designed for national integrity, absolute ballot secrecy, and public trust.</p>
+
+                <div class="security-highlights">
+                    <div class="security-item">
+                        <div class="security-icon"><i class="fas fa-fingerprint"></i></div>
+                        <div>
+                            <strong>Biometric Liveness Verification</strong>
+                            <p>Single-use face descriptor verification protects against identity impersonation.</p>
+                        </div>
                     </div>
-                    <h1 class="form__title">Sign In</h1>
-                    <p class="form__subtitle">Enter your credentials to access the secure voting system</p>
+                    <div class="security-item">
+                        <div class="security-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div>
+                            <strong>Decoupled Ballot Secrecy</strong>
+                            <p>Anonymous ballot casting completely separates voter identity from vote choices.</p>
+                        </div>
+                    </div>
+                    <div class="security-item">
+                        <div class="security-icon"><i class="fas fa-link"></i></div>
+                        <div>
+                            <strong>SHA-256 Audit Trail</strong>
+                            <p>Linear hash-chained immutable logging guarantees full administrative accountability.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-footer">
+                <span><i class="fas fa-lock"></i> 256-Bit Encrypted Communication</span>
+                <span>Version 2.4.0 (Enterprise)</span>
+            </div>
+        </div>
+
+        <!-- Right Authentication Card Column -->
+        <div class="login-form-panel">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2>Sign In to Portal</h2>
+                    <p>Select your authorized role and enter your credentials.</p>
                 </div>
 
-                <form class="form__content">
-                    <div class="form__div form__div-one">
-                        <div class="form__icon"><i class="fas fa-user"></i></div>
-                        <div class="form__div-input">
-                            <label for="username" class="form__label">Username or Voter ID</label>
-                            <input type="text" id="username" class="form__input" placeholder="e.g. voter1@voter or admin" required autocomplete="username">
+                <!-- Role Selector Tabs -->
+                <div class="role-selector-tabs" id="roleSelectorTabs">
+                    <button type="button" class="role-tab active" data-role="voter">
+                        <i class="fas fa-id-card"></i> Voter
+                    </button>
+                    <button type="button" class="role-tab" data-role="admin">
+                        <i class="fas fa-user-shield"></i> Admin
+                    </button>
+                    <button type="button" class="role-tab" data-role="party">
+                        <i class="fas fa-landmark"></i> Party
+                    </button>
+                </div>
+
+                <form action="" class="form__content" id="loginForm">
+                    <input type="hidden" id="role" name="role" value="voter">
+
+                    <div class="form-group">
+                        <label for="username" id="usernameLabel">Voter ID / Email Address</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="username" class="form-control form__input" placeholder="e.g. voter@domain.com" required autocomplete="username">
                         </div>
                     </div>
 
-                    <div class="form__div">
-                        <div class="form__icon"><i class="fas fa-lock"></i></div>
-                        <div class="form__div-input">
-                            <label for="password" class="form__label">Password</label>
-                            <input type="password" id="password" class="form__input" placeholder="Enter your password" required autocomplete="current-password">
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label for="password">Security Password</label>
+                            <a href="javascript:void(0)" class="form__forgot" style="font-size: 0.8rem; font-weight: 500;">Forgot Password?</a>
+                        </div>
+                        <div class="input-icon-wrapper">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" class="form-control form__input" placeholder="Enter your password" required autocomplete="current-password">
+                            <button type="button" class="password-toggle-btn" id="togglePasswordBtn" title="Toggle password visibility">
+                                <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <div class="form__div">
-                        <label for="role" class="form__label">Account Role</label>
-                        <select id="role" class="form__select">
-                            <option value="voter">Voter Portal</option>
-                            <option value="admin">System Administrator</option>
-                            <option value="party">Party Representative</option>
-                        </select>
-                    </div>
-
-                    <a href="#" class="form__forgot">Forgot Password?</a>
-
-                    <input type="submit" class="form__button" value="Sign In to Platform">
-
-                    <div class="form__footer">
-                        <p><i class="fas fa-lock text-muted"></i> 256-bit Encrypted Session & Biometric Verification</p>
-                    </div>
+                    <button type="submit" class="btn-primary form__button" id="loginSubmitBtn" style="width: 100%; padding: 12px; margin-top: 8px;">
+                        <i class="fas fa-sign-in-alt"></i> Access Secure Portal
+                    </button>
                 </form>
+
+                <div class="auth-security-notice">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Authorized personnel only. All access attempts and biometric events are logged to the immutable audit chain.</span>
+                </div>
             </div>
         </div>
     </div>

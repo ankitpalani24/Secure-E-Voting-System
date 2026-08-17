@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Voter - Secure E-Voting Platform</title>
+    <title>Enroll New Citizen - SecureVote Admin</title>
     <!-- Face-api.js -->
     <script src="../../lib/face-api.min.js"></script>
     <link rel="stylesheet" href="../../styles/main.css">
@@ -16,87 +16,153 @@
 
 <body>
 
-    <header class="top-header">
-        <div class="header-left">
-            <h1>Admin Dashboard</h1>
-            <p>Citizen Enrollment & Biometric Registration</p>
-        </div>
-        <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
-    </header>
-
-    <main class="container">
-        <nav class="tab-nav">
-            <a href="../../admin/dashboard/dashboard.html" class="tab"><i class="fas fa-chart-line"></i> Overview</a>
-            <a href="../../admin/voters/voters.html" class="tab"><i class="fas fa-users"></i> Voters (0)</a>
-            <a href="../../admin/parties/parties.html" class="tab"><i class="fas fa-building"></i> Parties (0)</a>
-            <a href="../../admin/results/results.html" class="tab"><i class="fas fa-poll"></i> Results</a>
-            <a href="../../admin/register-voter/register-voter.html" class="tab active"><i class="fas fa-user-plus"></i> Register Voter</a>
-            <a href="../../admin/register-party/register-party.html" class="tab"><i class="fas fa-plus"></i> Register Party</a>
-        </nav>
-
-        <section class="stats-grid">
-            <div class="stat-card" style="cursor: pointer;">
-                <div>
-                    <span class="label">Citizen Enrollment</span>
-                    <h2 class="value" style="font-size: 1.3rem;">Register New Eligible Voter</h2>
-                </div>
-                <button class="icon-box green" title="Open Registration Form"><i class="fas fa-user-plus"></i></button>
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="../dashboard/dashboard.html" class="brand-logo">
+                    <div class="brand-icon"><i class="fas fa-vote-yea"></i></div>
+                    <span>SecureVote</span>
+                </a>
             </div>
-        </section>
 
-        <div id="addvoter" class="hidden">
-            <div class="card">
-                <div style="margin-bottom: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border);">
-                    <h2>Voter Registration Form</h2>
-                    <p>Enter citizen identity details and capture facial biometric embedding</p>
+            <nav class="sidebar-nav">
+                <span class="nav-section-title">Operations</span>
+                <a href="../dashboard/dashboard.html" class="nav-link">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </a>
+                <a href="../voters/voters.html" class="nav-link">
+                    <i class="fas fa-users"></i> <span>Voters Roll</span>
+                </a>
+                <a href="../parties/parties.html" class="nav-link">
+                    <i class="fas fa-landmark"></i> <span>Parties Catalog</span>
+                </a>
+                <a href="../results/results.html" class="nav-link">
+                    <i class="fas fa-poll"></i> <span>Live Results</span>
+                </a>
+
+                <span class="nav-section-title">Registration</span>
+                <a href="register-voter.html" class="nav-link active">
+                    <i class="fas fa-user-plus"></i> <span>Register Voter</span>
+                </a>
+                <a href="../register-party/register-party.html" class="nav-link">
+                    <i class="fas fa-plus-circle"></i> <span>Register Party</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="../../login/login.html" class="logout-nav-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title-group">
+                        <h1>Voter Registration & Biometric Enrollment</h1>
+                        <p>Official Citizen Accreditation & Security Profile Creation</p>
+                    </div>
                 </div>
 
-                <form id="registerForm">
-                    <div class="form-grid">
-                        <div class="row">
+                <div class="topbar-right">
+                    <a href="../voters/voters.html" class="btn-secondary" style="padding: 8px 14px; font-size: 0.85rem;">
+                        <i class="fas fa-arrow-left"></i> Back to Roll
+                    </a>
+                </div>
+            </header>
+
+            <main class="page-content">
+                <div class="section-card" style="max-width: 720px; margin: 0 auto;">
+                    <div class="section-header">
+                        <h3><i class="fas fa-id-card" style="color: var(--primary);"></i> Citizen Demographic & Security Form</h3>
+                    </div>
+
+                    <form id="registerForm">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div class="form-group">
                                 <label for="fullName">Full Legal Name</label>
-                                <input type="text" id="fullName" placeholder="e.g. Eleanor Vance" required>
+                                <input type="text" id="fullName" class="form-control" placeholder="e.g. Eleanor Vance" required>
                             </div>
                             <div class="form-group">
-                                <label for="voterId">Government ID / Voter Number</label>
-                                <input type="text" id="voterId" placeholder="e.g. VTR-99824" required>
+                                <label for="voterId">Voter ID / National Identifier</label>
+                                <input type="text" id="voterId" class="form-control" placeholder="e.g. VOT-2026-8942" required>
                             </div>
                         </div>
 
-                        <div class="row">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div class="form-group">
-                                <label for="email">Portal User Handle</label>
-                                <input type="text" id="email" placeholder="e.g. eleanor (auto-formats as eleanor@voter)" required>
+                                <label for="email">Registered Email Address</label>
+                                <input type="email" id="email" class="form-control" placeholder="e.g. eleanor.vance@domain.com" required>
                             </div>
                             <div class="form-group">
-                                <label for="password">Account Password</label>
-                                <input type="password" id="password" placeholder="Min. 8 characters" required>
+                                <label for="password">Temporary Access Password</label>
+                                <input type="password" id="password" class="form-control" placeholder="Minimum 6 characters" required>
                             </div>
                         </div>
 
-                        <div class="row">
+                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px;">
                             <div class="form-group">
                                 <label for="dob">Date of Birth</label>
-                                <input type="date" id="dob" required>
+                                <input type="date" id="dob" class="form-control" required>
                             </div>
                             <div class="form-group">
-                                <label for="address">Residential Address</label>
-                                <input type="text" id="address" placeholder="e.g. 104 Civic Square, Precinct 4" required>
+                                <label for="address">Residential Constituency / Address</label>
+                                <input type="text" id="address" class="form-control" placeholder="e.g. District 4, Central Ward" required>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="button-group">
-                        <button type="button" class="cancel-btn">Cancel</button>
-                        <button type="submit" class="submit-btn">
-                            <i class="fas fa-camera"></i> Continue to Face Capture
-                        </button>
-                    </div>
-                </form>
-            </div>
+                        <!-- Biometric Facial Signature Box -->
+                        <div id="biometricCallout" style="background-color: var(--surface-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <strong style="display: block; font-size: 0.95rem; color: var(--text-primary);">Facial Biometric Embedding (128-d Vector)</strong>
+                                <span id="faceDescriptorStatusText" style="font-size: 0.82rem; color: var(--warning-text); font-weight: 600;">
+                                    <i class="fas fa-exclamation-circle"></i> Biometric scan required before submission
+                                </span>
+                            </div>
+                            <button type="button" class="btn-primary" id="openFaceModalBtn" style="padding: 10px 18px; font-size: 0.9rem; background-color: #7E22CE;">
+                                <i class="fas fa-camera"></i> Scan Face
+                            </button>
+                        </div>
+
+                        <div class="button-group" style="display: flex; gap: 12px; justify-content: flex-end;">
+                            <button type="button" class="cancel-btn btn-secondary" onclick="window.location.href='../voters/voters.html'">Cancel</button>
+                            <button type="submit" class="btn-primary" id="addvoter">
+                                <i class="fas fa-check-circle"></i> Complete Enrollment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </main>
         </div>
-    </main>
+    </div>
+
+    <!-- Face Capture Dialog Modal -->
+    <div id="facePopup" class="modal-backdrop hidden">
+        <div class="face-modal" style="background: var(--surface); border-radius: var(--radius-xl); padding: 28px; max-width: 440px; width: 100%; text-align: center; box-shadow: var(--shadow-xl); border: 1px solid var(--border);">
+            <div class="face-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.1rem; color: var(--text-primary);"><i class="fas fa-camera"></i> Biometric Facial Capture</h3>
+                <button type="button" id="closePopup" class="close-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">×</button>
+            </div>
+            
+            <div style="position: relative; width: 320px; height: 240px; margin: 0 auto 16px auto; border-radius: var(--radius-md); overflow: hidden; background-color: #000;">
+                <video id="video" width="320" height="240" autoplay muted style="transform: scaleX(-1); object-fit: cover;"></video>
+            </div>
+
+            <div id="faceStatus" style="font-size: 0.85rem; font-weight: 500; min-height: 24px; margin-bottom: 16px; color: var(--warning-text);">
+                Initializing camera feed...
+            </div>
+
+            <button type="button" id="captureBtn" class="btn-primary" style="width: 100%; padding: 12px; background-color: var(--success);" disabled>
+                <i class="fas fa-check-circle"></i> Save Biometric Vector
+            </button>
+        </div>
+    </div>
 
     <script src="../../shared/spinner.js"></script>
     <script src="../../shared/toast.js"></script>

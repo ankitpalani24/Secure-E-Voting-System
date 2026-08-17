@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cast Ballot - Secure E-Voting Platform</title>
+    <title>Cast Ballot - SecureVote Citizen Portal</title>
     <!-- Face-api.js -->
     <script src="../lib/face-api.min.js"></script>
     <link rel="stylesheet" href="../styles/main.css">
@@ -16,74 +16,111 @@
 
 <body>
 
-    <header class="top-header">
-        <div class="header-left">
-            <h1>Citizen Portal</h1>
-            <p>Official Ballot Casting & Verification</p>
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="v-dashboard.html" class="brand-logo">
+                    <div class="brand-icon"><i class="fas fa-vote-yea"></i></div>
+                    <span>SecureVote</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <span class="nav-section-title">Citizen Portal</span>
+                <a href="v-dashboard.html" class="nav-link">
+                    <i class="fas fa-id-card"></i> <span>Voter Status</span>
+                </a>
+                <a href="v-vote.html" class="nav-link active">
+                    <i class="fas fa-vote-yea"></i> <span>Cast Ballot</span>
+                </a>
+                <a href="v-result.html" class="nav-link">
+                    <i class="fas fa-poll"></i> <span>Election Results</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="../login/login.html" class="logout-nav-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title-group">
+                        <h1>Official Ballot Submission</h1>
+                        <p>Decentralized Anonymous Voting Chamber</p>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="status-badge live">
+                        <i class="fas fa-shield-alt"></i> Anonymous Session
+                    </div>
+                </div>
+            </header>
+
+            <main class="page-content">
+                <!-- 4-Step Progress Stepper -->
+                <div class="stepper" id="votingStepper">
+                    <div class="step-item active" id="step1">
+                        <div class="step-number">01</div>
+                        <div class="step-info">
+                            <span class="step-title">Select Party</span>
+                            <span class="step-subtitle">Candidate choice</span>
+                        </div>
+                    </div>
+                    <div class="step-divider" id="divider1"></div>
+                    <div class="step-item" id="step2">
+                        <div class="step-number">02</div>
+                        <div class="step-info">
+                            <span class="step-title">Review Choice</span>
+                            <span class="step-subtitle">Verify ballot</span>
+                        </div>
+                    </div>
+                    <div class="step-divider" id="divider2"></div>
+                    <div class="step-item" id="step3">
+                        <div class="step-number">03</div>
+                        <div class="step-info">
+                            <span class="step-title">Face Verify</span>
+                            <span class="step-subtitle">Liveness match</span>
+                        </div>
+                    </div>
+                    <div class="step-divider" id="divider3"></div>
+                    <div class="step-item" id="step4">
+                        <div class="step-number">04</div>
+                        <div class="step-info">
+                            <span class="step-title">Receipt</span>
+                            <span class="step-subtitle">Cryptographic seal</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Party Candidate List Container -->
+                <div class="section-card" id="ballotSelectionCard">
+                    <div class="section-header">
+                        <div>
+                            <h3><i class="fas fa-users" style="color: var(--primary);"></i> Accredited Candidates & Political Parties</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Click a candidate card below to review and proceed to biometric confirmation.</p>
+                        </div>
+                    </div>
+
+                    <div class="party-list candidates-grid" id="partiesContainer" style="box-shadow: none; border: none; padding: 0;">
+                        <!-- Candidate cards dynamically injected by v-vote.js -->
+                    </div>
+                </div>
+
+                <!-- Cryptographic Receipt Container (Revealed upon successful ballot commit) -->
+                <div id="receiptContainer" class="hidden"></div>
+            </main>
         </div>
-        <a href="../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
-    </header>
-
-    <main class="container">
-        <!-- 4-Step Voting Stepper -->
-        <div class="stepper" id="votingStepper">
-            <div class="step-item active" id="step1">
-                <div class="step-number">1</div>
-                <div class="step-info">
-                    <span class="step-title">Select Party</span>
-                    <span class="step-subtitle">Choose candidate</span>
-                </div>
-            </div>
-            <div class="step-divider" id="divider1"></div>
-            <div class="step-item" id="step2">
-                <div class="step-number">2</div>
-                <div class="step-info">
-                    <span class="step-title">Review Choice</span>
-                    <span class="step-subtitle">Confirm ballot</span>
-                </div>
-            </div>
-            <div class="step-divider" id="divider2"></div>
-            <div class="step-item" id="step3">
-                <div class="step-number">3</div>
-                <div class="step-info">
-                    <span class="step-title">Face Verification</span>
-                    <span class="step-subtitle">Biometric match</span>
-                </div>
-            </div>
-            <div class="step-divider" id="divider3"></div>
-            <div class="step-item" id="step4">
-                <div class="step-number">4</div>
-                <div class="step-info">
-                    <span class="step-title">Receipt</span>
-                    <span class="step-subtitle">Cryptographic seal</span>
-                </div>
-            </div>
-        </div>
-
-        <nav class="tab-nav">
-            <a href="v-dashboard.html" class="tab"><i class="fas fa-id-card"></i> Voter Status</a>
-            <a href="v-vote.html" class="tab active"><i class="fas fa-vote-yea"></i> Cast Ballot</a>
-            <a href="v-result.html" class="tab"><i class="fas fa-poll"></i> Election Results</a>
-        </nav>
-
-        <section class="stats-grid">
-            <div class="vstat-card">
-                <div>
-                    <h6 class="value" style="font-size: 1.25rem;">Electoral Status</h6>
-                    <span class="label">Ready to cast ballot</span>
-                </div>
-                <div class="icon-box green"><i class="fas fa-check"></i></div>
-            </div>
-        </section>
-
-        <section class="party-list">
-            <h3>Accredited Ballot Candidates</h3>
-            <!-- Party selection cards dynamically injected by v-vote.js -->
-        </section>
-
-        <!-- Container for receipt display after voting -->
-        <div id="receiptContainer" class="hidden"></div>
-    </main>
+    </div>
 
     <script src="../shared/spinner.js"></script>
     <script src="../shared/toast.js"></script>
