@@ -37,6 +37,13 @@
             </nav>
 
             <div class="sidebar-footer">
+                <div class="user-profile-badge">
+                    <div class="user-avatar"><i class="fas fa-landmark"></i></div>
+                    <div class="user-info-text">
+                        <strong id="partyUserName">Party Representative</strong>
+                        <span>Accredited Observer</span>
+                    </div>
+                </div>
                 <a href="../login/login.html" class="logout-nav-btn">
                     <i class="fas fa-sign-out-alt"></i> Sign Out
                 </a>
@@ -60,6 +67,9 @@
                     <div class="status-badge live" id="partyTotalBadge">
                         0 Ballots Cast
                     </div>
+                    <a href="../login/login.html" class="logout-nav-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
                 </div>
             </header>
 
@@ -98,6 +108,7 @@
 
     <script src="../shared/spinner.js"></script>
     <script src="../shared/toast.js"></script>
+    <script src="../shared/auth.js"></script>
     <script src="p-result.js"></script>
 </body>
 

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url=login/login.html">
+    <title>SecureVote Gateway</title>
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (token && role) {
+            if (role === 'admin') window.location.href = 'admin/dashboard/dashboard.html';
+            else if (role === 'voter') window.location.href = 'voter-dashboard/v-dashboard.html';
+            else if (role === 'party') window.location.href = 'party-dashboard/p-parties.html';
+            else window.location.href = 'login/login.html';
+        } else {
+            window.location.href = 'login/login.html';
+        }
+    </script>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding-top: 50px; background: #F6F7F2; color: #20251A;">
+    <p>Redirecting to SecureVote Portal...</p>
+</body>
+</html>
