@@ -170,18 +170,20 @@ exports.castVote = async (req, res) => {
       return res.status(400).json({ message: "You have already voted in this election." });
     }
 
-    // 5. Consume Biometric Token if provided (or validate single-use)
-    if (biometricToken) {
-      const consumedToken = await BiometricToken.findOneAndDelete({
-        token: biometricToken,
-        voterId,
-        used: false,
-        expiresAt: { $gt: new Date() },
-      });
+    // 5. Mandatory Biometric Authorization Token Validation & Single-Use Consumption
+    if (!biometricToken || typeof biometricToken !== "string" || biometricToken.trim() === "") {
+      return res.status(400).json({ message: "Biometric authorization token is required to cast a ballot" });
+    }
 
-      if (!consumedToken) {
-        return res.status(400).json({ message: "Invalid or expired biometric authorization token. Please scan face again." });
-      }
+    const consumedToken = await BiometricToken.findOneAndDelete({
+      token: biometricToken.trim(),
+      voterId: new mongoose.Types.ObjectId(voterId),
+      used: false,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!consumedToken) {
+      return res.status(400).json({ message: "Invalid, expired, or previously consumed biometric authorization token. Please scan face again." });
     }
 
     // 6. Generate Decoupled Cryptographic Commitment Hash for Ballot
@@ -191,14 +193,15 @@ exports.castVote = async (req, res) => {
       .update(`${serialNonce}|${election._id}|${partyId}`)
       .digest("hex");
 
-    // 7. Atomic Insertions (Voter Participation + Anonymous Ballot)
+    // 7. Insert Decoupled Participation Record (Compound unique index { voterId, electionId } prevents double voting)
     await VoterParticipation.create({
       voterId,
       electionId: election._id,
       participatedAt: new Date(),
-      verificationMethod: biometricToken ? "FACE_BIOMETRIC" : "PASSWORD_ONLY",
+      verificationMethod: "FACE_BIOMETRIC",
     });
 
+    // 8. Insert Anonymous Ballot (Contains ZERO voter identity)
     await AnonymousBallot.create({
       electionId: election._id,
       partyId,
@@ -207,14 +210,7 @@ exports.castVote = async (req, res) => {
       castAt: new Date(),
     });
 
-    // Also populate legacy Vote for backward compatibility
-    try {
-      await Vote.create({ voterId, partyId });
-    } catch (e) {
-      // Ignore if legacy already captured
-    }
-
-    // 8. Chained Audit Logging (Logs WHO voted and WHEN, but NEVER logs WHICH party to preserve ballot secrecy)
+    // 9. Chained Audit Logging (NEVER records partyId, candidateId, or ballotCommitmentHash to eliminate database correlation)
     await logAuditEvent({
       action: "BALLOT_CAST_SUCCESS",
       category: "AUDIT_EVENT",
@@ -223,20 +219,18 @@ exports.castVote = async (req, res) => {
       electionId: election._id,
       status: "SUCCESS",
       details: {
-        ballotCommitmentHash,
-        verificationMethod: biometricToken ? "FACE_BIOMETRIC" : "PASSWORD_ONLY",
+        verificationMethod: "FACE_BIOMETRIC",
       },
       ipAddress: req.ip,
       userAgent: req.headers["user-agent"],
     });
 
-    // 9. Real-Time Broadcast: ZERO voterId emitted (Preserves privacy for connected observers)
+    // 10. Real-Time Broadcast: Sanitized event without partyId, voterId, candidateId, or individual choices
     const io = req.app.get("io");
     if (io) {
       io.emit("newVote", {
-        partyId,
+        type: "vote-update",
         electionId: election._id,
-        timestamp: new Date().toISOString(),
       });
     }
 
