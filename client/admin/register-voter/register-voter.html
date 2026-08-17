@@ -65,8 +65,8 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="page-title-group">
-                        <h1>Voter Registration & Biometric Enrollment</h1>
-                        <p>Official Citizen Accreditation & Security Profile Creation</p>
+                        <h1>Citizen Biometric Enrollment</h1>
+                        <p>Official Electoral Registration & Facial Recognition Profiling</p>
                     </div>
                 </div>
 
@@ -80,13 +80,13 @@
             <main class="page-content">
                 <div class="section-card" style="max-width: 720px; margin: 0 auto;">
                     <div class="section-header">
-                        <h3><i class="fas fa-id-card" style="color: var(--primary);"></i> Citizen Demographic & Security Form</h3>
+                        <h3><i class="fas fa-id-card" style="color: var(--primary);"></i> Citizen Registration Details</h3>
                     </div>
 
                     <form id="registerForm">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div class="form-group">
-                                <label for="fullName">Full Legal Name</label>
+                                <label for="fullName">Citizen Full Name</label>
                                 <input type="text" id="fullName" class="form-control" placeholder="e.g. Eleanor Vance" required>
                             </div>
                             <div class="form-group">
@@ -97,7 +97,7 @@
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div class="form-group">
-                                <label for="email">Registered Email Address</label>
+                                <label for="email">Official Registered Email</label>
                                 <input type="email" id="email" class="form-control" placeholder="e.g. eleanor.vance@domain.com" required>
                             </div>
                             <div class="form-group">
@@ -109,23 +109,23 @@
                         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px;">
                             <div class="form-group">
                                 <label for="dob">Date of Birth</label>
-                                <input type="date" id="dob" class="form-control" required>
+                                <input type="date" id="dob" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label for="address">Residential Constituency / Address</label>
-                                <input type="text" id="address" class="form-control" placeholder="e.g. District 4, Central Ward" required>
+                                <label for="address">Constituency / Address</label>
+                                <input type="text" id="address" class="form-control" placeholder="e.g. District 4, Central Ward">
                             </div>
                         </div>
 
                         <!-- Biometric Facial Signature Box -->
-                        <div id="biometricCallout" style="background-color: var(--surface-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+                        <div id="biometricCallout" style="background-color: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
                             <div>
-                                <strong style="display: block; font-size: 0.95rem; color: var(--text-primary);">Facial Biometric Embedding (128-d Vector)</strong>
+                                <strong style="display: block; font-size: 0.95rem; color: var(--text-primary);">Facial Biometric Vector (128-d Signature)</strong>
                                 <span id="faceDescriptorStatusText" style="font-size: 0.82rem; color: var(--warning-text); font-weight: 600;">
                                     <i class="fas fa-exclamation-circle"></i> Biometric scan required before submission
                                 </span>
                             </div>
-                            <button type="button" class="btn-primary" id="openFaceModalBtn" style="padding: 10px 18px; font-size: 0.9rem; background-color: #7E22CE;">
+                            <button type="button" class="btn-primary" id="openFaceModalBtn" style="padding: 10px 18px; font-size: 0.9rem;">
                                 <i class="fas fa-camera"></i> Scan Face
                             </button>
                         </div>
@@ -144,23 +144,26 @@
 
     <!-- Face Capture Dialog Modal -->
     <div id="facePopup" class="modal-backdrop hidden">
-        <div class="face-modal" style="background: var(--surface); border-radius: var(--radius-xl); padding: 28px; max-width: 440px; width: 100%; text-align: center; box-shadow: var(--shadow-xl); border: 1px solid var(--border);">
+        <div class="face-modal" style="background: var(--surface); border-radius: var(--radius-xl); padding: 28px; max-width: 460px; width: 100%; text-align: center; box-shadow: var(--shadow-xl); border: 1px solid var(--border);">
             <div class="face-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="font-size: 1.1rem; color: var(--text-primary);"><i class="fas fa-camera"></i> Biometric Facial Capture</h3>
+                <h3 style="font-size: 1.15rem; color: var(--text-primary);"><i class="fas fa-camera"></i> Biometric Facial Capture</h3>
                 <button type="button" id="closePopup" class="close-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">×</button>
             </div>
             
-            <div style="position: relative; width: 320px; height: 240px; margin: 0 auto 16px auto; border-radius: var(--radius-md); overflow: hidden; background-color: #000;">
-                <video id="video" width="320" height="240" autoplay muted style="transform: scaleX(-1); object-fit: cover;"></video>
+            <div style="position: relative; width: 320px; height: 240px; margin: 0 auto 16px auto; border-radius: var(--radius-md); overflow: hidden; background-color: #000; border: 2px solid var(--border);">
+                <video id="video" width="320" height="240" autoplay playsinline muted style="transform: scaleX(-1); object-fit: cover; width: 100%; height: 100%;"></video>
             </div>
 
-            <div id="faceStatus" style="font-size: 0.85rem; font-weight: 500; min-height: 24px; margin-bottom: 16px; color: var(--warning-text);">
+            <div id="faceStatus" style="font-size: 0.85rem; font-weight: 600; min-height: 24px; margin-bottom: 16px; color: var(--warning-text);">
                 Initializing camera feed...
             </div>
 
-            <button type="button" id="captureBtn" class="btn-primary" style="width: 100%; padding: 12px; background-color: var(--success);" disabled>
-                <i class="fas fa-check-circle"></i> Save Biometric Vector
-            </button>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" id="closeModalCancelBtn" class="btn-secondary" style="padding: 10px 16px;">Cancel</button>
+                <button type="button" id="captureBtn" class="btn-primary" style="padding: 10px 20px; background-color: var(--primary);">
+                    <i class="fas fa-camera"></i> Capture Face Signature
+                </button>
+            </div>
         </div>
     </div>
 

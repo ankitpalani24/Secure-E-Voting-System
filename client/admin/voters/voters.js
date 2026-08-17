@@ -1,4 +1,13 @@
-// Global variables for search filtering
+// Mobile Sidebar Toggle
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const appSidebar = document.getElementById('appSidebar');
+if (mobileMenuBtn && appSidebar) {
+    mobileMenuBtn.addEventListener('click', () => {
+        appSidebar.classList.toggle('open');
+    });
+}
+
+// Global state for voters
 let allVoters = [];
 
 // Load voters from API
@@ -6,124 +15,117 @@ async function loadVoters() {
     const token = localStorage.getItem('token');
     if (!token) return window.location.href = '../../login/login.html';
 
-    const container = document.querySelector('.overview-list');
-    container.innerHTML = '<div class="loading"><span class="spinner"></span>Searching voters...</div>';
+    const tbody = document.getElementById('votersTableBody');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;"><i class="fas fa-spinner fa-spin"></i> Retrieving accredited citizen records...</td></tr>';
+    }
     
     try {
         const res = await fetch('/api/admin/voters', {
             headers: { Authorization: `Bearer ${token}` }
         });
-        allVoters = await res.json(); // Persist all loaded voters
-
-        // Fetch global stats to update nav tabs
-        try {
-            const statsRes = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` }});
-            if (statsRes.ok) {
-                const stats = await statsRes.json();
-                const voterTab = document.querySelector('a[href*="/voters/"]');
-                if (voterTab) voterTab.innerHTML = '<i class="fas fa-users"></i> Voters (' + stats.votersCount + ')';
-                const partyTab = document.querySelector('a[href*="/parties/"]');
-                if (partyTab) partyTab.innerHTML = '<i class="fas fa-building"></i> Parties (' + stats.partiesCount + ')';
-            }
-        } catch (e) {
-            console.error('Nav stats load error:', e);
+        
+        if (!res.ok) {
+            throw new Error(`Server returned ${res.status}`);
         }
 
-        // Display all voters initially
-        displayVoters(allVoters);
+        allVoters = await res.json();
+        
+        // Update badge
+        const badge = document.getElementById('voterCountBadge');
+        if (badge) badge.textContent = `${allVoters.length} Registered Voters`;
 
+        renderVotersTable(allVoters);
     } catch (err) {
-        document.querySelector('.overview-list').innerHTML = '<h3>Error loading voters</h3>';
-        console.error(err);
+        console.error('Voters load error:', err);
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--danger-text); padding: 32px;"><i class="fas fa-exclamation-triangle"></i> Unable to load voter records. Please try again.</td></tr>';
+        }
+        showToast('Failed to load voters roll: ' + err.message, 'error');
     }
 }
 
-// Helper to sanitize/escape HTML entities
-function escapeHTML(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-// Render voters array into the DOM
-function displayVoters(votersArray) {
-    const container = document.querySelector('.overview-list');
-    container.innerHTML = '';
+// Render voters array into the table body
+function renderVotersTable(votersArray) {
+    const tbody = document.getElementById('votersTableBody');
+    if (!tbody) return;
     
-    const heading = document.createElement('h3');
-    heading.textContent = `Voters List (${votersArray.length})`;
-    container.appendChild(heading);
+    tbody.innerHTML = '';
 
-    if (votersArray.length === 0) {
-        const noVoters = document.createElement('p');
-        noVoters.textContent = 'No voters found.';
-        container.appendChild(noVoters);
+    if (!Array.isArray(votersArray) || votersArray.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;"><i class="fas fa-users-slash"></i> No citizen voter records found.</td></tr>';
         return;
     }
 
     votersArray.forEach(voter => {
-        const item = document.createElement('div');
-        item.className = 'list-item';
-        
-        const listInfo = document.createElement('div');
-        listInfo.className = 'list-info';
+        const tr = document.createElement('tr');
 
-        const strong = document.createElement('strong');
-        strong.textContent = voter.name || 'Unknown';
+        // 1. Citizen Name with Avatar Icon
+        const nameTd = document.createElement('td');
+        nameTd.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+                    ${(voter.name || 'V').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                    <strong style="display: block; font-size: 0.9rem; color: var(--text-primary);">${voter.name || 'Unknown Citizen'}</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Accredited Voter</span>
+                </div>
+            </div>
+        `;
 
-        if (voter.hasVoted && voter.voteTimestamp) {
-            const d = new Date(voter.voteTimestamp);
-            const dateSpan = document.createElement('span');
-            dateSpan.style.cssText = 'font-size: 0.85em; color: #888; font-weight: normal; margin-left: 10px;';
-            dateSpan.textContent = `(Voted: ${d.toLocaleString()})`;
-            strong.appendChild(dateSpan);
+        // 2. Email
+        const emailTd = document.createElement('td');
+        emailTd.textContent = voter.email || 'N/A';
+        emailTd.style.color = 'var(--text-secondary)';
+
+        // 3. Voter ID / Mongo ID Short
+        const idTd = document.createElement('td');
+        const idShort = voter.voterId || (voter._id ? `VOT-${voter._id.slice(-6).toUpperCase()}` : 'N/A');
+        idTd.innerHTML = `<span style="font-family: monospace; font-size: 0.82rem; background: var(--surface-muted); padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-weight: 600;">${idShort}</span>`;
+
+        // 4. Biometrics Status
+        const bioTd = document.createElement('td');
+        bioTd.innerHTML = `<span class="status-badge live" style="font-size: 0.75rem;"><i class="fas fa-check-circle"></i> Enrolled (128-d)</span>`;
+
+        // 5. Participation Status
+        const statusTd = document.createElement('td');
+        if (voter.hasVoted) {
+            statusTd.innerHTML = `<span class="status-badge live"><i class="fas fa-vote-yea"></i> VOTED</span>`;
+        } else {
+            statusTd.innerHTML = `<span class="status-badge pending"><i class="fas fa-clock"></i> PENDING</span>`;
         }
 
-        const p = document.createElement('p');
-        const voterIdShort = voter._id ? voter._id.slice(-6) : 'N/A';
-        p.textContent = `${voter.email || ''} | ID: ${voterIdShort} | Voted: ${voter.hasVoted ? 'Yes' : 'No'}`;
+        tr.appendChild(nameTd);
+        tr.appendChild(emailTd);
+        tr.appendChild(idTd);
+        tr.appendChild(bioTd);
+        tr.appendChild(statusTd);
 
-        listInfo.appendChild(strong);
-        listInfo.appendChild(p);
-
-        const countSpan = document.createElement('span');
-        countSpan.className = `list-count ${voter.hasVoted ? 'green-text' : 'orange-text'}`;
-        countSpan.textContent = voter.hasVoted ? 'VOTED' : 'PENDING';
-
-        item.appendChild(listInfo);
-        item.appendChild(countSpan);
-        container.appendChild(item);
+        tbody.appendChild(tr);
     });
 }
 
-// Search bar listener (filtering precisely by full name)
+// Search filter
 const searchInput = document.getElementById('voterSearch');
 if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        const filteredVoters = allVoters.filter(voter => 
-            voter.name.toLowerCase().includes(searchTerm)
-        );
-        displayVoters(filteredVoters);
+        const query = e.target.value.toLowerCase().trim();
+        if (!query) {
+            renderVotersTable(allVoters);
+            return;
+        }
+
+        const filtered = allVoters.filter(v => {
+            const name = (v.name || '').toLowerCase();
+            const email = (v.email || '').toLowerCase();
+            const id = (v.voterId || v._id || '').toLowerCase();
+            return name.includes(query) || email.includes(query) || id.includes(query);
+        });
+
+        renderVotersTable(filtered);
     });
 }
 
-// Hover logout
-const logoutBtn = document.querySelector(".logout-btn");
-if (logoutBtn) {
-    logoutBtn.addEventListener("mouseover", () => {
-        logoutBtn.style.color = "#ff0000";
-        logoutBtn.style.transform = "scale(1.2)";
-    });
-    logoutBtn.addEventListener("mouseout", () => {
-        logoutBtn.style.color = "inherit";
-        logoutBtn.style.transform = "scale(1)";
-    });
-}
-
-// Load on page ready
+// Initial load
 loadVoters();

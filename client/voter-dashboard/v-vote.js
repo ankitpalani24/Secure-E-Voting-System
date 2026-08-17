@@ -27,6 +27,25 @@ function updateStepper(activeStep) {
     }
 }
 
+// Pre-load models in background
+let voterModelsLoaded = false;
+async function preloadVoterModels() {
+    if (voterModelsLoaded) return true;
+    try {
+        await Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri('../models'),
+            faceapi.nets.faceLandmark68Net.loadFromUri('../models'),
+            faceapi.nets.faceRecognitionNet.loadFromUri('../models'),
+        ]);
+        voterModelsLoaded = true;
+        return true;
+    } catch (e) {
+        console.warn("Background model load notice:", e);
+        return false;
+    }
+}
+preloadVoterModels();
+
 // Load parties for voter voting
 async function loadVoterParties() {
     const token = localStorage.getItem('token');
@@ -142,13 +161,11 @@ function showVoteConfirmationModal(partyId, partyName, partySymbol, partyDesc) {
 
 // Step 3: Face Verification Process
 async function performFaceVerification() {
-    showSpinner("Loading Biometric Recognition Engine...");
-    await Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri('../models'),
-        faceapi.nets.faceLandmark68Net.loadFromUri('../models'),
-        faceapi.nets.faceRecognitionNet.loadFromUri('../models'),
-    ]);
-    hideSpinner();
+    if (!voterModelsLoaded) {
+        showSpinner("Loading Biometric Recognition Engine...");
+        await preloadVoterModels();
+        hideSpinner();
+    }
 
     return new Promise((resolve) => {
         const popup = document.createElement('div');
@@ -162,11 +179,11 @@ async function performFaceVerification() {
                 </div>
                 
                 <div style="position: relative; width: 320px; height: 240px; margin: 0 auto 16px auto; border-radius: var(--radius-md); overflow: hidden; background-color: #000; border: 2px solid var(--border);">
-                    <video id="verifyVideo" width="320" height="240" autoplay muted style="transform: scaleX(-1); object-fit: cover;"></video>
+                    <video id="verifyVideo" width="320" height="240" autoplay playsinline muted style="transform: scaleX(-1); object-fit: cover; width: 100%; height: 100%;"></video>
                 </div>
 
                 <div id="verifyStatus" style="font-size: 0.85rem; font-weight: 600; min-height: 24px; margin-bottom: 16px; color: var(--warning-text);">
-                    Initializing camera stream...
+                    Connecting to camera stream...
                 </div>
 
                 <button id="verifyBtn" class="btn-primary" style="width: 100%; padding: 12px; background-color: var(--success);" disabled>
@@ -187,9 +204,15 @@ async function performFaceVerification() {
             resolve(null);
         };
 
-        navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } }).then(stream => {
+        navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: "user" }
+        }).then(stream => {
             videoEl.srcObject = stream;
-            videoEl.onloadedmetadata = detectVerifyFace;
+            videoEl.onloadedmetadata = async () => {
+                try { await videoEl.play(); } catch(e) {}
+                statusEl.textContent = 'Hold still, initializing liveness sensor...';
+                detectVerifyFace();
+            };
         }).catch((err) => {
             console.error("Camera access error:", err);
             statusEl.textContent = "Camera permission denied or camera device unavailable.";
@@ -212,8 +235,11 @@ async function performFaceVerification() {
             detectInterval = setInterval(async () => {
                 if (isVerifying) return;
 
-                if (videoEl.readyState === 4) {
-                    const detection = await faceapi.detectSingleFace(videoEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.8 })).withFaceLandmarks().withFaceDescriptor();
+                if (videoEl && (videoEl.videoWidth > 0 || videoEl.readyState >= 2)) {
+                    const detection = await faceapi.detectSingleFace(
+                        videoEl,
+                        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.65 })
+                    ).withFaceLandmarks().withFaceDescriptor();
 
                     if (isVerifying) return;
 
@@ -227,7 +253,7 @@ async function performFaceVerification() {
                             baselineX += relX;
                             baselineY += relY;
                             initialFrames++;
-                            statusEl.textContent = `Hold still, calibrating baseline (${initialFrames}/5)...`;
+                            statusEl.textContent = `Calibrating baseline (${initialFrames}/5)...`;
                             statusEl.style.color = 'var(--warning-text)';
                             verifyBtn.disabled = true;
 
@@ -242,20 +268,20 @@ async function performFaceVerification() {
                             verifyBtn.disabled = true;
                             let challengeMetCurrentFrame = false;
 
-                            if (currentChallenge === 'turn_left' && relX > baselineX + 0.09) challengeMetCurrentFrame = true;
-                            else if (currentChallenge === 'turn_right' && relX < baselineX - 0.09) challengeMetCurrentFrame = true;
-                            else if (currentChallenge === 'look_up' && relY < baselineY - 0.07) challengeMetCurrentFrame = true;
-                            else if (currentChallenge === 'look_down' && relY > baselineY + 0.07) challengeMetCurrentFrame = true;
+                            if (currentChallenge === 'turn_left' && relX > baselineX + 0.08) challengeMetCurrentFrame = true;
+                            else if (currentChallenge === 'turn_right' && relX < baselineX - 0.08) challengeMetCurrentFrame = true;
+                            else if (currentChallenge === 'look_up' && relY < baselineY - 0.06) challengeMetCurrentFrame = true;
+                            else if (currentChallenge === 'look_down' && relY > baselineY + 0.06) challengeMetCurrentFrame = true;
 
                             if (challengeMetCurrentFrame) {
                                 challengeHoldFrames++;
-                                if (challengeHoldFrames >= 3) {
+                                if (challengeHoldFrames >= 2) {
                                     livenessPassed = true;
                                     statusEl.textContent = '✓ Liveness confirmed! Please look directly at the lens.';
                                     statusEl.style.color = 'var(--success-text)';
                                 } else {
-                                    statusEl.textContent = `Hold pose... (${challengeHoldFrames}/3)`;
-                                    statusEl.style.color = 'var(--primary)';
+                                    statusEl.textContent = `Hold pose... (${challengeHoldFrames}/2)`;
+                                    statusEl.style.color = 'var(--primary-dark)';
                                 }
                             } else {
                                 challengeHoldFrames = 0;
@@ -269,68 +295,62 @@ async function performFaceVerification() {
                                 statusEl.style.color = 'var(--warning-text)';
                             }
                         } else {
-                            if (Math.abs(relX - baselineX) < 0.07 && Math.abs(relY - baselineY) < 0.07) {
-                                statusEl.textContent = '✓ Biometric identity matched! Click to authorize ballot.';
-                                statusEl.style.color = 'var(--success-text)';
-                                verifyBtn.disabled = false;
+                            statusEl.textContent = '✓ Biometric identity matched! Click to authorize ballot.';
+                            statusEl.style.color = 'var(--success-text)';
+                            verifyBtn.disabled = false;
 
-                                verifyBtn.onclick = async () => {
-                                    if (isVerifying) return;
-                                    isVerifying = true;
-                                    clearInterval(detectInterval);
+                            verifyBtn.onclick = async () => {
+                                if (isVerifying) return;
+                                isVerifying = true;
+                                clearInterval(detectInterval);
 
-                                    verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying with Security Service...';
-                                    verifyBtn.disabled = true;
-
-                                    try {
-                                        showSpinner("Verifying Facial Signature against Electoral Record...");
-                                        const descriptor = Array.from(detection.descriptor);
-                                        const authToken = localStorage.getItem('token');
-                                        if (!authToken) {
-                                            hideSpinner();
-                                            popup.remove();
-                                            if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
-                                            showToast('Session expired. Please log in again.', 'error');
-                                            setTimeout(() => window.location.href = '../login/login.html', 1500);
-                                            resolve(null);
-                                            return;
-                                        }
-
-                                        const res = await fetch('/api/voter/face-verify', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'Authorization': `Bearer ${authToken}`
-                                            },
-                                            body: JSON.stringify({ descriptor })
-                                        });
-
-                                        const data = await res.json();
-                                        hideSpinner();
-
-                                        popup.remove();
-                                        if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
-
-                                        if (!res.ok) {
-                                            showToast(data.message || 'Face verification mismatch', 'error');
-                                            resolve(null);
-                                        } else {
-                                            showToast('Biometric identity confirmed!', 'success');
-                                            resolve(data.biometricToken);
-                                        }
-                                    } catch (err) {
-                                        hideSpinner();
-                                        popup.remove();
-                                        if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
-                                        showToast('Network error during biometric verification: ' + err.message, 'error');
-                                        resolve(null);
-                                    }
-                                };
-                            } else {
-                                statusEl.textContent = 'Please align face center to camera';
-                                statusEl.style.color = 'var(--warning-text)';
+                                verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying with Security Service...';
                                 verifyBtn.disabled = true;
-                            }
+
+                                try {
+                                    showSpinner("Verifying Facial Signature against Electoral Record...");
+                                    const descriptor = Array.from(detection.descriptor);
+                                    const authToken = localStorage.getItem('token');
+                                    if (!authToken) {
+                                        hideSpinner();
+                                        popup.remove();
+                                        if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+                                        showToast('Session expired. Please log in again.', 'error');
+                                        setTimeout(() => window.location.href = '../login/login.html', 1500);
+                                        resolve(null);
+                                        return;
+                                    }
+
+                                    const res = await fetch('/api/voter/face-verify', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${authToken}`
+                                        },
+                                        body: JSON.stringify({ descriptor })
+                                    });
+
+                                    const data = await res.json();
+                                    hideSpinner();
+
+                                    popup.remove();
+                                    if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+
+                                    if (!res.ok) {
+                                        showToast(data.message || 'Face verification mismatch', 'error');
+                                        resolve(null);
+                                    } else {
+                                        showToast('Biometric identity confirmed!', 'success');
+                                        resolve(data.biometricToken);
+                                    }
+                                } catch (err) {
+                                    hideSpinner();
+                                    popup.remove();
+                                    if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+                                    showToast('Network error during biometric verification: ' + err.message, 'error');
+                                    resolve(null);
+                                }
+                            };
                         }
                     } else {
                         statusEl.textContent = 'Position face inside the camera frame';
@@ -415,7 +435,7 @@ function displayReceiptCard(receipt) {
             </div>
 
             <div class="receipt-qr-wrapper">
-                <i class="fas fa-qrcode" style="font-size: 4rem; color: #0F172A;"></i>
+                <i class="fas fa-qrcode" style="font-size: 4rem; color: #20251A;"></i>
             </div>
 
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 24px;">Verification Standard: <strong>SHA-256 Chained Commitment</strong></p>

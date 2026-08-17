@@ -77,13 +77,36 @@
 
             <main class="page-content">
                 <div class="section-card">
-                    <div style="position: relative; margin-bottom: 20px;">
-                        <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                        <input type="text" id="voterSearch" class="form-control" style="padding-left: 40px;" placeholder="Search voters by full name, ID, or registered email...">
+                    <div class="section-header">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <h3><i class="fas fa-id-badge" style="color: var(--primary);"></i> Citizen Electoral Roll</h3>
+                            <span class="status-badge live" id="voterCountBadge">0 Voters</span>
+                        </div>
+                        <div style="position: relative; min-width: 280px;">
+                            <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                            <input type="text" id="voterSearch" class="form-control" style="padding-left: 38px; font-size: 0.85rem;" placeholder="Search by citizen name, email, or ID...">
+                        </div>
                     </div>
 
-                    <div class="overview-list" id="votersContainer" style="box-shadow: none; border: none; padding: 0; margin: 0;">
-                        <!-- Injected by voters.js -->
+                    <div class="data-table-wrapper" id="votersTableWrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Citizen Name</th>
+                                    <th>Registered Email</th>
+                                    <th>National / Voter ID</th>
+                                    <th>Biometrics</th>
+                                    <th>Ballot Participation</th>
+                                </tr>
+                            </thead>
+                            <tbody id="votersTableBody">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading official voter records...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </main>
