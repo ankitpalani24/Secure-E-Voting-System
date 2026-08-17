@@ -747,3 +747,56 @@
         border-bottom: none;
     }
 }
+
+/* ==========================================================================
+   12. SKELETON LOADERS & EMPTY STATES
+   ========================================================================== */
+
+.skeleton {
+    background: linear-gradient(90deg, var(--surface-muted) 25%, #F6F7F2 50%, var(--surface-muted) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.5s infinite;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}
+
+@keyframes skeletonPulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.empty-state-box {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: var(--border-strong);
+    margin-bottom: 12px;
+}
+
+.empty-state-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.empty-state-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    max-width: 420px;
+    margin: 0 auto 16px auto;
+}
+
+/* Reduced Motion Preference for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

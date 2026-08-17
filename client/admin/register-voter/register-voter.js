@@ -61,6 +61,12 @@ if (closeModalCancelBtn && facePopup) {
     closeModalCancelBtn.onclick = closeFacePopup;
 }
 
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && facePopup && !facePopup.classList.contains('hidden')) {
+        closeFacePopup();
+    }
+});
+
 async function initFaceCapture() {
     videoEl = document.getElementById('video');
     const statusEl = document.getElementById('faceStatus');

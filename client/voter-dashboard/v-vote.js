@@ -151,13 +151,25 @@ function showVoteConfirmationModal(partyId, partyName, partySymbol, partyDesc) {
 
     document.body.appendChild(modal);
 
+    const handleReviewEscape = (e) => {
+        if (e.key === 'Escape') {
+            document.removeEventListener('keydown', handleReviewEscape);
+            modal.remove();
+            document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
+            updateStepper(1);
+        }
+    };
+    document.addEventListener('keydown', handleReviewEscape);
+
     document.getElementById('cancelVoteBtn').onclick = () => {
+        document.removeEventListener('keydown', handleReviewEscape);
         modal.remove();
         document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
         updateStepper(1);
     };
 
     document.getElementById('confirmVoteBtn').onclick = async () => {
+        document.removeEventListener('keydown', handleReviewEscape);
         modal.remove();
         updateStepper(3);
         await proceedWithBiometricsAndVote(partyId, partyName);
@@ -180,7 +192,7 @@ async function performFaceVerification() {
             <div class="review-modal-card" style="max-width: 440px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h3 style="font-size: 1.15rem; color: var(--text-primary);"><i class="fas fa-camera"></i> Biometric Identity Verification</h3>
-                    <button id="closeVerify" style="background:none; border:none; font-size: 1.5rem; color: var(--text-muted); cursor:pointer;">×</button>
+                    <button id="closeVerify" style="background:none; border:none; font-size: 1.5rem; color: var(--text-muted); cursor:pointer;" aria-label="Close verification modal">×</button>
                 </div>
                 
                 <div style="position: relative; width: 320px; height: 240px; margin: 0 auto 16px auto; border-radius: var(--radius-md); overflow: hidden; background-color: #000; border: 2px solid var(--border);">
@@ -202,11 +214,25 @@ async function performFaceVerification() {
         const statusEl = document.getElementById('verifyStatus');
         const verifyBtn = document.getElementById('verifyBtn');
 
-        document.getElementById('closeVerify').onclick = () => {
+        const cleanupVerifyModal = () => {
             popup.remove();
             if (videoEl && videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
             document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
             updateStepper(1);
+        };
+
+        const handleVerifyEscape = (e) => {
+            if (e.key === 'Escape') {
+                document.removeEventListener('keydown', handleVerifyEscape);
+                cleanupVerifyModal();
+                resolve(null);
+            }
+        };
+        document.addEventListener('keydown', handleVerifyEscape);
+
+        document.getElementById('closeVerify').onclick = () => {
+            document.removeEventListener('keydown', handleVerifyEscape);
+            cleanupVerifyModal();
             resolve(null);
         };
 
