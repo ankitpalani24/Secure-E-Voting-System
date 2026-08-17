@@ -2,31 +2,38 @@
  * SECUREVOTE SHARED CLIENT-SIDE AUTH & LAYOUT HELPER
  */
 
+function getPortalPrefix() {
+    const pathname = window.location.pathname.replace(/\\/g, '/');
+    if (pathname.includes('/admin/')) {
+        return '../../';
+    } else if (pathname.includes('/voter-dashboard/') || pathname.includes('/party-dashboard/') || pathname.includes('/login/')) {
+        return '../';
+    } else {
+        return '';
+    }
+}
+
 function checkAuth(requiredRole) {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-
-    // Calculate relative path to login based on nesting depth
-    const pathParts = window.location.pathname.replace(/\\/g, '/').split('/');
-    let loginPath = '../login/login.html';
-    if (window.location.pathname.includes('/admin/') || window.location.pathname.includes('/voter-dashboard/') || window.location.pathname.includes('/party-dashboard/')) {
-        loginPath = '../../login/login.html';
-        if (pathParts.length > 0 && pathParts[pathParts.length - 2] === 'client') {
-            loginPath = 'login/login.html';
-        }
-    }
+    const prefix = getPortalPrefix();
 
     if (!token) {
-        window.location.href = loginPath;
+        window.location.href = prefix ? `${prefix}login/login.html` : 'login/login.html';
         return false;
     }
 
     if (requiredRole && role && role !== requiredRole) {
         // Redirect to user's authorized portal
-        if (role === 'admin') window.location.href = '../../admin/dashboard/dashboard.html';
-        else if (role === 'voter') window.location.href = '../../voter-dashboard/v-dashboard.html';
-        else if (role === 'party') window.location.href = '../../party-dashboard/p-parties.html';
-        else window.location.href = loginPath;
+        if (role === 'admin') {
+            window.location.href = prefix ? `${prefix}admin/dashboard/dashboard.html` : 'admin/dashboard/dashboard.html';
+        } else if (role === 'voter') {
+            window.location.href = prefix ? `${prefix}voter-dashboard/v-dashboard.html` : 'voter-dashboard/v-dashboard.html';
+        } else if (role === 'party') {
+            window.location.href = prefix ? `${prefix}party-dashboard/p-parties.html` : 'party-dashboard/p-parties.html';
+        } else {
+            window.location.href = prefix ? `${prefix}login/login.html` : 'login/login.html';
+        }
         return false;
     }
 
@@ -39,14 +46,8 @@ function handleLogout() {
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
 
-    let loginPath = '../../login/login.html';
-    if (window.location.pathname.includes('/login/')) {
-        loginPath = 'login.html';
-    } else if (window.location.pathname.endsWith('/client/index.html') || window.location.pathname.endsWith('/client/')) {
-        loginPath = 'login/login.html';
-    }
-
-    window.location.href = loginPath;
+    const prefix = getPortalPrefix();
+    window.location.href = prefix ? `${prefix}login/login.html` : 'login/login.html';
 }
 
 // Attach event listeners on DOMContentLoaded
