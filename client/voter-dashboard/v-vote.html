@@ -19,12 +19,47 @@
     <header class="top-header">
         <div class="header-left">
             <h1>Citizen Portal</h1>
-            <p>Welcome, Voter</p>
+            <p>Official Ballot Casting & Verification</p>
         </div>
         <a href="../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
     </header>
 
     <main class="container">
+        <!-- 4-Step Voting Stepper -->
+        <div class="stepper" id="votingStepper">
+            <div class="step-item active" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-info">
+                    <span class="step-title">Select Party</span>
+                    <span class="step-subtitle">Choose candidate</span>
+                </div>
+            </div>
+            <div class="step-divider" id="divider1"></div>
+            <div class="step-item" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-info">
+                    <span class="step-title">Review Choice</span>
+                    <span class="step-subtitle">Confirm ballot</span>
+                </div>
+            </div>
+            <div class="step-divider" id="divider2"></div>
+            <div class="step-item" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-info">
+                    <span class="step-title">Face Verification</span>
+                    <span class="step-subtitle">Biometric match</span>
+                </div>
+            </div>
+            <div class="step-divider" id="divider3"></div>
+            <div class="step-item" id="step4">
+                <div class="step-number">4</div>
+                <div class="step-info">
+                    <span class="step-title">Receipt</span>
+                    <span class="step-subtitle">Cryptographic seal</span>
+                </div>
+            </div>
+        </div>
+
         <nav class="tab-nav">
             <a href="v-dashboard.html" class="tab"><i class="fas fa-id-card"></i> Voter Status</a>
             <a href="v-vote.html" class="tab active"><i class="fas fa-vote-yea"></i> Cast Ballot</a>
@@ -35,16 +70,19 @@
             <div class="vstat-card">
                 <div>
                     <h6 class="value" style="font-size: 1.25rem;">Electoral Status</h6>
-                    <span class="label">Ready to vote</span>
+                    <span class="label">Ready to cast ballot</span>
                 </div>
                 <div class="icon-box green"><i class="fas fa-check"></i></div>
             </div>
         </section>
 
         <section class="party-list">
-            <h3>Official Accredited Ballot Candidates</h3>
+            <h3>Accredited Ballot Candidates</h3>
             <!-- Party selection cards dynamically injected by v-vote.js -->
         </section>
+
+        <!-- Container for receipt display after voting -->
+        <div id="receiptContainer" class="hidden"></div>
     </main>
 
     <script src="../shared/spinner.js"></script>

@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="../shared/toast.css">
     <link rel="stylesheet" href="../shared/spinner.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -28,6 +30,22 @@
             <a href="v-vote.html" class="tab"><i class="fas fa-vote-yea"></i> Cast Ballot</a>
             <a href="v-result.html" class="tab active"><i class="fas fa-poll"></i> Election Results</a>
         </nav>
+
+        <!-- Visual Analytics Grid -->
+        <section class="charts-grid" id="chartsSection">
+            <div class="chart-card">
+                <h4><span><i class="fas fa-chart-pie" style="color: var(--primary);"></i> Vote Share Breakdown</span> <span id="voterTotalBadge" class="list-count blue-text">0 Ballots</span></h4>
+                <div class="chart-container">
+                    <canvas id="voterDoughnutChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h4><span><i class="fas fa-chart-bar" style="color: var(--success);"></i> Live Standings</span> <span class="list-count green-text">Encrypted Tally</span></h4>
+                <div class="chart-container">
+                    <canvas id="voterBarChart"></canvas>
+                </div>
+            </div>
+        </section>
 
         <section class="party-list">
             <h3>Certified Election Tally</h3>

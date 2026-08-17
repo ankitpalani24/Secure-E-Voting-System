@@ -1,9 +1,9 @@
 /* ==========================================================================
    SECURE ONLINE VOTING PLATFORM - UNIFIED DESIGN SYSTEM
-   Professional, Clean, Trustworthy Light Theme
+   Professional, Clean, Trustworthy Civic Service Theme
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
     /* Color System */
@@ -36,16 +36,18 @@
     /* Typography */
     --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     
-    /* Elevation & Shadows (Clean & Subtle) */
+    /* Elevation & Shadows */
     --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
     
-    /* Border Radius (Refined, Modern) */
+    /* Border Radius */
     --radius-sm: 6px;
     --radius-md: 8px;
     --radius-lg: 12px;
+    --radius-xl: 16px;
     --radius-full: 9999px;
     
     /* Spacing System (8px Grid) */
@@ -239,6 +241,7 @@ a:hover {
 .stat-card:hover, .vstat-card:hover {
     border-color: #CBD5E1;
     box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .stat-card .label, .vstat-card .label {
@@ -272,6 +275,409 @@ a:hover {
 .icon-box.green { background-color: var(--success-light); color: var(--success); }
 .icon-box.orange { background-color: var(--warning-light); color: var(--warning); }
 .icon-box.purple { background-color: #F3E8FF; color: #7E22CE; }
+
+/* ==========================================================================
+   FEATURE 1: 4-STEP VOTING PROGRESS STEPPER
+   ========================================================================== */
+
+.stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-5) var(--space-8);
+    margin-bottom: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    position: relative;
+    color: var(--text-muted);
+}
+
+.step-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 2px solid var(--border);
+    transition: all 0.25s ease;
+}
+
+.step-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.step-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.step-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.step-item.active .step-number {
+    background-color: var(--primary);
+    color: #FFFFFF;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+.step-item.active .step-title {
+    color: var(--primary);
+}
+
+.step-item.completed .step-number {
+    background-color: var(--success);
+    color: #FFFFFF;
+    border-color: var(--success);
+}
+
+.step-item.completed .step-title {
+    color: var(--text-primary);
+}
+
+.step-divider {
+    flex: 1;
+    height: 2px;
+    background-color: var(--border);
+    margin: 0 var(--space-4);
+}
+
+.step-divider.active {
+    background-color: var(--primary);
+}
+
+/* ==========================================================================
+   FEATURE 2: VOTE REVIEW & CONFIRMATION MODAL
+   ========================================================================== */
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.review-modal-card {
+    background-color: var(--surface);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    max-width: 520px;
+    width: 100%;
+    padding: var(--space-8);
+    box-shadow: var(--shadow-xl);
+    text-align: center;
+}
+
+.review-party-box {
+    background-color: var(--surface-secondary);
+    border: 2px dashed #CBD5E1;
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin: var(--space-5) 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+}
+
+.review-party-symbol {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.review-party-details {
+    text-align: left;
+}
+
+.warning-callout {
+    background-color: var(--warning-light);
+    border: 1px solid #FCD34D;
+    color: var(--warning-text);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+}
+
+/* ==========================================================================
+   FEATURE 3: CRYPTOGRAPHIC VOTER RECEIPT CARD
+   ========================================================================== */
+
+.receipt-card {
+    background-color: var(--surface);
+    border: 2px solid var(--success);
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-lg);
+    max-width: 600px;
+    margin: var(--space-6) auto;
+    text-align: center;
+}
+
+.receipt-header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    background-color: var(--success-light);
+    color: var(--success-text);
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-4);
+}
+
+.receipt-hash-container {
+    background-color: #0F172A;
+    color: #38BDF8;
+    font-family: monospace;
+    font-size: 0.85rem;
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    margin: var(--space-4) 0;
+    word-break: break-all;
+    user-select: all;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+}
+
+.copy-hash-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #FFFFFF;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+}
+
+.copy-hash-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.qr-code-placeholder {
+    width: 120px;
+    height: 120px;
+    margin: var(--space-4) auto;
+    background-color: #FFFFFF;
+    border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   FEATURE 4: CHARTS & VISUAL ANALYTICS
+   ========================================================================== */
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    margin-bottom: var(--space-6);
+}
+
+.chart-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.chart-card h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chart-container {
+    position: relative;
+    height: 260px;
+    width: 100%;
+}
+
+/* ==========================================================================
+   FEATURE 5: AUDIT LOG EXPLORER & VERIFIER
+   ========================================================================== */
+
+.audit-explorer {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-6);
+}
+
+.audit-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
+}
+
+.audit-table-wrapper {
+    overflow-x: auto;
+}
+
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.audit-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+}
+
+.audit-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #F1F5F9;
+    color: var(--text-primary);
+}
+
+.audit-table tr:hover td {
+    background-color: #F8FAFC;
+}
+
+.chain-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: monospace;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+}
+
+.btn-verify-chain {
+    background-color: #0F172A;
+    color: #38BDF8;
+    border: 1px solid #1E293B;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-verify-chain:hover {
+    background-color: #1E293B;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+
+/* ==========================================================================
+   FEATURE 6: ELECTION COUNTDOWN BANNER
+   ========================================================================== */
+
+.election-banner {
+    background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+    color: #FFFFFF;
+    border-radius: var(--radius-lg);
+    padding: var(--space-5) var(--space-6);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+    box-shadow: var(--shadow-md);
+}
+
+.election-banner h2 {
+    color: #FFFFFF;
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+}
+
+.election-banner p {
+    color: #BFDBFE;
+    font-size: 0.85rem;
+}
+
+.countdown-box {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+}
+
+.countdown-pill {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    text-align: center;
+    min-width: 54px;
+}
+
+.countdown-pill span {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.countdown-pill small {
+    font-size: 0.65rem;
+    color: #DBEAFE;
+    text-transform: uppercase;
+}
 
 /* ==========================================================================
    COMPONENTS: LISTS, OVERVIEW & TABLES
@@ -609,6 +1015,12 @@ textarea {
     opacity: 0.7;
 }
 
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
 /* ==========================================================================
    RESPONSIVE DESIGN (Mobile to Desktop)
    ========================================================================== */
@@ -638,7 +1050,7 @@ textarea {
         width: 100%;
     }
 
-    .row {
+    .row, .charts-grid {
         grid-template-columns: 1fr;
     }
 
@@ -648,5 +1060,21 @@ textarea {
 
     .stats-grid {
         grid-template-columns: 1fr;
+    }
+
+    .stepper {
+        flex-direction: column;
+        gap: var(--space-4);
+        align-items: flex-start;
+    }
+
+    .step-divider {
+        display: none;
+    }
+
+    .election-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-4);
     }
 }

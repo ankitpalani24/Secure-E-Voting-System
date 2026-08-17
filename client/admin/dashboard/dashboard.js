@@ -1,142 +1,213 @@
-let data = {
-    votersCount: 0,
-    votesCount: 0,
-    partiesCount: 0
-};
+let allAuditLogs = [];
 
-// Load live stats from API
-async function loadDashboardData() {
+// ================== ELECTION COUNTDOWN CLOCK ==================
+function startElectionClock() {
+    let remainingSeconds = 12 * 3600 + 45 * 60; // 12h 45m simulation
+    
+    setInterval(() => {
+        if (remainingSeconds <= 0) return;
+        remainingSeconds--;
+
+        const hours = Math.floor(remainingSeconds / 3600);
+        const mins = Math.floor((remainingSeconds % 3600) / 60);
+        const secs = remainingSeconds % 60;
+
+        const hEl = document.getElementById('timerHours');
+        const mEl = document.getElementById('timerMins');
+        const sEl = document.getElementById('timerSecs');
+
+        if (hEl) hEl.textContent = String(hours).padStart(2, '0');
+        if (mEl) mEl.textContent = String(mins).padStart(2, '0');
+        if (sEl) sEl.textContent = String(secs).padStart(2, '0');
+    }, 1000);
+}
+
+// ================== AUDIT LOG EXPLORER ==================
+async function loadAuditLogs() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const res = await fetch('/api/admin/audit-logs?limit=25', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            allAuditLogs = data.logs || [];
+            renderAuditLogs(allAuditLogs);
+        }
+    } catch (err) {
+        console.error('Audit log fetch error:', err);
+    }
+}
+
+function renderAuditLogs(logs) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!Array.isArray(logs) || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No audit events recorded yet.</td></tr>';
+        return;
+    }
+
+    logs.forEach(log => {
+        const tr = document.createElement('tr');
+
+        const timeTd = document.createElement('td');
+        timeTd.textContent = log.time ? new Date(log.time).toLocaleTimeString() : 'N/A';
+        timeTd.style.whiteSpace = 'nowrap';
+
+        const catTd = document.createElement('td');
+        const catBadge = document.createElement('span');
+        catBadge.className = 'list-count ' + (log.category === 'SECURITY_EVENT' ? 'orange-text' : 'blue-text');
+        catBadge.textContent = log.category || 'AUDIT_EVENT';
+        catTd.appendChild(catBadge);
+
+        const actionTd = document.createElement('td');
+        actionTd.textContent = log.action || 'EVENT';
+        actionTd.style.fontWeight = '600';
+
+        const roleTd = document.createElement('td');
+        roleTd.textContent = log.userRole || 'system';
+        roleTd.style.textTransform = 'capitalize';
+
+        const hashTd = document.createElement('td');
+        const hashBadge = document.createElement('span');
+        hashBadge.className = 'chain-badge';
+        const hashStr = log.currentHash ? log.currentHash.substring(0, 16) + '...' : 'Genesis';
+        hashBadge.textContent = hashStr;
+        hashBadge.title = log.currentHash || 'Genesis Block';
+        hashTd.appendChild(hashBadge);
+
+        tr.appendChild(timeTd);
+        tr.appendChild(catTd);
+        tr.appendChild(actionTd);
+        tr.appendChild(roleTd);
+        tr.appendChild(hashTd);
+
+        tbody.appendChild(tr);
+    });
+}
+
+// ================== AUDIT CHAIN VERIFIER ==================
+async function verifyAuditChain() {
+    const token = localStorage.getItem('token');
+    const banner = document.getElementById('chainVerificationBanner');
+    const btn = document.getElementById('verifyChainBtn');
+    if (!banner || !btn) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying SHA-256 Chain...';
+
+    try {
+        const res = await fetch('/api/admin/audit-verify', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        banner.className = '';
+        if (data.valid) {
+            banner.style.backgroundColor = 'var(--success-light)';
+            banner.style.color = 'var(--success-text)';
+            banner.style.border = '1px solid #86EFAC';
+            banner.innerHTML = `<i class="fas fa-check-circle"></i> <strong>Cryptographic Chain Intact:</strong> Validated all ${data.totalRecords || 0} audit records. Zero tampering or sequence breaks detected.`;
+            showToast('Audit hash chain verified: 100% intact!', 'success');
+        } else {
+            banner.style.backgroundColor = 'var(--danger-light)';
+            banner.style.color = 'var(--danger-text)';
+            banner.style.border = '1px solid #FCA5A5';
+            banner.innerHTML = `<i class="fas fa-exclamation-circle"></i> <strong>Integrity Alert:</strong> Chain break detected at record #${data.brokenAt}. Possible retroactive modification.`;
+            showToast('Audit integrity warning!', 'error');
+        }
+    } catch (err) {
+        showToast('Chain verification network error: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-shield-alt"></i> Verify Hash Chain';
+    }
+}
+
+// ================== DASHBOARD STATS ==================
+async function loadDashboardStats() {
     const token = localStorage.getItem('token');
     if (!token) return window.location.href = '../../login/login.html';
 
-    const statsSection = document.querySelector('.stats-grid') || document.body;
-    // The loading text wipe has been removed to preserve the stat-card HTML elements
-    
     try {
         const res = await fetch('/api/admin/stats', {
             headers: { Authorization: `Bearer ${token}` }
         });
+        if (!res.ok) throw new Error("Failed to load statistics");
 
-        if (!res.ok) {
-            if (res.status === 401 || res.status === 403) {
-                localStorage.removeItem('token');
-                window.location.href = '../../login/login.html';
-                return;
-            }
-            throw new Error(`API returned ${res.status}`);
+        const data = await res.json();
+
+        // 1. Update Stat Cards
+        const statCards = document.querySelectorAll('.stat-card .value');
+        if (statCards.length >= 3) {
+            statCards[0].textContent = data.votersCount || 0;
+            statCards[1].textContent = data.votesCount || 0;
+            statCards[2].textContent = data.partiesCount || 0;
         }
 
-        const stats = await res.json();
-        data = stats;
-        animateCounters();
-    } catch (e) {
-        statsSection.innerHTML = `<div style="text-align:center; padding: 20px;">
-            <h3 style="color: red;">Error Loading Stats</h3>
-            <p>${e.message}</p>
-            <p>If the error is "Failed to fetch", please try a <strong>hard refresh (Ctrl + F5)</strong>. Your browser might still be using the cached older file!</p>
-        </div>`;
-        console.error('Dashboard stats error:', e);
-    }
-}
+        // 2. Update Turnout Progress Bar
+        const votersCount = data.votersCount || 0;
+        const votesCount = data.votesCount || 0;
+        const turnoutPct = votersCount > 0 ? ((votesCount / votersCount) * 100).toFixed(1) : 0;
 
-// Animate counters
-function animateCounters() {
-    const values = document.querySelectorAll('.stat-card .value');
-    const labels = ['votersCount', 'votesCount', 'partiesCount'];
-    
-    values.forEach((value, index) => {
-        const target = data[labels[index]];
-        let current = 0;
-        const increment = target / 100;
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                value.textContent = target;
-                clearInterval(timer);
-            } else {
-                value.textContent = Math.floor(current);
-            }
-        }, 20);
-    });
-    
-    // Update System Overview List
-    const listCounts = document.querySelectorAll('.overview-list .list-count');
-    if (listCounts.length >= 3) {
-        listCounts[0].textContent = data.votersCount || 0;
-        listCounts[1].textContent = data.votesCount || 0;
-        listCounts[2].textContent = Math.max(0, (data.votersCount || 0) - (data.votesCount || 0));
-    }
-    
-    updateNavCounts();
-}
+        const turnoutText = document.getElementById('turnoutPercentage');
+        const turnoutBar = document.getElementById('turnoutProgressBar');
 
-// Update nav counts
-function updateNavCounts() {
-    const voterTab = document.querySelector('a[href*="/voters/"]');
-    if (voterTab) voterTab.innerHTML = '<i class="fas fa-users"></i> Voters (' + data.votersCount + ')';
-    
-    const partyTab = document.querySelector('a[href*="/parties/"]');
-    if (partyTab) partyTab.innerHTML = '<i class="fas fa-building"></i> Parties (' + data.partiesCount + ')';
-}
+        if (turnoutText) turnoutText.textContent = `${turnoutPct}% Turnout (${votesCount} / ${votersCount})`;
+        if (turnoutBar) turnoutBar.style.width = `${Math.min(turnoutPct, 100)}%`;
 
-// Hover effects
-document.addEventListener('DOMContentLoaded', () => {
-    const cards = document.querySelectorAll(".stat-card");
-    cards.forEach(card => {
-        card.addEventListener("mouseenter", () => {
-            card.style.transform = "scale(1.05)";
-        });
-        card.addEventListener("mouseleave", () => {
-            card.style.transform = "scale(1)";
-        });
-    });
-});
-
-const logoutBtn = document.querySelector(".logout-btn");
-if (logoutBtn) {
-    logoutBtn.addEventListener("mouseover", () => {
-        logoutBtn.style.color = "#ff0000";
-        logoutBtn.style.transform = "scale(1.2)";
-    });
-    logoutBtn.addEventListener("mouseout", () => {
-        logoutBtn.style.color = "inherit";
-        logoutBtn.style.transform = "scale(1)";
-    });
-}
-
-// Initialize
-loadDashboardData();
-
-// ================== REAL-TIME WEBSOCKETS ==================
-const socket = window.io ? window.io(window.location.origin) : null;
-
-if (socket) {
-    socket.on('newVote', (voteData) => {
-        console.log('Real-time vote received:', voteData);
-        
-        // Increment global counter
-        data.votesCount++;
-        
-        // Update Total Votes card (Index 1)
-        const votesValueEl = document.querySelectorAll('.stat-card .value')[1];
-        if (votesValueEl) {
-            votesValueEl.textContent = data.votesCount;
-            
-            // Flash animation
-            votesValueEl.style.transition = 'color 0.3s, transform 0.3s';
-            votesValueEl.style.color = '#10b981'; // green flash
-            votesValueEl.style.transform = 'scale(1.2)';
-            setTimeout(() => {
-                votesValueEl.style.color = 'inherit';
-                votesValueEl.style.transform = 'scale(1)';
-            }, 600);
-        }
-        
-        // Update List counts
+        // 3. Update Overview List Counts
         const listCounts = document.querySelectorAll('.overview-list .list-count');
         if (listCounts.length >= 3) {
-            listCounts[1].textContent = data.votesCount;
-            listCounts[2].textContent = Math.max(0, data.votersCount - data.votesCount);
+            listCounts[0].textContent = votersCount;
+            listCounts[1].textContent = votesCount;
+            listCounts[2].textContent = Math.max(0, votersCount - votesCount);
         }
+
+        // 4. Update Nav Tab Counts
+        const voterTab = document.querySelector('a[href*="/voters/"]');
+        if (voterTab) voterTab.innerHTML = `<i class="fas fa-users"></i> Voters (${votersCount})`;
+
+        const partyTab = document.querySelector('a[href*="/parties/"]');
+        if (partyTab) partyTab.innerHTML = `<i class="fas fa-building"></i> Parties (${data.partiesCount || 0})`;
+
+    } catch (err) {
+        console.error('Stats error:', err);
+    }
+}
+
+// Initializations
+loadDashboardStats();
+loadAuditLogs();
+startElectionClock();
+
+// Event Listeners
+const verifyBtn = document.getElementById('verifyChainBtn');
+if (verifyBtn) verifyBtn.onclick = verifyAuditChain;
+
+const filterSelect = document.getElementById('auditCategoryFilter');
+if (filterSelect) {
+    filterSelect.onchange = () => {
+        const cat = filterSelect.value;
+        if (cat === 'ALL') {
+            renderAuditLogs(allAuditLogs);
+        } else {
+            renderAuditLogs(allAuditLogs.filter(l => l.category === cat));
+        }
+    };
+}
+
+// Real-time socket updates
+const socket = window.io ? window.io(window.location.origin) : null;
+if (socket) {
+    socket.on('newVote', () => {
+        loadDashboardStats();
+        loadAuditLogs();
     });
 }

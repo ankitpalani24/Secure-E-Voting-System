@@ -4,12 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Election Results - Secure E-Voting Platform</title>
+    <title>Election Results & Visual Analytics - Secure E-Voting Platform</title>
     <link rel="stylesheet" href="../../styles/main.css">
     <link rel="stylesheet" href="results.css">
     <link rel="stylesheet" href="../../shared/toast.css">
     <link rel="stylesheet" href="../../shared/spinner.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js for interactive analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -17,7 +19,7 @@
     <header class="top-header">
         <div class="header-left">
             <h1>Admin Dashboard</h1>
-            <p>Cryptographic Tally & Election Results</p>
+            <p>Live Cryptographic Results & Visual Tally Analytics</p>
         </div>
         <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
     </header>
@@ -31,6 +33,22 @@
             <a href="../../admin/register-voter/register-voter.html" class="tab"><i class="fas fa-user-plus"></i> Register Voter</a>
             <a href="../../admin/register-party/register-party.html" class="tab"><i class="fas fa-plus"></i> Register Party</a>
         </nav>
+
+        <!-- Visual Analytics Grid -->
+        <section class="charts-grid" id="chartsSection">
+            <div class="chart-card">
+                <h4><span><i class="fas fa-chart-pie" style="color: var(--primary);"></i> Vote Share Distribution</span> <span id="totalVotesBadge" class="list-count blue-text">0 Ballots</span></h4>
+                <div class="chart-container">
+                    <canvas id="voteDoughnutChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h4><span><i class="fas fa-chart-bar" style="color: var(--success);"></i> Candidate Vote Count</span> <span class="list-count green-text">Certified</span></h4>
+                <div class="chart-container">
+                    <canvas id="voteBarChart"></canvas>
+                </div>
+            </div>
+        </section>
 
         <section class="party-list">
             <h3>Certified Ballot Box Tally</h3>

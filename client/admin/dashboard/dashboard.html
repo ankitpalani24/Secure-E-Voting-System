@@ -17,12 +17,34 @@
     <header class="top-header">
         <div class="header-left">
             <h1>Admin Dashboard</h1>
-            <p>Electoral Operations & System Management</p>
+            <p>Electoral Operations & Cryptographic Security Control Center</p>
         </div>
         <a href="../../login/login.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
     </header>
 
     <main class="container">
+        <!-- Live Election Status & Countdown Banner -->
+        <div class="election-banner">
+            <div>
+                <h2>🏛️ National General Election 2026</h2>
+                <p><i class="fas fa-circle" style="color: #4ADE80; font-size: 0.65rem;"></i> Phase: <strong>VOTING (ACTIVE)</strong> | Multi-District Ballot Box</p>
+            </div>
+            <div class="countdown-box">
+                <div class="countdown-pill">
+                    <span id="timerHours">12</span>
+                    <small>Hours</small>
+                </div>
+                <div class="countdown-pill">
+                    <span id="timerMins">45</span>
+                    <small>Mins</small>
+                </div>
+                <div class="countdown-pill">
+                    <span id="timerSecs">00</span>
+                    <small>Secs</small>
+                </div>
+            </div>
+        </div>
+
         <nav class="tab-nav">
             <a href="../../admin/dashboard/dashboard.html" id="dashboardactive" class="tab active"><i class="fas fa-chart-line"></i> Overview</a>
             <a href="../../admin/voters/voters.html" class="tab"><i class="fas fa-users"></i> Voters (0)</a>
@@ -49,35 +71,86 @@
             </div>
             <div class="stat-card">
                 <div>
-                    <span class="label">Registered Parties</span>
+                    <span class="label">Accredited Parties</span>
                     <h2 class="value">0</h2>
                 </div>
                 <div class="icon-box purple"><i class="fas fa-landmark"></i></div>
             </div>
         </section>
 
+        <!-- Turnout Progress Gauge -->
+        <div class="card" style="margin-bottom: var(--space-6); max-width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+                <strong style="color: var(--text-primary); font-size: 0.95rem;"><i class="fas fa-chart-pie" style="color: var(--primary);"></i> Voter Turnout Gauge</strong>
+                <span id="turnoutPercentage" class="list-count blue-text" style="font-size: 0.9rem;">0.0% Participated</span>
+            </div>
+            <div style="width: 100%; height: 12px; background-color: var(--surface-secondary); border-radius: var(--radius-full); overflow: hidden; border: 1px solid var(--border);">
+                <div id="turnoutProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #2563EB, #16A34A); transition: width 0.5s ease;"></div>
+            </div>
+        </div>
+
         <section class="overview-list">
-            <h3>System Status & Activity</h3>
+            <h3>System Status & Metrics</h3>
             <div class="list-item">
                 <div class="list-info">
                     <strong>Registered Voters</strong>
-                    <p>Total eligible registered citizens in the system</p>
+                    <p>Total eligible citizens registered with biometric embeddings</p>
                 </div>
                 <span class="list-count blue-text">0</span>
             </div>
             <div class="list-item">
                 <div class="list-info">
                     <strong>Ballots Recorded</strong>
-                    <p>Total anonymous votes securely committed to the ballot box</p>
+                    <p>Total anonymous votes securely committed to the decentralized ballot box</p>
                 </div>
                 <span class="list-count green-text">0</span>
             </div>
             <div class="list-item">
                 <div class="list-info">
-                    <strong>Turnout Remaining</strong>
-                    <p>Eligible voters who have not yet participated</p>
+                    <strong>Pending Participation</strong>
+                    <p>Eligible citizens who have not yet cast their ballot</p>
                 </div>
                 <span class="list-count orange-text">0</span>
+            </div>
+        </section>
+
+        <!-- Audit Log Explorer & SHA-256 Chain Verifier -->
+        <section class="audit-explorer">
+            <div class="audit-toolbar">
+                <div>
+                    <h3 style="border: none; margin: 0; padding: 0;">🛡️ Cryptographic Audit Log Explorer</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Immutable SHA-256 linear hash-chained election ledger</p>
+                </div>
+                <div style="display: flex; gap: var(--space-3); align-items: center;">
+                    <select id="auditCategoryFilter" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">
+                        <option value="ALL">All Categories</option>
+                        <option value="AUDIT_EVENT">Audit Events</option>
+                        <option value="SECURITY_EVENT">Security Events</option>
+                        <option value="SYSTEM_EVENT">System Events</option>
+                    </select>
+                    <button id="verifyChainBtn" class="btn-verify-chain">
+                        <i class="fas fa-shield-alt"></i> Verify Hash Chain
+                    </button>
+                </div>
+            </div>
+
+            <div id="chainVerificationBanner" class="hidden" style="margin-bottom: var(--space-4); padding: 12px 16px; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 500;"></div>
+
+            <div class="audit-table-wrapper">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Category</th>
+                            <th>Action</th>
+                            <th>Role</th>
+                            <th>Cryptographic Hash</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading audit logs...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </section>
     </main>
