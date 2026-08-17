@@ -16,8 +16,8 @@ function renderPartyCharts(parties, voteCounts) {
     if (!doughnutCtx || !barCtx || !window.Chart) return;
 
     const palette = [
-        '#1D4ED8', '#16A34A', '#D97706', '#7E22CE', '#0284C7',
-        '#DC2626', '#EA580C', '#4F46E5', '#0D9488', '#E11D48'
+        '#667A3E', '#4F612F', '#8A9B5A', '#2F7D32', '#C58A00',
+        '#2E6B8E', '#7E22CE', '#C0392B', '#556B2F', '#3B7A57'
     ];
 
     const labels = parties.map(p => `${p.partyName} (${p.symbol || '🗳️'})`);
@@ -74,7 +74,7 @@ function renderPartyCharts(parties, voteCounts) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: { beginAtZero: true, ticks: { precision: 0, font: { family: 'Inter' } }, grid: { color: '#F1F5F9' } },
+                y: { beginAtZero: true, ticks: { precision: 0, font: { family: 'Inter' } }, grid: { color: '#EEF0E8' } },
                 x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } }
             },
             plugins: {
@@ -136,7 +136,7 @@ async function loadPartyResults() {
             labelSpan.textContent = `${party.partyName || 'Unknown'} (${party.symbol || 'N/A'}) `;
 
             const badge = document.createElement('strong');
-            badge.style.cssText = 'color: var(--primary); background: var(--primary-light); padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-left: 8px; font-weight: 600;';
+            badge.style.cssText = 'color: var(--primary-dark); background: var(--primary-subtle); padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-left: 8px; font-weight: 600;';
             badge.textContent = rankBadge;
             labelSpan.appendChild(badge);
 

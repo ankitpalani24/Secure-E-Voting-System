@@ -1,3 +1,12 @@
+// Mobile Sidebar Toggle
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const appSidebar = document.getElementById('appSidebar');
+if (mobileMenuBtn && appSidebar) {
+    mobileMenuBtn.addEventListener('click', () => {
+        appSidebar.classList.toggle('open');
+    });
+}
+
 let voterDoughnutInstance = null;
 let voterBarInstance = null;
 
@@ -7,8 +16,8 @@ function renderVoterCharts(parties, voteCounts) {
     if (!doughnutCtx || !barCtx || !window.Chart) return;
 
     const palette = [
-        '#2563EB', '#16A34A', '#D97706', '#7E22CE', '#0284C7',
-        '#DC2626', '#EA580C', '#4F46E5', '#0D9488', '#E11D48'
+        '#667A3E', '#4F612F', '#8A9B5A', '#2F7D32', '#C58A00',
+        '#2E6B8E', '#7E22CE', '#C0392B', '#556B2F', '#3B7A57'
     ];
 
     const labels = parties.map(p => `${p.partyName} (${p.symbol || '🗳️'})`);
@@ -65,7 +74,7 @@ function renderVoterCharts(parties, voteCounts) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: { beginAtZero: true, ticks: { precision: 0, font: { family: 'Inter' } }, grid: { color: '#F1F5F9' } },
+                y: { beginAtZero: true, ticks: { precision: 0, font: { family: 'Inter' } }, grid: { color: '#EEF0E8' } },
                 x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } }
             },
             plugins: {
@@ -75,41 +84,33 @@ function renderVoterCharts(parties, voteCounts) {
     });
 }
 
-// Load election results for voter
+// Load results from API
 async function loadVoterResults() {
     const token = localStorage.getItem('token');
-    
-    try {
-        const userName = localStorage.getItem('userName') || 'Voter';
-        const headerP = document.querySelector('.header-left p');
-        if (headerP) headerP.textContent = `Welcome, ${userName}`;
+    if (!token) return window.location.href = '../login/login.html';
 
+    try {
         const res = await fetch('/api/results', {
             headers: { Authorization: `Bearer ${token}` }
         });
         const results = await res.json();
 
-        const partyList = document.querySelector('.party-list');
-        partyList.innerHTML = '';
-        const heading = document.createElement('h3');
-        heading.textContent = 'Certified Election Tally :';
-        partyList.appendChild(heading);
+        const container = document.getElementById('voterResultsContainer');
+        if (!container) return;
+        container.innerHTML = '';
 
         if (!Array.isArray(results) || results.length === 0) {
-            const noResults = document.createElement('p');
-            noResults.textContent = 'No election results recorded yet.';
-            partyList.appendChild(noResults);
+            container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">No certified election results recorded in the ballot box yet.</p>';
             const chartsSec = document.getElementById('chartsSection');
             if (chartsSec) chartsSec.style.display = 'none';
             return;
         }
 
-        // Sort results by total votes descending
         const sortedResults = results.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
         const totalVotesCount = sortedResults.reduce((sum, p) => sum + (p.totalVotes || 0), 0);
 
         const totalBadge = document.getElementById('voterTotalBadge');
-        if (totalBadge) totalBadge.textContent = `${totalVotesCount} Ballots Cast`;
+        if (totalBadge) totalBadge.textContent = `${totalVotesCount.toLocaleString()} Ballots Cast`;
 
         const chartsSec = document.getElementById('chartsSection');
         if (chartsSec) chartsSec.style.display = 'grid';
@@ -127,6 +128,7 @@ async function loadVoterResults() {
 
             const card = document.createElement('div');
             card.className = 'stat-card';
+            card.style.marginBottom = '12px';
 
             const textDiv = document.createElement('div');
             const labelSpan = document.createElement('span');
@@ -134,39 +136,38 @@ async function loadVoterResults() {
             labelSpan.textContent = `${party.partyName || 'Unknown'} (${party.symbol || 'N/A'}) `;
 
             const badge = document.createElement('strong');
-            badge.style.cssText = 'color: var(--primary); background: var(--primary-light); padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-left: 8px; font-weight: 600;';
+            badge.style.cssText = 'color: var(--primary-dark); background: var(--primary-subtle); padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-left: 8px; font-weight: 600;';
             badge.textContent = rankBadge;
             labelSpan.appendChild(badge);
 
             const valueH2 = document.createElement('h2');
             valueH2.className = 'value';
-            valueH2.textContent = `${party.totalVotes || 0} Votes (${percentage}%)`;
+            valueH2.textContent = `${(party.totalVotes || 0).toLocaleString()} Votes (${percentage}%)`;
 
             textDiv.appendChild(labelSpan);
             textDiv.appendChild(valueH2);
 
             const iconBox = document.createElement('div');
-            iconBox.className = rank === 1 ? 'icon-box green' : 'icon-box blue';
+            iconBox.className = rank === 1 ? 'icon-box green' : 'icon-box purple';
             const icon = document.createElement('i');
-            icon.className = rank === 1 ? 'fas fa-trophy' : 'fas fa-vote-yea';
+            icon.className = rank === 1 ? 'fas fa-trophy' : 'fas fa-landmark';
             iconBox.appendChild(icon);
 
             card.appendChild(textDiv);
             card.appendChild(iconBox);
-            partyList.appendChild(card);
+            container.appendChild(card);
         });
     } catch (err) {
         console.error('Voter Results error:', err);
     }
 }
 
-loadVoterResults();
-
-// ================== REAL-TIME WEBSOCKETS ==================
+// WebSocket listener
 const socket = window.io ? window.io(window.location.origin) : null;
-
 if (socket) {
     socket.on('newVote', () => {
         loadVoterResults();
     });
 }
+
+loadVoterResults();

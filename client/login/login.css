@@ -1,6 +1,6 @@
 /* ==========================================================================
    SECUREVOTE AUTHENTICATION SCREEN
-   Two-Column Professional Layout
+   Two-Column Professional Olive Layout
    ========================================================================== */
 
 .login-layout {
@@ -10,10 +10,10 @@
     background-color: var(--background);
 }
 
-/* Left Hero Column */
+/* Left Hero Column (Olive Green) */
 .login-hero-panel {
     flex: 1;
-    background: linear-gradient(145deg, #1E3A8A 0%, #1D4ED8 100%);
+    background: linear-gradient(145deg, #4F612F 0%, #667A3E 100%);
     color: #FFFFFF;
     padding: 60px 48px;
     display: flex;
@@ -44,8 +44,8 @@
 .hero-brand .brand-icon {
     width: 44px;
     height: 44px;
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
@@ -74,7 +74,7 @@
 }
 
 .hero-content p {
-    color: #DBEAFE;
+    color: #E4E8DC;
     font-size: 1rem;
     line-height: 1.6;
     margin-bottom: 32px;
@@ -95,14 +95,14 @@
 .security-icon {
     width: 36px;
     height: 36px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.18);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1rem;
     flex-shrink: 0;
-    color: #93C5FD;
+    color: #DDE2D3;
 }
 
 .security-item strong {
@@ -115,7 +115,7 @@
 
 .security-item p {
     font-size: 0.82rem;
-    color: #BFDBFE;
+    color: #DDE2D3;
     margin: 0;
     line-height: 1.4;
 }
@@ -124,8 +124,8 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.8rem;
-    color: #93C5FD;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    color: #DDE2D3;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
     padding-top: 20px;
 }
 
@@ -168,7 +168,7 @@
 .role-selector-tabs {
     display: flex;
     gap: 6px;
-    background-color: var(--surface-secondary);
+    background-color: var(--surface-muted);
     padding: 4px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
@@ -198,7 +198,7 @@
 
 .role-tab.active {
     background-color: var(--surface);
-    color: var(--primary);
+    color: var(--primary-dark);
     box-shadow: var(--shadow-sm);
 }
 
@@ -240,7 +240,7 @@
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    background-color: var(--surface-secondary);
+    background-color: var(--surface-muted);
     border: 1px solid var(--border);
     padding: 12px 14px;
     border-radius: var(--radius-md);
@@ -251,7 +251,7 @@
 }
 
 .auth-security-notice i {
-    color: var(--info);
+    color: var(--primary);
     margin-top: 2px;
     flex-shrink: 0;
 }

@@ -1,26 +1,33 @@
+// Mobile Sidebar Toggle
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const appSidebar = document.getElementById('appSidebar');
+if (mobileMenuBtn && appSidebar) {
+    mobileMenuBtn.addEventListener('click', () => {
+        appSidebar.classList.toggle('open');
+    });
+}
+
 let doughnutChartInstance = null;
 let barChartInstance = null;
 
-// Render Chart.js Analytics
-function renderCharts(parties, voteCounts) {
+// Initialize & render Chart.js analytics
+function renderAnalyticsCharts(parties, voteCounts) {
     const doughnutCtx = document.getElementById('voteDoughnutChart');
     const barCtx = document.getElementById('voteBarChart');
     if (!doughnutCtx || !barCtx || !window.Chart) return;
 
     const palette = [
-        '#2563EB', '#16A34A', '#D97706', '#7E22CE', '#0284C7',
-        '#DC2626', '#EA580C', '#4F46E5', '#0D9488', '#E11D48'
+        '#667A3E', '#4F612F', '#8A9B5A', '#2F7D32', '#C58A00',
+        '#2E6B8E', '#7E22CE', '#C0392B', '#556B2F', '#3B7A57'
     ];
 
     const labels = parties.map(p => `${p.partyName} (${p.symbol || '🗳️'})`);
     const data = voteCounts;
     const colors = labels.map((_, i) => palette[i % palette.length]);
 
-    // Destroy existing instances on update to prevent canvas overlap
     if (doughnutChartInstance) doughnutChartInstance.destroy();
     if (barChartInstance) barChartInstance.destroy();
 
-    // 1. Doughnut Chart
     doughnutChartInstance = new Chart(doughnutCtx, {
         type: 'doughnut',
         data: {
@@ -52,7 +59,6 @@ function renderCharts(parties, voteCounts) {
         }
     });
 
-    // 2. Bar Chart
     barChartInstance = new Chart(barCtx, {
         type: 'bar',
         data: {
@@ -69,7 +75,7 @@ function renderCharts(parties, voteCounts) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: { beginAtZero: true, ticks: { precision: 0, font: { family: 'Inter' } }, grid: { color: '#F1F5F9' } },
+                y: { beginAtZero: true, ticks: { precision: 0, font: { family: 'Inter' } }, grid: { color: '#EEF0E8' } },
                 x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } }
             },
             plugins: {
@@ -79,56 +85,37 @@ function renderCharts(parties, voteCounts) {
     });
 }
 
-// Load election results for admin
+// Load results from API
 async function loadResults() {
     const token = localStorage.getItem('token');
-    
+    if (!token) return window.location.href = '../../login/login.html';
+
     try {
         const res = await fetch('/api/results', {
             headers: { Authorization: `Bearer ${token}` }
         });
         const results = await res.json();
 
-        // Fetch global stats to update nav tabs
-        try {
-            const statsRes = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` }});
-            if (statsRes.ok) {
-                const stats = await statsRes.json();
-                const voterTab = document.querySelector('a[href*="/voters/"]');
-                if (voterTab) voterTab.innerHTML = '<i class="fas fa-users"></i> Voters (' + stats.votersCount + ')';
-                const partyTab = document.querySelector('a[href*="/parties/"]');
-                if (partyTab) partyTab.innerHTML = '<i class="fas fa-building"></i> Parties (' + stats.partiesCount + ')';
-            }
-        } catch (e) {
-            console.error('Nav stats load error:', e);
-        }
-
-        const partyList = document.querySelector('.party-list');
-        partyList.innerHTML = '';
-        const heading = document.createElement('h3');
-        heading.textContent = 'Certified Ballot Box Standings :';
-        partyList.appendChild(heading);
+        const container = document.getElementById('resultsListContainer');
+        if (!container) return;
+        container.innerHTML = '';
 
         if (!Array.isArray(results) || results.length === 0) {
-            const noResults = document.createElement('p');
-            noResults.textContent = 'No election results recorded yet.';
-            partyList.appendChild(noResults);
+            container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">No certified results recorded in the ballot box yet.</p>';
             const chartsSec = document.getElementById('chartsSection');
             if (chartsSec) chartsSec.style.display = 'none';
             return;
         }
 
-        // Sort results by total votes descending
         const sortedResults = results.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
         const totalVotesCount = sortedResults.reduce((sum, p) => sum + (p.totalVotes || 0), 0);
 
-        const totalVotesBadge = document.getElementById('totalVotesBadge');
-        if (totalVotesBadge) totalVotesBadge.textContent = `${totalVotesCount} Total Ballots`;
+        const totalBadge = document.getElementById('totalVotesBadge');
+        if (totalBadge) totalBadge.textContent = `${totalVotesCount.toLocaleString()} Total Ballots`;
 
-        // Render Charts
         const chartsSec = document.getElementById('chartsSection');
         if (chartsSec) chartsSec.style.display = 'grid';
-        renderCharts(sortedResults, sortedResults.map(p => p.totalVotes || 0));
+        renderAnalyticsCharts(sortedResults, sortedResults.map(p => p.totalVotes || 0));
 
         sortedResults.forEach((party, index) => {
             const rank = index + 1;
@@ -142,6 +129,7 @@ async function loadResults() {
 
             const card = document.createElement('div');
             card.className = 'stat-card';
+            card.style.marginBottom = '12px';
 
             const textDiv = document.createElement('div');
             const labelSpan = document.createElement('span');
@@ -149,39 +137,38 @@ async function loadResults() {
             labelSpan.textContent = `${party.partyName || 'Unknown'} (${party.symbol || 'N/A'}) `;
 
             const badge = document.createElement('strong');
-            badge.style.cssText = 'color: var(--primary); background: var(--primary-light); padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-left: 8px; font-weight: 600;';
+            badge.style.cssText = 'color: var(--primary-dark); background: var(--primary-subtle); padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-left: 8px; font-weight: 600;';
             badge.textContent = rankBadge;
             labelSpan.appendChild(badge);
 
             const valueH2 = document.createElement('h2');
             valueH2.className = 'value';
-            valueH2.textContent = `${party.totalVotes || 0} Votes (${percentage}%)`;
+            valueH2.textContent = `${(party.totalVotes || 0).toLocaleString()} Votes (${percentage}%)`;
 
             textDiv.appendChild(labelSpan);
             textDiv.appendChild(valueH2);
 
             const iconBox = document.createElement('div');
-            iconBox.className = rank === 1 ? 'icon-box green' : 'icon-box blue';
+            iconBox.className = rank === 1 ? 'icon-box green' : 'icon-box purple';
             const icon = document.createElement('i');
-            icon.className = rank === 1 ? 'fas fa-trophy' : 'fas fa-vote-yea';
+            icon.className = rank === 1 ? 'fas fa-trophy' : 'fas fa-landmark';
             iconBox.appendChild(icon);
 
             card.appendChild(textDiv);
             card.appendChild(iconBox);
-            partyList.appendChild(card);
+            container.appendChild(card);
         });
     } catch (err) {
         console.error('Results error:', err);
     }
 }
 
-loadResults();
-
-// ================== REAL-TIME WEBSOCKETS ==================
+// WebSocket real-time tally refresh
 const socket = window.io ? window.io(window.location.origin) : null;
-
 if (socket) {
     socket.on('newVote', () => {
         loadResults();
     });
 }
+
+loadResults();
