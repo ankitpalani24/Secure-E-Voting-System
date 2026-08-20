@@ -8,6 +8,7 @@ const {
   getParties,
   getDashboardStats,
   getElections,
+  createElection,
   updateElectionPhase,
   getAuditLogs,
   verifyAuditChainEndpoint,
@@ -22,6 +23,7 @@ router.get("/voters", verifyToken, isAdmin, getVoters);
 router.get("/parties", verifyToken, isAdmin, getParties);
 router.get("/stats", verifyToken, isAdmin, getDashboardStats);
 router.get("/elections", verifyToken, isAdmin, getElections);
+router.post("/create-election", verifyToken, isAdmin, createElection);
 router.post("/update-phase", verifyToken, isAdmin, updateElectionPhase);
 router.get("/audit-logs", verifyToken, isAdmin, getAuditLogs);
 router.get("/audit-verify", verifyToken, isAdmin, verifyAuditChainEndpoint);

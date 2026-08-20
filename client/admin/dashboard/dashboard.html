@@ -160,6 +160,56 @@
                     </div>
                 </div>
 
+                <!-- Election Lifecycle Operations Control Center -->
+                <div class="section-card" id="electionControlCard" style="border-left: 4px solid var(--primary);">
+                    <div class="section-header" style="flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="font-size: 1.15rem; color: var(--text-primary);"><i class="fas fa-tasks" style="color: var(--primary);"></i> Election Lifecycle Operations Center</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Authoritative server-side state transitions & result publication controls</p>
+                        </div>
+                        <div id="activePhasePill" class="status-badge live" style="font-size: 0.85rem; text-transform: uppercase;">
+                            Phase: VOTING
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; padding: 14px; background: var(--surface-muted); border-radius: var(--radius-md);">
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Active Slate Title</span>
+                            <strong style="color: var(--text-primary); font-size: 0.95rem;" id="activeElectionTitle">National General Election</strong>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Voting Window Start</span>
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;" id="electionStartTime">Loading...</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Voting Window Concludes</span>
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;" id="electionEndTime">Loading...</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Results Visibility</span>
+                            <span style="font-size: 0.85rem; font-weight: 600;" id="resultsVisibilityStatus">Embargoed to Public</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;" id="phaseActionButtonsContainer">
+                        <button type="button" class="btn-secondary" id="btnTransitionSchedule" disabled>
+                            <i class="fas fa-calendar-alt"></i> Schedule Election
+                        </button>
+                        <button type="button" class="btn-primary" id="btnTransitionOpenVoting" disabled style="background-color: var(--success);">
+                            <i class="fas fa-vote-yea"></i> Open Voting Window
+                        </button>
+                        <button type="button" class="btn-secondary" id="btnTransitionCloseVoting" disabled style="color: var(--danger-text);">
+                            <i class="fas fa-lock"></i> Close Voting
+                        </button>
+                        <button type="button" class="btn-primary" id="btnTransitionPublishResults" disabled style="background-color: #1D4ED8;">
+                            <i class="fas fa-bullhorn"></i> Publish Certified Results
+                        </button>
+                        <button type="button" class="btn-secondary" id="btnTransitionArchive" disabled>
+                            <i class="fas fa-archive"></i> Archive
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Quick Administrative Actions -->
                 <div class="section-card">
                     <div class="section-header">

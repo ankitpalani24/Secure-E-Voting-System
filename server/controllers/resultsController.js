@@ -3,12 +3,32 @@ const AnonymousBallot = require("../models/AnonymousBallot");
 const Vote = require("../models/Vote");
 const Party = require("../models/Party");
 const Election = require("../models/Election");
+const { canViewResults, ELECTION_PHASES } = require("../utils/electionEngine");
 const logger = require("../utils/logger");
 
 // ================= GET RESULTS =================
 exports.getResults = async (req, res) => {
   try {
     const { electionId } = req.query;
+    const userRole = req.user ? req.user.role : "public";
+
+    // 1. Look up Election
+    let election = null;
+    if (electionId) {
+      election = await Election.findById(electionId);
+    } else {
+      election = await Election.findOne({ isDefault: true }) || await Election.findOne().sort({ createdAt: -1 });
+    }
+
+    // 2. Embargo Enforcement: Non-admins cannot view tally if embargoed
+    if (election && !canViewResults(election, userRole)) {
+      return res.status(403).json({
+        message: "Official election tally results are embargoed until voting concludes and certified results are published.",
+        phase: election.phase,
+        resultsPublished: false,
+        results: [],
+      });
+    }
 
     // Build match stage
     const matchStage = {};

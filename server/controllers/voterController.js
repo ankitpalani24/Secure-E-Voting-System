@@ -9,6 +9,8 @@ const VoterParticipation = require("../models/VoterParticipation");
 const BiometricToken = require("../models/BiometricToken");
 const { euclideanDistance } = require("../utils/faceUtils");
 const { logAuditEvent } = require("../utils/auditUtils");
+const { isVotingAllowed, ELECTION_PHASES } = require("../utils/electionEngine");
+const { getBiometricProvider } = require("../utils/biometricProvider");
 const logger = require("../utils/logger");
 
 // ================= GET VOTER PROFILE =================
@@ -21,6 +23,19 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: "Voter not found" });
     }
 
+    // Active election metadata
+    let election = null;
+    try {
+      const q = Election.findOne({ isDefault: true });
+      election = q && typeof q.lean === "function" ? await q.lean() : await q;
+      if (!election) {
+        const q2 = Election.findOne({ phase: ELECTION_PHASES.VOTING });
+        election = q2 && typeof q2.lean === "function" ? await q2.lean() : await q2;
+      }
+    } catch (e) {
+      election = null;
+    }
+
     // Single source of truth for vote status across both decoupled and legacy records
     const [participationExists, legacyVoteExists] = await Promise.all([
       VoterParticipation.exists({ voterId: new mongoose.Types.ObjectId(voterId) }),
@@ -28,6 +43,16 @@ exports.getProfile = async (req, res) => {
     ]);
 
     voter.hasVoted = Boolean(participationExists || legacyVoteExists);
+    voter.election = election
+      ? {
+          _id: election._id,
+          title: election.title,
+          phase: election.phase,
+          startDate: election.startDate,
+          endDate: election.endDate,
+          publishLiveTally: election.publishLiveTally,
+        }
+      : null;
 
     res.json(voter);
   } catch (err) {
@@ -51,6 +76,22 @@ exports.faceVerify = async (req, res) => {
       return res.status(400).json({ message: "No facial biometric data registered on file" });
     }
 
+    // Look up election and enforce voting window
+    let election = null;
+    if (electionId) {
+      election = await Election.findById(electionId);
+    }
+    if (!election) {
+      election = await Election.findOne({ phase: ELECTION_PHASES.VOTING }) || await Election.findOne({ isDefault: true });
+    }
+
+    if (election) {
+      const windowCheck = isVotingAllowed(election);
+      if (!windowCheck.allowed) {
+        return res.status(400).json({ message: windowCheck.reason });
+      }
+    }
+
     // Check if voter has already participated
     const [participationExists, legacyVoteExists] = await Promise.all([
       VoterParticipation.exists({ voterId: voter._id }),
@@ -61,16 +102,17 @@ exports.faceVerify = async (req, res) => {
       return res.status(400).json({ message: "Voter has already cast a ballot in this election" });
     }
 
-    const distance = euclideanDistance(descriptor, voter.faceDescriptor);
+    // Use BiometricProvider abstraction
+    const provider = getBiometricProvider("face");
+    const result = await provider.verify(voter.faceDescriptor, descriptor);
 
-    // Euclidean distance threshold for 128-d face embeddings
-    if (distance < 0.55) {
+    if (result.verified) {
       // Generate a single-use cryptographically random token valid for 5 minutes
       const randomSecret = crypto.randomBytes(32).toString("hex");
       const biometricToken = await BiometricToken.create({
         token: randomSecret,
         voterId: voter._id,
-        electionId: electionId || null,
+        electionId: election ? election._id : (electionId || null),
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       });
 
@@ -80,7 +122,7 @@ exports.faceVerify = async (req, res) => {
         userId: voter._id,
         userRole: "voter",
         status: "SUCCESS",
-        details: { distance },
+        details: { distance: result.score },
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
@@ -88,7 +130,7 @@ exports.faceVerify = async (req, res) => {
       res.json({
         verified: true,
         biometricToken: biometricToken.token,
-        distance,
+        distance: result.score,
         message: "Biometric identity verified successfully. Authorization token issued.",
       });
     } else {
@@ -98,12 +140,12 @@ exports.faceVerify = async (req, res) => {
         userId: voter._id,
         userRole: "voter",
         status: "DENIED",
-        details: { distance, threshold: 0.55 },
+        details: { distance: result.score, threshold: result.threshold },
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
 
-      res.status(400).json({ message: "Facial biometric verification failed (mismatch)", distance });
+      res.status(400).json({ message: "Facial biometric verification failed (mismatch)", distance: result.score });
     }
   } catch (err) {
     logger.error("Face verify error: " + err.message, { requestId: req.id, method: "POST", path: "/api/voter/face-verify" });
@@ -134,21 +176,24 @@ exports.castVote = async (req, res) => {
     }
 
     // 3. Find Active Election
-    let election = await Election.findOne({ phase: "VOTING" });
+    let election = await Election.findOne({ phase: ELECTION_PHASES.VOTING });
     if (!election) {
       // Auto-fallback/create default voting election if first run
       election = await Election.findOne({ isDefault: true });
       if (!election) {
         election = await Election.create({
           title: "General Election",
-          phase: "VOTING",
+          phase: ELECTION_PHASES.VOTING,
           isDefault: true,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         });
       }
     }
 
-    if (election.phase !== "VOTING") {
-      return res.status(400).json({ message: `Voting is currently closed for this election (Phase: ${election.phase})` });
+    const windowCheck = isVotingAllowed(election);
+    if (!windowCheck.allowed) {
+      return res.status(400).json({ message: windowCheck.reason });
     }
 
     // 4. Verify Double-Voting Prevention (both decoupled and legacy)

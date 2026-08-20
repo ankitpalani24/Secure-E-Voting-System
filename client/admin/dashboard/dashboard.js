@@ -1,4 +1,6 @@
 let allAuditLogs = [];
+let activeElection = null;
+let countdownTimerInterval = null;
 
 // ================== SIDEBAR MOBILE TOGGLE ==================
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -9,26 +11,163 @@ if (mobileMenuBtn && appSidebar) {
     });
 }
 
-// ================== ELECTION COUNTDOWN CLOCK ==================
-function startElectionClock() {
-    let remainingSeconds = 12 * 3600 + 45 * 60; // 12h 45m simulation
-    
-    setInterval(() => {
-        if (remainingSeconds <= 0) return;
-        remainingSeconds--;
+// ================== ELECTION OPERATIONS & LIFECYCLE ==================
+async function loadElectionOperations() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-        const hours = Math.floor(remainingSeconds / 3600);
-        const mins = Math.floor((remainingSeconds % 3600) / 60);
-        const secs = remainingSeconds % 60;
+    try {
+        const res = await fetch('/api/admin/elections', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return;
 
+        const elections = await res.json();
+        if (Array.isArray(elections) && elections.length > 0) {
+            activeElection = elections[0]; // Active/default slate
+            renderElectionControlCenter(activeElection);
+            startRealElectionClock(activeElection);
+        }
+    } catch (err) {
+        console.error('Election load error:', err);
+    }
+}
+
+function renderElectionControlCenter(election) {
+    if (!election) return;
+
+    const titleEl = document.getElementById('activeElectionTitle');
+    const phasePill = document.getElementById('activePhasePill');
+    const topPhaseBadge = document.getElementById('electionPhaseBadge');
+    const startEl = document.getElementById('electionStartTime');
+    const endEl = document.getElementById('electionEndTime');
+    const visibilityEl = document.getElementById('resultsVisibilityStatus');
+
+    const cleanTitle = typeof escapeHtml === 'function' ? escapeHtml(election.title) : election.title;
+    if (titleEl) titleEl.textContent = cleanTitle;
+
+    const phase = election.phase || 'VOTING';
+    if (phasePill) {
+        phasePill.textContent = `Phase: ${phase}`;
+        phasePill.className = `status-badge ${phase === 'VOTING' ? 'live' : phase === 'CLOSED' ? 'pending' : 'neutral'}`;
+    }
+    if (topPhaseBadge) {
+        topPhaseBadge.textContent = `Voting Phase: ${phase}`;
+        topPhaseBadge.className = `status-badge ${phase === 'VOTING' ? 'live' : phase === 'CLOSED' ? 'pending' : 'neutral'}`;
+    }
+
+    if (startEl) startEl.textContent = election.startDate ? new Date(election.startDate).toLocaleString() : 'N/A';
+    if (endEl) endEl.textContent = election.endDate ? new Date(election.endDate).toLocaleString() : 'N/A';
+
+    if (visibilityEl) {
+        if (phase === 'RESULTS_PUBLISHED') {
+            visibilityEl.textContent = '✓ Publicly Published';
+            visibilityEl.style.color = 'var(--success-text)';
+        } else if (election.publishLiveTally) {
+            visibilityEl.textContent = '● Live Tally Enabled';
+            visibilityEl.style.color = 'var(--primary)';
+        } else {
+            visibilityEl.textContent = '🔒 Embargoed to Public';
+            visibilityEl.style.color = 'var(--warning-text)';
+        }
+    }
+
+    // Dynamic State Transition Button Enabling
+    const btnSchedule = document.getElementById('btnTransitionSchedule');
+    const btnOpen = document.getElementById('btnTransitionOpenVoting');
+    const btnClose = document.getElementById('btnTransitionCloseVoting');
+    const btnPublish = document.getElementById('btnTransitionPublishResults');
+    const btnArchive = document.getElementById('btnTransitionArchive');
+
+    if (btnSchedule) btnSchedule.disabled = !(phase === 'DRAFT');
+    if (btnOpen) btnOpen.disabled = !(phase === 'SCHEDULED');
+    if (btnClose) btnClose.disabled = !(phase === 'VOTING');
+    if (btnPublish) btnPublish.disabled = !(phase === 'CLOSED');
+    if (btnArchive) btnArchive.disabled = !(phase === 'CLOSED' || phase === 'RESULTS_PUBLISHED' || phase === 'DRAFT');
+}
+
+async function handlePhaseTransition(targetPhase) {
+    if (!activeElection || !activeElection._id) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    if (!confirm(`Are you sure you want to transition election to '${targetPhase}' phase?`)) {
+        return;
+    }
+
+    showSpinner(`Transitioning Election to ${targetPhase}...`);
+
+    try {
+        const res = await fetch('/api/admin/update-phase', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                electionId: activeElection._id,
+                phase: targetPhase
+            })
+        });
+
+        const data = await res.json();
+        hideSpinner();
+
+        if (res.ok && data.election) {
+            activeElection = data.election;
+            renderElectionControlCenter(activeElection);
+            showToast(`✓ Election transitioned to ${targetPhase}`, 'success');
+            loadAuditLogs();
+            loadDashboardStats();
+        } else {
+            showToast(data.message || 'Transition rejected by election engine.', 'error');
+        }
+    } catch (err) {
+        hideSpinner();
+        showToast('Network error during phase transition: ' + err.message, 'error');
+    }
+}
+
+// ================== ELECTION COUNTDOWN CLOCK (REAL-TIME BOUND) ==================
+function startRealElectionClock(election) {
+    if (countdownTimerInterval) clearInterval(countdownTimerInterval);
+
+    const updateClock = () => {
         const hEl = document.getElementById('timerHours');
         const mEl = document.getElementById('timerMins');
         const sEl = document.getElementById('timerSecs');
+        if (!hEl || !mEl || !sEl) return;
 
-        if (hEl) hEl.textContent = String(hours).padStart(2, '0');
-        if (mEl) mEl.textContent = String(mins).padStart(2, '0');
-        if (sEl) sEl.textContent = String(secs).padStart(2, '0');
-    }, 1000);
+        if (!election || !election.endDate) {
+            hEl.textContent = '00';
+            mEl.textContent = '00';
+            sEl.textContent = '00';
+            return;
+        }
+
+        const now = Date.now();
+        const end = new Date(election.endDate).getTime();
+        const diffMs = end - now;
+
+        if (diffMs <= 0 || election.phase !== 'VOTING') {
+            hEl.textContent = '00';
+            mEl.textContent = '00';
+            sEl.textContent = '00';
+            return;
+        }
+
+        const totalSeconds = Math.floor(diffMs / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const mins = Math.floor((totalSeconds % 3600) / 60);
+        const secs = totalSeconds % 60;
+
+        hEl.textContent = String(hours).padStart(2, '0');
+        mEl.textContent = String(mins).padStart(2, '0');
+        sEl.textContent = String(secs).padStart(2, '0');
+    };
+
+    updateClock();
+    countdownTimerInterval = setInterval(updateClock, 1000);
 }
 
 // ================== AUDIT LOG EXPLORER ==================
@@ -170,7 +309,6 @@ async function loadDashboardStats() {
         if (voEl) voEl.textContent = votesCount.toLocaleString();
         if (pEl) pEl.textContent = partiesCount.toLocaleString();
 
-        // Also update standard .stat-card .value if present
         const statCards = document.querySelectorAll('.stat-card .value');
         if (statCards.length >= 3) {
             statCards[0].textContent = votersCount;
@@ -197,13 +335,28 @@ async function loadDashboardStats() {
 }
 
 // Initializations
+loadElectionOperations();
 loadDashboardStats();
 loadAuditLogs();
-startElectionClock();
 
 // Event Listeners
 const verifyBtn = document.getElementById('verifyChainBtn');
 if (verifyBtn) verifyBtn.onclick = verifyAuditChain;
+
+const btnSchedule = document.getElementById('btnTransitionSchedule');
+if (btnSchedule) btnSchedule.onclick = () => handlePhaseTransition('SCHEDULED');
+
+const btnOpen = document.getElementById('btnTransitionOpenVoting');
+if (btnOpen) btnOpen.onclick = () => handlePhaseTransition('VOTING');
+
+const btnClose = document.getElementById('btnTransitionCloseVoting');
+if (btnClose) btnClose.onclick = () => handlePhaseTransition('CLOSED');
+
+const btnPublish = document.getElementById('btnTransitionPublishResults');
+if (btnPublish) btnPublish.onclick = () => handlePhaseTransition('RESULTS_PUBLISHED');
+
+const btnArchive = document.getElementById('btnTransitionArchive');
+if (btnArchive) btnArchive.onclick = () => handlePhaseTransition('ARCHIVED');
 
 const filterSelect = document.getElementById('auditCategoryFilter');
 if (filterSelect) {
@@ -223,5 +376,10 @@ if (socket) {
     socket.on('newVote', () => {
         loadDashboardStats();
         loadAuditLogs();
+    });
+    socket.on('electionPhaseUpdated', (payload) => {
+        loadElectionOperations();
+        loadAuditLogs();
+        loadDashboardStats();
     });
 }

@@ -93,15 +93,34 @@ async function loadVoterResults() {
         const res = await fetch('/api/results', {
             headers: { Authorization: `Bearer ${token}` }
         });
-        const results = await res.json();
 
         const container = document.getElementById('voterResultsContainer');
+        const chartsSec = document.getElementById('chartsSection');
         if (!container) return;
+
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <div class="section-card" style="text-align: center; padding: 40px 24px; border-left: 4px solid var(--warning);">
+                    <i class="fas fa-lock" style="font-size: 2.5rem; color: var(--warning); margin-bottom: 12px;"></i>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; margin-bottom: 6px;">Results Embargo Active</h3>
+                    <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 12px auto; font-size: 0.9rem;">
+                        ${data.message || 'Official tally results are strictly embargoed while voting is active to prevent election bias.'}
+                    </p>
+                    <span class="status-badge pending" style="text-transform: uppercase;">Phase: ${data.phase || 'VOTING'}</span>
+                </div>
+            `;
+            if (chartsSec) chartsSec.style.display = 'none';
+            const totalBadge = document.getElementById('voterTotalBadge');
+            if (totalBadge) totalBadge.textContent = 'Embargoed';
+            return;
+        }
+
+        const results = await res.json();
         container.innerHTML = '';
 
         if (!Array.isArray(results) || results.length === 0) {
             container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">No certified election results recorded in the ballot box yet.</p>';
-            const chartsSec = document.getElementById('chartsSection');
             if (chartsSec) chartsSec.style.display = 'none';
             return;
         }

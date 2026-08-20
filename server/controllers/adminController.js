@@ -8,6 +8,7 @@ const Election = require("../models/Election");
 const AuditLog = require("../models/AuditLog");
 const { euclideanDistance } = require("../utils/faceUtils");
 const { logAuditEvent } = require("../utils/auditUtils");
+const { validatePhaseTransition, validateElectionDates, ELECTION_PHASES } = require("../utils/electionEngine");
 const logger = require("../utils/logger");
 
 // ================= ADD VOTER =================
@@ -233,6 +234,54 @@ exports.getDashboardStats = async (req, res) => {
 };
 
 // ================= ELECTION MANAGEMENT =================
+exports.createElection = async (req, res) => {
+  try {
+    const { title, description, electionType, startDate, endDate, electionCode, publishLiveTally } = req.body;
+
+    if (!title || typeof title !== "string" || title.trim() === "") {
+      return res.status(400).json({ message: "Election title is required" });
+    }
+
+    const start = startDate ? new Date(startDate) : new Date();
+    const end = endDate ? new Date(endDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    const dateValidation = validateElectionDates(start, end);
+    if (!dateValidation.valid) {
+      return res.status(400).json({ message: dateValidation.error });
+    }
+
+    const newElection = await Election.create({
+      title: title.trim(),
+      description: description ? description.trim() : "Standard electronic democratic election.",
+      electionType: electionType || "GENERAL",
+      electionCode: electionCode ? electionCode.trim() : undefined,
+      phase: ELECTION_PHASES.DRAFT,
+      startDate: start,
+      endDate: end,
+      publishLiveTally: Boolean(publishLiveTally),
+      createdBy: req.user.id,
+      isDefault: false,
+    });
+
+    await logAuditEvent({
+      action: "ELECTION_CREATED",
+      category: "AUDIT_EVENT",
+      userId: req.user.id,
+      userRole: "admin",
+      electionId: newElection._id,
+      status: "SUCCESS",
+      details: { title: newElection.title, phase: newElection.phase },
+      ipAddress: req.ip,
+      userAgent: req.headers["user-agent"],
+    });
+
+    res.status(201).json({ message: "Election created successfully in DRAFT state", election: newElection });
+  } catch (err) {
+    logger.error("Create election error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to create election configuration" });
+  }
+};
+
 exports.getElections = async (req, res) => {
   try {
     let elections = await Election.find().sort({ createdAt: -1 }).lean();
@@ -241,8 +290,10 @@ exports.getElections = async (req, res) => {
       const defaultElection = await Election.create({
         title: "National General Election",
         description: "Official secure electronic ballot general election.",
-        phase: "VOTING",
+        phase: ELECTION_PHASES.VOTING,
         isDefault: true,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       });
       elections = [defaultElection];
     }
@@ -256,33 +307,48 @@ exports.getElections = async (req, res) => {
 exports.updateElectionPhase = async (req, res) => {
   try {
     const { electionId, phase } = req.body;
-    const validPhases = ["DRAFT", "REGISTRATION", "SCHEDULED", "VOTING", "CLOSED", "TALLIED", "PUBLISHED", "ARCHIVED"];
 
-    if (!validPhases.includes(phase)) {
-      return res.status(400).json({ message: "Invalid election phase state" });
+    if (!phase || typeof phase !== "string") {
+      return res.status(400).json({ message: "Target election phase is required" });
     }
 
-    const election = await Election.findByIdAndUpdate(
-      electionId,
-      { phase },
-      { new: true }
-    );
-
+    const election = await Election.findById(electionId);
     if (!election) {
       return res.status(404).json({ message: "Election not found" });
     }
 
+    const transitionCheck = validatePhaseTransition(election.phase, phase);
+    if (!transitionCheck.valid) {
+      return res.status(400).json({ message: transitionCheck.error });
+    }
+
+    election.phase = phase;
+    if (phase === ELECTION_PHASES.RESULTS_PUBLISHED) {
+      election.resultsPublishedAt = new Date();
+    }
+    await election.save();
+
     await logAuditEvent({
-      action: `ELECTION_PHASE_CHANGED_TO_${phase}`,
+      action: `ELECTION_PHASE_TRANSITION_${phase}`,
       category: "AUDIT_EVENT",
       userId: req.user.id,
       userRole: "admin",
       electionId: election._id,
       status: "SUCCESS",
-      details: { newPhase: phase },
+      details: { previousPhase: election.phase, newPhase: phase },
       ipAddress: req.ip,
       userAgent: req.headers["user-agent"],
     });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("electionPhaseUpdated", {
+        electionId: election._id,
+        phase: election.phase,
+        title: election.title,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     res.json({ message: `Election phase updated to ${phase}`, election });
   } catch (err) {
