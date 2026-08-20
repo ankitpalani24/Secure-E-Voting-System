@@ -63,6 +63,23 @@ function handleLogout() {
     window.location.href = prefix ? `${prefix}login/login.html` : 'login/login.html';
 }
 
+/**
+ * Checks if an API response indicates an expired or invalid session (HTTP 401).
+ * If so, triggers automatic logout, user notification, and redirect.
+ */
+function handleAuthResponse(res) {
+    if (res.status === 401) {
+        if (typeof showToast === 'function') {
+            showToast('Your session has expired. Please sign in again.', 'error');
+        }
+        setTimeout(() => {
+            handleLogout();
+        }, 1200);
+        return false;
+    }
+    return true;
+}
+
 // Attach event listeners on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Mobile menu toggle

@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const Party = require("./models/Party");
+const Party = require("../models/Party");
 
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {

@@ -14,7 +14,9 @@ exports.verifyToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(parts[1], process.env.JWT_SECRET);
+    const decoded = jwt.verify(parts[1], process.env.JWT_SECRET, {
+      algorithms: ["HS256"],
+    });
     if (!decoded || !decoded.id || !decoded.role) {
       return res.status(401).json({ message: "Malformed token claims" });
     }

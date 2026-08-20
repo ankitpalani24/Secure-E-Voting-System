@@ -3,6 +3,7 @@ const AnonymousBallot = require("../models/AnonymousBallot");
 const Vote = require("../models/Vote");
 const Party = require("../models/Party");
 const Election = require("../models/Election");
+const logger = require("../utils/logger");
 
 // ================= GET RESULTS =================
 exports.getResults = async (req, res) => {
@@ -69,7 +70,7 @@ exports.getResults = async (req, res) => {
 
     res.json(results);
   } catch (err) {
-    console.error("Get results error:", err);
-    res.status(500).json({ message: err.message });
+    logger.error("Get results error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to retrieve election tally results" });
   }
 };

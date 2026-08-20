@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const Voter = require("./models/Voter");
+const Voter = require("../models/Voter");
 
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {

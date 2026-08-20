@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY server/package*.json ./server/
 
-# Install dependencies
+# Install production dependencies only
 RUN npm ci --omit=dev && cd server && npm ci --omit=dev
 
 # Production image
@@ -28,9 +28,9 @@ COPY --chown=node:node client ./client
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node index.html ./
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/healthz || exit 1
+# Container readiness healthcheck (checks process liveness and DB connectivity)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/readyz || exit 1
 
 EXPOSE 5000
 

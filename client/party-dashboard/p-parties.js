@@ -50,17 +50,22 @@ async function loadPartyList() {
             card.style.alignItems = 'flex-start';
             card.style.gap = '14px';
 
+            const cleanSymbol = typeof escapeHtml === 'function' ? escapeHtml(party.symbol || '🗳️') : (party.symbol || '🗳️');
+            const cleanName = typeof escapeHtml === 'function' ? escapeHtml(party.partyName || 'Unknown Party') : (party.partyName || 'Unknown Party');
+            const cleanDesc = typeof escapeHtml === 'function' ? escapeHtml(party.description || 'Accredited political party slate.') : (party.description || 'Accredited political party slate.');
+            const cleanId = party._id ? (typeof escapeHtml === 'function' ? escapeHtml(party._id.slice(-6).toUpperCase()) : party._id.slice(-6).toUpperCase()) : 'N/A';
+
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                    <div style="font-size: 2.8rem; line-height: 1;">${party.symbol || '🗳️'}</div>
+                    <div style="font-size: 2.8rem; line-height: 1;">${cleanSymbol}</div>
                     <span class="status-badge live" style="font-size: 0.75rem;"><i class="fas fa-check-circle"></i> Certified</span>
                 </div>
                 <div style="width: 100%;">
-                    <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 4px; font-weight: 700;">${party.partyName || 'Unknown Party'}</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">${party.description || 'Accredited political party slate.'}</p>
+                    <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 4px; font-weight: 700;">${cleanName}</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">${cleanDesc}</p>
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 10px;">
                         <span><i class="fas fa-shield-alt"></i> Certified Candidate</span>
-                        <span style="font-family: monospace;">ID: ${party._id ? party._id.slice(-6).toUpperCase() : 'N/A'}</span>
+                        <span style="font-family: monospace;">ID: ${cleanId}</span>
                     </div>
                 </div>
             `;

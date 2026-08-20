@@ -5,6 +5,10 @@ server/node_modules
 .env
 server/.env
 *.log
+npm-debug.log*
 .vscode
 docs_and_scripts
-client/models/*.shard*
+server/tests
+coverage
+*.md
+!README.md

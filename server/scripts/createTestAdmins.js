@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const Admin = require("./models/Admin");
+const Admin = require("../models/Admin");
 
 mongoose.connect(process.env.MONGO_URI)
     .then(async () => {

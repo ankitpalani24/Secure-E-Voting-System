@@ -9,6 +9,7 @@ const VoterParticipation = require("../models/VoterParticipation");
 const BiometricToken = require("../models/BiometricToken");
 const { euclideanDistance } = require("../utils/faceUtils");
 const { logAuditEvent } = require("../utils/auditUtils");
+const logger = require("../utils/logger");
 
 // ================= GET VOTER PROFILE =================
 exports.getProfile = async (req, res) => {
@@ -30,8 +31,8 @@ exports.getProfile = async (req, res) => {
 
     res.json(voter);
   } catch (err) {
-    console.error("Get profile error:", err);
-    res.status(500).json({ message: err.message });
+    logger.error("Get profile error: " + err.message, { requestId: req.id, method: "GET", path: "/api/voter/profile" });
+    res.status(500).json({ message: "Failed to retrieve voter profile" });
   }
 };
 
@@ -105,8 +106,8 @@ exports.faceVerify = async (req, res) => {
       res.status(400).json({ message: "Facial biometric verification failed (mismatch)", distance });
     }
   } catch (err) {
-    console.error("Face verify error:", err);
-    res.status(500).json({ message: err.message });
+    logger.error("Face verify error: " + err.message, { requestId: req.id, method: "POST", path: "/api/voter/face-verify" });
+    res.status(500).json({ message: "Biometric verification service error" });
   }
 };
 
@@ -257,7 +258,7 @@ exports.castVote = async (req, res) => {
     if (err.code === 11000) {
       return res.status(400).json({ message: "Vote already recorded for this election" });
     }
-    console.error("Cast vote error:", err);
-    res.status(500).json({ message: err.message || "Failed to process voting transaction" });
+    logger.error("Cast vote error: " + err.message, { requestId: req.id, method: "POST", path: "/api/voter/vote" });
+    res.status(500).json({ message: "Failed to process voting transaction" });
   }
 };

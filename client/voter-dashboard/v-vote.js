@@ -95,6 +95,10 @@ async function loadVoterParties() {
         parties.forEach(party => {
             const card = document.createElement('div');
             card.className = 'candidate-card';
+            const cleanSymbol = typeof escapeHtml === 'function' ? escapeHtml(party.symbol || '🗳️') : (party.symbol || '🗳️');
+            const cleanName = typeof escapeHtml === 'function' ? escapeHtml(party.partyName || 'Unknown Party') : (party.partyName || 'Unknown Party');
+            const cleanDesc = typeof escapeHtml === 'function' ? escapeHtml(party.description || 'Accredited electoral candidate party') : (party.description || 'Accredited electoral candidate party');
+
             card.onclick = () => {
                 document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
@@ -102,9 +106,9 @@ async function loadVoterParties() {
             };
 
             card.innerHTML = `
-                <div class="candidate-symbol">${party.symbol || '🗳️'}</div>
-                <h3 class="candidate-name">${party.partyName}</h3>
-                <p class="candidate-desc">${party.description || 'Accredited electoral candidate party'}</p>
+                <div class="candidate-symbol">${cleanSymbol}</div>
+                <h3 class="candidate-name">${cleanName}</h3>
+                <p class="candidate-desc">${cleanDesc}</p>
                 <div class="select-indicator"><i class="fas fa-vote-yea"></i> Select Candidate</div>
             `;
 
@@ -119,6 +123,9 @@ async function loadVoterParties() {
 function showVoteConfirmationModal(partyId, partyName, partySymbol, partyDesc) {
     updateStepper(2);
 
+    const cleanSymbol = typeof escapeHtml === 'function' ? escapeHtml(partySymbol || '🗳️') : (partySymbol || '🗳️');
+    const cleanName = typeof escapeHtml === 'function' ? escapeHtml(partyName || 'Unknown Party') : (partyName || 'Unknown Party');
+
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';
     modal.id = 'voteReviewModal';
@@ -128,10 +135,10 @@ function showVoteConfirmationModal(partyId, partyName, partySymbol, partyDesc) {
             <p style="color: var(--text-secondary); font-size: 0.9rem;">Please verify your chosen candidate before initiating facial identity verification.</p>
             
             <div class="review-choice-box">
-                <div class="review-choice-symbol">${partySymbol || '🗳️'}</div>
+                <div class="review-choice-symbol">${cleanSymbol}</div>
                 <div class="review-choice-details">
                     <span style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Selected Candidate</span>
-                    <h3 style="color: var(--text-primary); font-size: 1.25rem; margin-top: 2px;">${partyName}</h3>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; margin-top: 2px;">${cleanName}</h3>
                 </div>
             </div>
 
@@ -168,7 +175,9 @@ function showVoteConfirmationModal(partyId, partyName, partySymbol, partyDesc) {
         updateStepper(1);
     };
 
-    document.getElementById('confirmVoteBtn').onclick = async () => {
+    const confirmBtn = document.getElementById('confirmVoteBtn');
+    confirmBtn.onclick = async () => {
+        confirmBtn.disabled = true;
         document.removeEventListener('keydown', handleReviewEscape);
         modal.remove();
         updateStepper(3);
@@ -425,13 +434,10 @@ async function proceedWithBiometricsAndVote(partyId, partyName) {
         const data = await res.json();
         hideSpinner();
 
-        if (res.ok) {
+        if (res.ok && data.receipt && data.receipt.ballotCommitment) {
             updateStepper(4);
             showToast('✓ Ballot committed and decoupled successfully!', 'success');
-            displayReceiptCard(data.receipt || {
-                ballotCommitment: 'SHA256:' + Math.random().toString(36).substring(2),
-                timestamp: new Date().toISOString()
-            });
+            displayReceiptCard(data.receipt);
         } else {
             showToast(data.message || 'Ballot submission failed!', 'error');
             document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
@@ -451,10 +457,11 @@ function displayReceiptCard(receipt) {
     if (ballotCard) ballotCard.style.display = 'none';
 
     const container = document.getElementById('receiptContainer');
-    if (!container) return;
+    if (!container || !receipt || !receipt.ballotCommitment) return;
 
     container.className = '';
-    const hash = receipt.ballotCommitment || 'E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855';
+    const rawHash = String(receipt.ballotCommitment);
+    const cleanHash = typeof escapeHtml === 'function' ? escapeHtml(rawHash) : rawHash;
 
     container.innerHTML = `
         <div class="receipt-card">
@@ -467,7 +474,7 @@ function displayReceiptCard(receipt) {
             </p>
 
             <div class="receipt-hash-container">
-                <span id="receiptHashText">${hash}</span>
+                <span id="receiptHashText">${cleanHash}</span>
                 <button class="copy-hash-btn" id="copyHashBtn"><i class="fas fa-copy"></i> Copy Hash</button>
             </div>
 
@@ -484,10 +491,13 @@ function displayReceiptCard(receipt) {
         </div>
     `;
 
-    document.getElementById('copyHashBtn').onclick = () => {
-        navigator.clipboard.writeText(hash);
-        showToast('Receipt hash copied to clipboard!', 'info');
-    };
+    const copyBtn = document.getElementById('copyHashBtn');
+    if (copyBtn) {
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(rawHash);
+            showToast('Receipt hash copied to clipboard!', 'info');
+        };
+    }
 }
 
 loadVoterParties();

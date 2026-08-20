@@ -49,7 +49,7 @@ exports.adminLogin = async (req, res) => {
     const token = jwt.sign(
       { id: admin._id, role: "admin", username: admin.username },
       process.env.JWT_SECRET,
-      { expiresIn: "2h" }
+      { algorithm: "HS256", expiresIn: "2h" }
     );
 
     await logAuditEvent({
@@ -110,7 +110,7 @@ exports.voterLogin = async (req, res) => {
     const token = jwt.sign(
       { id: voter._id, role: "voter", email: voter.email },
       process.env.JWT_SECRET,
-      { expiresIn: "2h" }
+      { algorithm: "HS256", expiresIn: "2h" }
     );
 
     // Derive participation status from VoterParticipation and legacy Vote collection
@@ -183,7 +183,7 @@ exports.partyLogin = async (req, res) => {
     const token = jwt.sign(
       { id: party._id, role: "party", partyName: party.partyName },
       process.env.JWT_SECRET,
-      { expiresIn: "2h" }
+      { algorithm: "HS256", expiresIn: "2h" }
     );
 
     await logAuditEvent({

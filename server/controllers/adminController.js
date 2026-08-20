@@ -5,8 +5,10 @@ const Vote = require("../models/Vote");
 const AnonymousBallot = require("../models/AnonymousBallot");
 const VoterParticipation = require("../models/VoterParticipation");
 const Election = require("../models/Election");
+const AuditLog = require("../models/AuditLog");
 const { euclideanDistance } = require("../utils/faceUtils");
 const { logAuditEvent } = require("../utils/auditUtils");
+const logger = require("../utils/logger");
 
 // ================= ADD VOTER =================
 exports.addVoter = async (req, res) => {
@@ -83,8 +85,8 @@ exports.addVoter = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Add voter error:", err);
-    res.status(500).json({ message: err.message || "Failed to register voter" });
+    logger.error("Add voter error: " + err.message, { requestId: req.id, method: "POST", path: "/api/admin/add-voter" });
+    res.status(500).json({ message: "Failed to register voter" });
   }
 };
 
@@ -156,7 +158,8 @@ exports.addParty = async (req, res) => {
     if (err.code === 11000) {
       return res.status(400).json({ message: "Party name or username already exists" });
     }
-    res.status(500).json({ message: err.message || "Failed to register party" });
+    logger.error("Add party error: " + err.message, { requestId: req.id, method: "POST", path: "/api/admin/add-party" });
+    res.status(500).json({ message: "Failed to register party" });
   }
 };
 
@@ -190,7 +193,8 @@ exports.getVoters = async (req, res) => {
 
     res.json(voters);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    logger.error("Get voters error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to retrieve voters list" });
   }
 };
 
@@ -200,7 +204,8 @@ exports.getParties = async (req, res) => {
     const parties = await Party.find({}, "-password").lean();
     res.json(parties);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    logger.error("Get parties error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to retrieve parties list" });
   }
 };
 
@@ -222,11 +227,12 @@ exports.getDashboardStats = async (req, res) => {
       votesCount: totalVotes,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    logger.error("Get stats error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to load dashboard statistics" });
   }
 };
 
-// ================= ELECTION MANAGEMENT (NEW) =================
+// ================= ELECTION MANAGEMENT =================
 exports.getElections = async (req, res) => {
   try {
     let elections = await Election.find().sort({ createdAt: -1 }).lean();
@@ -242,7 +248,8 @@ exports.getElections = async (req, res) => {
     }
     res.json(elections);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    logger.error("Get elections error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to load election configurations" });
   }
 };
 
@@ -279,15 +286,16 @@ exports.updateElectionPhase = async (req, res) => {
 
     res.json({ message: `Election phase updated to ${phase}`, election });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    logger.error("Update election phase error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to update election phase" });
   }
 };
 
 // ================= AUDIT LOG INSPECTOR =================
 exports.getAuditLogs = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
     const skip = (page - 1) * limit;
 
     const [logs, total] = await Promise.all([
@@ -303,7 +311,8 @@ exports.getAuditLogs = async (req, res) => {
       logs,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    logger.error("Get audit logs error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to retrieve audit log records" });
   }
 };
 
@@ -313,7 +322,8 @@ exports.verifyAuditChainEndpoint = async (req, res) => {
     const result = await verifyAuditChain();
     res.json(result);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    logger.error("Verify audit chain error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to verify cryptographic audit chain" });
   }
 };
 
