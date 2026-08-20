@@ -263,12 +263,17 @@ The platform features an extensible `BiometricProvider` abstraction ([`server/ut
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/api/auth/admin-login` | Public | Authenticates administrator and returns JWT. |
+| `POST` | `/api/auth/admin-login` | Public | Authenticates administrator and returns JWT with role. |
 | `POST` | `/api/auth/voter-login` | Public | Authenticates citizen voter and returns JWT. |
 | `POST` | `/api/auth/party-login` | Public | Authenticates party observer and returns JWT. |
 | `GET` | `/api/admin/elections` | Admin | Retrieves all election slates. |
 | `POST` | `/api/admin/create-election` | Admin | Creates election in `DRAFT` state with date validation. |
 | `POST` | `/api/admin/update-phase` | Admin | Transitions election phase according to lifecycle rules. |
+| `POST` | `/api/admin/proposals` | Admin | Proposes sensitive action requiring Two-Person Rule consensus. |
+| `GET` | `/api/admin/proposals` | Admin | Queries approval queue with status and election filters. |
+| `POST` | `/api/admin/proposals/:id/approve` | Admin | Authorizes proposal (enforces distinct secondary officer). |
+| `POST` | `/api/admin/proposals/:id/reject` | Admin | Rejects proposal with recorded reason. |
+| `GET` | `/api/admin/governance/summary` | Admin | Overview metrics for pending/executed proposals. |
 | `GET` | `/api/admin/stats` | Admin | Returns aggregated voter, ballot, and party counts. |
 | `GET` | `/api/admin/voters` | Admin | Returns electoral roll with voting status flags. |
 | `POST` | `/api/admin/add-voter` | Admin | Enrolls citizen with 128-d facial biometric vector. |
@@ -278,7 +283,7 @@ The platform features an extensible `BiometricProvider` abstraction ([`server/ut
 | `GET` | `/api/admin/audit-verify` | Admin | Verifies sequential linear SHA-256 hash chains. |
 | `GET` | `/api/voter/profile` | Voter | Returns citizen profile and active election status. |
 | `GET` | `/api/party` | Voter/Party | Returns active candidate slates. |
-| `POST` | `/api/voter/face-verify` | Voter | Validates facial biometrics and issues `biometricToken`. |
+| `POST` | `/api/voter/face-verify` | Voter | Validates facial biometrics and issues single-use `biometricToken`. |
 | `POST` | `/api/voter/vote` | Voter | Commits decoupled ballot and issues cryptographic receipt. |
 | `GET` | `/api/results` | Authenticated | Retrieves tally results (embargoed to non-admins until published). |
 | `GET` | `/healthz` | Public | Process liveness probe. |
@@ -286,9 +291,9 @@ The platform features an extensible `BiometricProvider` abstraction ([`server/ut
 
 ---
 
-## 14. Automated Testing & Smoke Verification
+## 14. Automated Testing & Verification Probes
 
-### Run Automated Test Suites (11 Suites / 95 Tests):
+### Run Complete Automated Test Suite (13 Suites / 114 Tests):
 ```bash
 cd server
 npm test
@@ -299,7 +304,22 @@ npm test
 npm run smoke-test
 ```
 
-### Check Security Vulnerabilities (0 Vulnerabilities):
+### Run 10-Point Data Consistency & Privacy Audit:
+```bash
+npm run consistency-check
+```
+
+### Run Real Express HTTP API Latency Benchmark:
+```bash
+npm run api-benchmark
+```
+
+### Run In-Process Cryptographic Performance Benchmark:
+```bash
+npm run benchmark
+```
+
+### Check Dependency Vulnerabilities (0 Vulnerabilities):
 ```bash
 npm audit
 ```
@@ -317,13 +337,17 @@ docker-compose up -d --build
 - **Liveness:** `GET http://localhost:5000/healthz` $\rightarrow$ `{"status": "ok"}`
 - **Readiness:** `GET http://localhost:5000/readyz` $\rightarrow$ `{"status": "ready", "database": "connected"}`
 
+### Disaster Recovery & Academic Documentation:
+- [Academic College Final Project Report](docs_and_scripts/COLLEGE_FINAL_PROJECT_REPORT.md)
+- [Disaster Recovery & Integrity Drill Handbook](docs_and_scripts/DISASTER_RECOVERY_AND_INTEGRITY_DRILL.md)
+
 ---
 
 ## 16. Known Limitations & Security Realities
 
-- **Client-Side Liveness:** Browser-based face tracking using webcams cannot substitute for tamper-resistant hardware biometrics or secure enclaves.
+- **Client-Side Liveness:** Browser-based face tracking using webcams cannot substitute for tamper-resistant certified biometric hardware or secure enclaves.
 - **Operational Database Trust:** Privacy separation relies on server security. If the underlying MongoDB host is compromised during the millisecond of insertion, timing correlation could theoretically occur.
-- **Absence of Multi-Party Computation:** The system does not implement multi-authority threshold decryption (MPC) or zero-knowledge range proofs (ZKP). It is intended for civic institutions, universities, and enterprise governance, not sovereign national elections.
+- **Scope Classification:** The platform is designed and validated for civic institutions, universities, organizational bodies, and enterprise governance, not sovereign national elections.
 
 ---
 

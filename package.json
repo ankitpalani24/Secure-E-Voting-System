@@ -8,7 +8,8 @@
     "test": "cd server && npm test",
     "smoke-test": "node server/scripts/smokeTest.js",
     "consistency-check": "node server/scripts/electionConsistencyChecker.js",
-    "benchmark": "node server/scripts/simulationPerformanceBenchmark.js"
+    "benchmark": "node server/scripts/simulationPerformanceBenchmark.js",
+    "api-benchmark": "node server/scripts/apiPerformanceBenchmark.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
