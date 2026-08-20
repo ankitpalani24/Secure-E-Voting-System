@@ -262,18 +262,61 @@
     }
 
     .login-hero-panel {
-        padding: 40px 24px;
+        padding: 32px 20px;
     }
 
     .hero-content {
-        margin: 24px 0;
+        margin: 16px 0;
     }
 
     .hero-content h1 {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
 
     .security-highlights {
         display: none;
+    }
+
+    .login-form-panel {
+        padding: 24px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-hero-panel {
+        padding: 24px 16px;
+    }
+
+    .hero-brand-text {
+        font-size: 1.25rem;
+    }
+
+    .hero-content h1 {
+        font-size: 1.35rem;
+    }
+
+    .hero-content p {
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+    }
+
+    .hero-footer {
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.72rem;
+    }
+
+    .auth-card {
+        padding: 24px 16px;
+        border-radius: var(--radius-lg);
+    }
+
+    .auth-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .role-tab {
+        padding: 6px 8px;
+        font-size: 0.75rem;
     }
 }

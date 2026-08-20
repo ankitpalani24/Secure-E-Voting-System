@@ -687,7 +687,10 @@
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Responsive Table & Card Adjustments */
+/* ==========================================================================
+   RESPONSIVE COMPONENT ADJUSTMENTS (MULTI-DEVICE SUPPORT)
+   ========================================================================== */
+
 @media (max-width: 1024px) {
     .charts-grid {
         grid-template-columns: 1fr;
@@ -695,21 +698,88 @@
 }
 
 @media (max-width: 768px) {
+    .kpi-grid {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+    }
+
+    .kpi-card {
+        padding: 16px 18px;
+    }
+
+    .kpi-value {
+        font-size: 1.5rem;
+    }
+
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+
+    .section-card {
+        padding: 18px 16px;
+        margin-bottom: 20px;
+    }
+
     .election-hero-card {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
+        padding: 20px;
+    }
+
+    .hero-countdown-wrapper {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .countdown-box {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 10px;
     }
 
     .stepper {
         flex-direction: column;
         align-items: flex-start;
         gap: 14px;
-        padding: 20px;
+        padding: 18px 16px;
     }
 
     .step-divider {
         display: none;
+    }
+
+    .candidates-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .review-modal-card {
+        padding: 24px 18px;
+    }
+
+    .receipt-card {
+        padding: 24px 18px;
+    }
+
+    .receipt-hash-container {
+        font-size: 0.78rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .copy-hash-btn {
+        width: 100%;
+    }
+
+    /* Auto-stacking grid helpers for forms on tablet/mobile */
+    [style*="grid-template-columns: 1fr 1fr"],
+    [style*="grid-template-columns: 1fr 2fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
     }
 
     .data-table-wrapper {
@@ -741,10 +811,44 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
     }
 
     .data-table td:last-child {
         border-bottom: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .btn-primary, .btn-secondary, .submit-btn, .cancel-btn {
+        width: 100%;
+        padding: 12px 16px;
+    }
+
+    .button-group {
+        flex-direction: column-reverse;
+        width: 100%;
+    }
+
+    #biometricCallout {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    #biometricCallout button {
+        width: 100%;
     }
 }
 

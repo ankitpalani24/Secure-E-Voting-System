@@ -257,7 +257,13 @@
     flex: 1;
 }
 
-/* Responsive Navigation Breakpoints */
+/* Responsive Navigation & Device Breakpoints */
+@media (max-width: 992px) {
+    .page-content {
+        padding: 24px 20px;
+    }
+}
+
 @media (max-width: 768px) {
     .app-sidebar {
         position: fixed;
@@ -266,6 +272,7 @@
         bottom: 0;
         transform: translateX(-100%);
         box-shadow: var(--shadow-xl);
+        width: min(280px, 80vw);
     }
 
     .app-sidebar.open {
@@ -273,14 +280,54 @@
     }
 
     .mobile-menu-btn {
-        display: block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .app-topbar {
         padding: 0 16px;
+        height: auto;
+        min-height: var(--header-height);
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .page-title-group h1 {
+        font-size: 1.1rem;
+    }
+
+    .page-title-group p {
+        font-size: 0.75rem;
     }
 
     .page-content {
-        padding: 20px 16px;
+        padding: 16px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-topbar {
+        padding: 8px 12px;
+    }
+
+    .topbar-right {
+        gap: 8px;
+    }
+
+    .status-badge {
+        font-size: 0.72rem;
+        padding: 3px 8px;
+    }
+
+    .logout-nav-btn {
+        padding: 6px 10px;
+        font-size: 0.78rem;
+    }
+
+    .page-content {
+        padding: 12px 8px;
     }
 }
