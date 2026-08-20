@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "jest --runInBand --detectOpenHandles",
-    "start": "node server.js"
+    "start": "node server.js",
+    "smoke-test": "node scripts/smokeTest.js"
   },
   "keywords": [],
   "author": "",

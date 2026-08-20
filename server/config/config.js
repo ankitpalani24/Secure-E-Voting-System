@@ -1,5 +1,12 @@
+const dns = require("dns");
 const dotenv = require("dotenv");
 dotenv.config();
+
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (e) {
+  // Ignore in environments where custom DNS servers cannot be set
+}
 
 const NODE_ENV = process.env.NODE_ENV || "development";
 const isProd = NODE_ENV === "production";

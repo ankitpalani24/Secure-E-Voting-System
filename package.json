@@ -5,7 +5,8 @@
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
-    "test": "cd server && npm test"
+    "test": "cd server && npm test",
+    "smoke-test": "node server/scripts/smokeTest.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

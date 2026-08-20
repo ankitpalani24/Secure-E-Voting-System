@@ -1,12 +1,5 @@
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const path = require("path");
-const dns = require("dns");
-
-dns.setServers(["8.8.8.8", "1.1.1.1"]);
-
-dotenv.config({ path: path.join(__dirname, "../.env") });
-
+const config = require("../config/config");
 const Voter = require("../models/Voter");
 const VoterParticipation = require("../models/VoterParticipation");
 const Vote = require("../models/Vote");
@@ -14,9 +7,8 @@ const BiometricToken = require("../models/BiometricToken");
 
 async function resetVote() {
   try {
-    const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/voting";
     console.log("Connecting to database...");
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(config.mongoUri);
 
     // Search for voter by name or email matching "ankit"
     const voters = await Voter.find({

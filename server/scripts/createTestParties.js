@@ -1,12 +1,9 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const dotenv = require("dotenv");
-
-dotenv.config();
-
+const config = require("../config/config");
 const Party = require("../models/Party");
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(config.mongoUri)
   .then(async () => {
     console.log("MongoDB connected for test party creation");
 

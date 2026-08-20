@@ -1,12 +1,9 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const dotenv = require("dotenv");
-
-dotenv.config();
-
+const config = require("../config/config");
 const Voter = require("../models/Voter");
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(config.mongoUri)
   .then(async () => {
     console.log("MongoDB connected for test voter creation");
 
