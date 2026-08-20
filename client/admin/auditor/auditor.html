@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditor Surveillance Portal - SecureVote</title>
+    <link rel="stylesheet" href="../../styles/main.css">
+    <link rel="stylesheet" href="../dashboard/dashboard.css">
+    <link rel="stylesheet" href="../../shared/toast.css">
+    <link rel="stylesheet" href="../../shared/spinner.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <div class="app-shell">
+        <!-- Sidebar Navigation (Read-Only Auditor Portal) -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="auditor.html" class="brand-logo">
+                    <div class="brand-icon"><i class="fas fa-search"></i></div>
+                    <span>SecureVote</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <span class="nav-section-title">Auditor Surveillance</span>
+                <a href="auditor.html" class="nav-link active">
+                    <i class="fas fa-shield-alt"></i> <span>Audit Integrity</span>
+                </a>
+                <a href="../results/results.html" class="nav-link">
+                    <i class="fas fa-poll"></i> <span>Election Results</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile-badge">
+                    <div class="user-avatar" style="background-color: #EBF5FB; color: var(--info);"><i class="fas fa-user-shield"></i></div>
+                    <div class="user-info-text">
+                        <strong id="auditorUserName">Auditor Officer</strong>
+                        <span>Independent Observer</span>
+                    </div>
+                </div>
+                <a href="../../login/login.html" class="logout-nav-btn" id="sidebarLogoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <div class="app-main">
+            <!-- Topbar Header -->
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title-group">
+                        <h1>Electoral Audit & Surveillance Portal</h1>
+                        <p>Independent Read-Only Cryptographic Verification & Governance Oversight</p>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="status-badge live" id="auditorElectionPhaseBadge">
+                        Election: ACTIVE
+                    </div>
+                    <a href="../../login/login.html" class="logout-nav-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="page-content">
+                <!-- System Observability & Health Banner -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div>
+                            <span class="kpi-label">Liveness Probe (/healthz)</span>
+                            <div class="kpi-value" id="livenessStatus" style="color: var(--success); font-size: 1.4rem;">ONLINE</div>
+                            <span class="kpi-subtext">Process uptime active</span>
+                        </div>
+                        <div class="kpi-icon green"><i class="fas fa-heartbeat"></i></div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div>
+                            <span class="kpi-label">Database Probe (/readyz)</span>
+                            <div class="kpi-value" id="readinessStatus" style="color: var(--success); font-size: 1.4rem;">CONNECTED</div>
+                            <span class="kpi-subtext">MongoDB replica set ready</span>
+                        </div>
+                        <div class="kpi-icon olive"><i class="fas fa-database"></i></div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div>
+                            <span class="kpi-label">Total Governance Proposals</span>
+                            <div class="kpi-value" id="auditorProposalsCount">0</div>
+                            <span class="kpi-subtext">Two-Person rule records</span>
+                        </div>
+                        <div class="kpi-icon blue"><i class="fas fa-user-check"></i></div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div>
+                            <span class="kpi-label">Audit Log Count</span>
+                            <div class="kpi-value" id="auditorLogCount">0</div>
+                            <span class="kpi-subtext">Chained SHA-256 blocks</span>
+                        </div>
+                        <div class="kpi-icon purple"><i class="fas fa-link"></i></div>
+                    </div>
+                </div>
+
+                <!-- Two-Person Governance Approvals Audit Trail -->
+                <div class="section-card" style="border-left: 4px solid var(--info);">
+                    <div class="section-header">
+                        <div>
+                            <h3><i class="fas fa-user-check" style="color: var(--info);"></i> Dual-Admin Governance Ledger</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Separation-of-duties proposals, peer authorizations, and rejections</p>
+                        </div>
+                    </div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Proposed By</th>
+                                    <th>Authorized By</th>
+                                    <th>Status</th>
+                                    <th>Operational Reason</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditorProposalsTableBody">
+                                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading governance proposals...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Cryptographic Audit Log Explorer -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <div>
+                            <h3><i class="fas fa-shield-alt" style="color: var(--primary);"></i> Immutable Audit Log Explorer</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Linear SHA-256 hash-chained security event ledger</p>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <button id="auditorVerifyChainBtn" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">
+                                <i class="fas fa-link"></i> Verify Hash Chain
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="auditorChainVerificationBanner" class="hidden" style="margin-bottom: 16px; padding: 14px 18px; border-radius: var(--radius-md); font-size: 0.9rem; font-weight: 500;"></div>
+
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Event Timestamp</th>
+                                    <th>Category</th>
+                                    <th>Action</th>
+                                    <th>Role Claim</th>
+                                    <th>Cryptographic Hash Block</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditorAuditTableBody">
+                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">Loading audit ledger records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="../../shared/spinner.js"></script>
+    <script src="../../shared/toast.js"></script>
+    <script src="../../shared/auth.js"></script>
+    <script src="auditor.js"></script>
+</body>
+
+</html>

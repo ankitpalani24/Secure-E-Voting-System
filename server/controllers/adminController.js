@@ -322,6 +322,12 @@ exports.updateElectionPhase = async (req, res) => {
       return res.status(400).json({ message: transitionCheck.error });
     }
 
+    if (phase === ELECTION_PHASES.RESULTS_PUBLISHED && election.phase !== ELECTION_PHASES.CLOSED) {
+      return res.status(400).json({
+        message: "Results can only be published once the election has been officially CLOSED.",
+      });
+    }
+
     election.phase = phase;
     if (phase === ELECTION_PHASES.RESULTS_PUBLISHED) {
       election.resultsPublishedAt = new Date();

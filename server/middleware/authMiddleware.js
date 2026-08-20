@@ -20,16 +20,35 @@ exports.verifyToken = (req, res, next) => {
     if (!decoded || !decoded.id || !decoded.role) {
       return res.status(401).json({ message: "Malformed token claims" });
     }
-    req.user = decoded; // contains id and role
+    req.user = decoded; // contains id, role, username
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });
   }
 };
 
-// ===== Check Admin Role =====
+// ===== Check Any Admin Role (including Auditor) =====
 exports.isAdmin = (req, res, next) => {
-  if (req.user.role !== "admin") {
+  const allowed = ["admin", "SUPER_ADMIN", "ELECTION_ADMIN", "AUDITOR"];
+  if (!req.user || !allowed.includes(req.user.role)) {
+    return res.status(403).json({ message: "Unauthorized access" });
+  }
+  next();
+};
+
+// ===== Check Election Mutation Permission (Blocks Read-Only Auditor) =====
+exports.canMutateElection = (req, res, next) => {
+  const allowed = ["admin", "SUPER_ADMIN", "ELECTION_ADMIN"];
+  if (!req.user || !allowed.includes(req.user.role)) {
+    return res.status(403).json({ message: "Unauthorized access" });
+  }
+  next();
+};
+
+// ===== Check Super Admin Permission =====
+exports.isSuperAdmin = (req, res, next) => {
+  const allowed = ["admin", "SUPER_ADMIN"];
+  if (!req.user || !allowed.includes(req.user.role)) {
     return res.status(403).json({ message: "Unauthorized access" });
   }
   next();
@@ -37,7 +56,15 @@ exports.isAdmin = (req, res, next) => {
 
 // ===== Check Voter Role =====
 exports.isVoter = (req, res, next) => {
-  if (req.user.role !== "voter") {
+  if (!req.user || req.user.role !== "voter") {
+    return res.status(403).json({ message: "Unauthorized access" });
+  }
+  next();
+};
+
+// ===== Check Party Role =====
+exports.isParty = (req, res, next) => {
+  if (!req.user || req.user.role !== "party") {
     return res.status(403).json({ message: "Unauthorized access" });
   }
   next();

@@ -1,4 +1,5 @@
 let allAuditLogs = [];
+let allProposals = [];
 let activeElection = null;
 let countdownTimerInterval = null;
 
@@ -91,6 +92,52 @@ async function handlePhaseTransition(targetPhase) {
     const token = localStorage.getItem('token');
     if (!token) return;
 
+    // Offer two-person governance proposal workflow for sensitive actions
+    const isSensitive = targetPhase === 'VOTING' || targetPhase === 'CLOSED' || targetPhase === 'RESULTS_PUBLISHED' || targetPhase === 'ARCHIVED';
+    const actionMap = {
+        'VOTING': 'OPEN_VOTING',
+        'CLOSED': 'CLOSE_VOTING',
+        'RESULTS_PUBLISHED': 'PUBLISH_RESULTS',
+        'ARCHIVED': 'ARCHIVE_ELECTION'
+    };
+
+    if (isSensitive) {
+        const action = actionMap[targetPhase];
+        const reason = prompt(`Submit Two-Person Governance Proposal to '${action}'?\nEnter operational reason:`, `Scheduled transition to ${targetPhase}`);
+        if (reason === null) return;
+
+        showSpinner(`Submitting ${action} Governance Proposal...`);
+        try {
+            const res = await fetch('/api/admin/proposals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    electionId: activeElection._id,
+                    action,
+                    reason
+                })
+            });
+
+            const data = await res.json();
+            hideSpinner();
+
+            if (res.ok) {
+                showToast(`✓ Proposal created! Awaiting secondary administrator review.`, 'success');
+                loadGovernanceProposals();
+                loadAuditLogs();
+            } else {
+                showToast(data.message || 'Proposal rejected by governance engine.', 'error');
+            }
+        } catch (err) {
+            hideSpinner();
+            showToast('Network error during proposal submission: ' + err.message, 'error');
+        }
+        return;
+    }
+
     if (!confirm(`Are you sure you want to transition election to '${targetPhase}' phase?`)) {
         return;
     }
@@ -119,12 +166,197 @@ async function handlePhaseTransition(targetPhase) {
             showToast(`✓ Election transitioned to ${targetPhase}`, 'success');
             loadAuditLogs();
             loadDashboardStats();
+            loadGovernanceProposals();
         } else {
             showToast(data.message || 'Transition rejected by election engine.', 'error');
         }
     } catch (err) {
         hideSpinner();
         showToast('Network error during phase transition: ' + err.message, 'error');
+    }
+}
+
+// ================== TWO-PERSON GOVERNANCE QUEUE ==================
+async function loadGovernanceProposals() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const res = await fetch('/api/admin/proposals', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            allProposals = await res.json();
+            renderGovernanceProposals(allProposals);
+        }
+    } catch (err) {
+        console.error('Governance proposals load error:', err);
+    }
+}
+
+function renderGovernanceProposals(proposals) {
+    const container = document.getElementById('governanceProposalsList');
+    const badge = document.getElementById('pendingProposalsCountBadge');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const pendingProposals = proposals.filter(p => p.status === 'PENDING');
+    if (badge) {
+        badge.textContent = `${pendingProposals.length} Pending Approval${pendingProposals.length === 1 ? '' : 's'}`;
+        badge.className = `status-badge ${pendingProposals.length > 0 ? 'pending' : 'neutral'}`;
+    }
+
+    if (!Array.isArray(proposals) || proposals.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No operational approval proposals in queue.</p>';
+        return;
+    }
+
+    const currentAdminName = localStorage.getItem('userName') || 'Admin';
+
+    proposals.slice(0, 8).forEach(proposal => {
+        const isPending = proposal.status === 'PENDING';
+        const isSelf = proposal.requestedByUsername === currentAdminName;
+
+        const card = document.createElement('div');
+        card.style.cssText = 'background: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;';
+
+        const infoDiv = document.createElement('div');
+        infoDiv.style.maxWidth = '520px';
+
+        const headerDiv = document.createElement('div');
+        headerDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 4px;';
+
+        const actionTag = document.createElement('strong');
+        actionTag.style.color = 'var(--text-primary)';
+        actionTag.textContent = proposal.action.replace('_', ' ');
+
+        const statusTag = document.createElement('span');
+        statusTag.className = `status-badge ${isPending ? 'pending' : proposal.status === 'EXECUTED' ? 'live' : 'neutral'}`;
+        statusTag.textContent = proposal.status;
+
+        headerDiv.appendChild(actionTag);
+        headerDiv.appendChild(statusTag);
+
+        const subtext = document.createElement('p');
+        subtext.style.cssText = 'font-size: 0.82rem; color: var(--text-secondary); margin: 0;';
+        subtext.innerHTML = `Requested by <strong>${proposal.requestedByUsername || 'Admin'}</strong> on ${new Date(proposal.createdAt || proposal.requestedAt).toLocaleString()}<br><em>Reason: ${proposal.reason || 'Standard operation'}</em>`;
+
+        infoDiv.appendChild(headerDiv);
+        infoDiv.appendChild(subtext);
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+
+        if (isPending) {
+            if (isSelf) {
+                const selfBadge = document.createElement('span');
+                selfBadge.style.cssText = 'font-size: 0.78rem; color: var(--warning-text); background: var(--warning-light); border: 1px solid var(--warning-border); padding: 4px 10px; border-radius: var(--radius-sm); font-weight: 600;';
+                selfBadge.innerHTML = '<i class="fas fa-user-clock"></i> Your Proposal (Awaiting Peer Review)';
+                actionsDiv.appendChild(selfBadge);
+            } else {
+                const approveBtn = document.createElement('button');
+                approveBtn.className = 'btn-primary';
+                approveBtn.style.cssText = 'padding: 6px 14px; font-size: 0.82rem; background-color: var(--success);';
+                approveBtn.innerHTML = '<i class="fas fa-check"></i> Authorize & Execute';
+                approveBtn.onclick = () => handleApproveProposal(proposal._id, proposal.action);
+
+                const rejectBtn = document.createElement('button');
+                rejectBtn.className = 'btn-secondary';
+                rejectBtn.style.cssText = 'padding: 6px 12px; font-size: 0.82rem; color: var(--danger-text);';
+                rejectBtn.innerHTML = '<i class="fas fa-times"></i> Reject';
+                rejectBtn.onclick = () => handleRejectProposal(proposal._id, proposal.action);
+
+                actionsDiv.appendChild(approveBtn);
+                actionsDiv.appendChild(rejectBtn);
+            }
+        } else if (proposal.status === 'EXECUTED') {
+            const executedText = document.createElement('span');
+            executedText.style.cssText = 'font-size: 0.78rem; color: var(--success-text); font-weight: 600;';
+            executedText.textContent = `✓ Authorized by ${proposal.approvedByUsername || 'Peer Officer'}`;
+            actionsDiv.appendChild(executedText);
+        } else if (proposal.status === 'REJECTED') {
+            const rejectedText = document.createElement('span');
+            rejectedText.style.cssText = 'font-size: 0.78rem; color: var(--danger-text); font-weight: 600;';
+            rejectedText.textContent = `✕ Rejected by ${proposal.approvedByUsername || 'Reviewer'}`;
+            actionsDiv.appendChild(rejectedText);
+        }
+
+        card.appendChild(infoDiv);
+        card.appendChild(actionsDiv);
+        container.appendChild(card);
+    });
+}
+
+async function handleApproveProposal(id, action) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    if (!confirm(`Are you sure you want to AUTHORIZE and EXECUTE action '${action}'?`)) {
+        return;
+    }
+
+    showSpinner(`Authorizing & Executing ${action}...`);
+
+    try {
+        const res = await fetch(`/api/admin/proposals/${id}/approve`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        const data = await res.json();
+        hideSpinner();
+
+        if (res.ok) {
+            showToast(`✓ Dual-admin consensus reached! Action ${action} executed.`, 'success');
+            loadElectionOperations();
+            loadGovernanceProposals();
+            loadAuditLogs();
+            loadDashboardStats();
+        } else {
+            showToast(data.message || 'Authorization failed.', 'error');
+        }
+    } catch (err) {
+        hideSpinner();
+        showToast('Network error during authorization: ' + err.message, 'error');
+    }
+}
+
+async function handleRejectProposal(id, action) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const reason = prompt(`Reason for rejecting '${action}' proposal:`, 'Operational requirements not met');
+    if (reason === null) return;
+
+    showSpinner(`Rejecting Proposal...`);
+
+    try {
+        const res = await fetch(`/api/admin/proposals/${id}/reject`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ reason })
+        });
+
+        const data = await res.json();
+        hideSpinner();
+
+        if (res.ok) {
+            showToast(`Proposal rejected.`, 'info');
+            loadGovernanceProposals();
+            loadAuditLogs();
+        } else {
+            showToast(data.message || 'Rejection failed.', 'error');
+        }
+    } catch (err) {
+        hideSpinner();
+        showToast('Network error: ' + err.message, 'error');
     }
 }
 
@@ -338,10 +570,14 @@ async function loadDashboardStats() {
 loadElectionOperations();
 loadDashboardStats();
 loadAuditLogs();
+loadGovernanceProposals();
 
 // Event Listeners
 const verifyBtn = document.getElementById('verifyChainBtn');
 if (verifyBtn) verifyBtn.onclick = verifyAuditChain;
+
+const refreshPropBtn = document.getElementById('refreshProposalsBtn');
+if (refreshPropBtn) refreshPropBtn.onclick = loadGovernanceProposals;
 
 const btnSchedule = document.getElementById('btnTransitionSchedule');
 if (btnSchedule) btnSchedule.onclick = () => handlePhaseTransition('SCHEDULED');
@@ -377,7 +613,18 @@ if (socket) {
         loadDashboardStats();
         loadAuditLogs();
     });
-    socket.on('electionPhaseUpdated', (payload) => {
+    socket.on('electionPhaseUpdated', () => {
+        loadElectionOperations();
+        loadAuditLogs();
+        loadDashboardStats();
+        loadGovernanceProposals();
+    });
+    socket.on('governanceProposalCreated', () => {
+        loadGovernanceProposals();
+        loadAuditLogs();
+    });
+    socket.on('governanceProposalResolved', () => {
+        loadGovernanceProposals();
         loadElectionOperations();
         loadAuditLogs();
         loadDashboardStats();

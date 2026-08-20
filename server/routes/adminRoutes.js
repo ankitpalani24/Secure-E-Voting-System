@@ -14,18 +14,35 @@ const {
   verifyAuditChainEndpoint,
 } = require("../controllers/adminController");
 
-const { verifyToken, isAdmin } = require("../middleware/authMiddleware");
+const {
+  createProposal,
+  getProposals,
+  approveProposal,
+  rejectProposal,
+  getGovernanceSummary,
+} = require("../controllers/governanceController");
 
-// 🔒 PROTECTED ADMIN ROUTES
-router.post("/add-voter", verifyToken, isAdmin, addVoter);
-router.post("/add-party", verifyToken, isAdmin, addParty);
+const { verifyToken, isAdmin, canMutateElection } = require("../middleware/authMiddleware");
+
+// 🔒 PROTECTED READ-ONLY ADMIN / AUDITOR ROUTES
+router.get("/stats", verifyToken, isAdmin, getDashboardStats);
 router.get("/voters", verifyToken, isAdmin, getVoters);
 router.get("/parties", verifyToken, isAdmin, getParties);
-router.get("/stats", verifyToken, isAdmin, getDashboardStats);
 router.get("/elections", verifyToken, isAdmin, getElections);
-router.post("/create-election", verifyToken, isAdmin, createElection);
-router.post("/update-phase", verifyToken, isAdmin, updateElectionPhase);
 router.get("/audit-logs", verifyToken, isAdmin, getAuditLogs);
 router.get("/audit-verify", verifyToken, isAdmin, verifyAuditChainEndpoint);
+router.get("/proposals", verifyToken, isAdmin, getProposals);
+router.get("/governance/summary", verifyToken, isAdmin, getGovernanceSummary);
+
+// 🔒 PROTECTED OPERATIONAL MUTATION ROUTES (ELECTION_ADMIN / SUPER_ADMIN)
+router.post("/add-voter", verifyToken, canMutateElection, addVoter);
+router.post("/add-party", verifyToken, canMutateElection, addParty);
+router.post("/create-election", verifyToken, canMutateElection, createElection);
+router.post("/update-phase", verifyToken, canMutateElection, updateElectionPhase);
+
+// 🔒 TWO-PERSON GOVERNANCE PROPOSAL & APPROVAL ENDPOINTS
+router.post("/proposals", verifyToken, canMutateElection, createProposal);
+router.post("/proposals/:id/approve", verifyToken, canMutateElection, approveProposal);
+router.post("/proposals/:id/reject", verifyToken, canMutateElection, rejectProposal);
 
 module.exports = router;

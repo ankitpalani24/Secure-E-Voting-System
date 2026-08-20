@@ -46,23 +46,30 @@ exports.adminLogin = async (req, res) => {
       return res.status(401).json({ message: "Invalid administrative credentials" });
     }
 
+    const role = admin.role || "admin";
+
     const token = jwt.sign(
-      { id: admin._id, role: "admin", username: admin.username },
+      { id: admin._id, role, username: admin.username },
       process.env.JWT_SECRET,
       { algorithm: "HS256", expiresIn: "2h" }
     );
 
+    admin.lastLogin = new Date();
+    if (typeof admin.save === "function") {
+      await admin.save().catch(() => {});
+    }
+
     await logAuditEvent({
-      action: "Admin Logged In",
+      action: "ADMIN_LOGIN_SUCCESS",
       category: "AUDIT_EVENT",
       userId: admin._id,
-      userRole: "admin",
+      userRole: role,
       status: "SUCCESS",
       ipAddress: req.ip,
       userAgent: req.headers["user-agent"],
     });
 
-    res.json({ token, role: "admin", username: admin.username });
+    res.json({ token, role, username: admin.username, fullName: admin.fullName || admin.username });
   } catch (err) {
     console.error("Admin login error:", err);
     res.status(500).json({ message: "Authentication service error" });
