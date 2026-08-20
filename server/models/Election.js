@@ -12,7 +12,6 @@ const electionSchema = new mongoose.Schema(
     electionCode: {
       type: String,
       trim: true,
-      sparse: true,
     },
     description: {
       type: String,

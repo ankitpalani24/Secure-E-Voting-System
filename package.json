@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server/server.js",
     "test": "cd server && npm test",
-    "smoke-test": "node server/scripts/smokeTest.js"
+    "smoke-test": "node server/scripts/smokeTest.js",
+    "consistency-check": "node server/scripts/electionConsistencyChecker.js",
+    "benchmark": "node server/scripts/simulationPerformanceBenchmark.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

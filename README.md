@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/Express-v5-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express"/>
   <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
   <img src="https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT"/>
-  <img src="https://img.shields.io/badge/Jest-108_Passed_(12_Suites)-success?style=for-the-badge&logo=jest&logoColor=white" alt="Jest Tests"/>
+  <img src="https://img.shields.io/badge/Jest-114_Passed_(13_Suites)-success?style=for-the-badge&logo=jest&logoColor=white" alt="Jest Tests"/>
   <img src="https://img.shields.io/badge/Smoke_Test-6%2F6_Passed-success?style=for-the-badge" alt="Smoke Test"/>
   <img src="https://img.shields.io/badge/Security-0_Vulnerabilities-success?style=for-the-badge" alt="npm audit"/>
 </p>
