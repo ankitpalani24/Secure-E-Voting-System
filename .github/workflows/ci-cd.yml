@@ -1,0 +1,76 @@
+name: CI/CD Pipeline - Secure E-Voting System
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-audit:
+    name: Test & Security Audit Matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install Root Dependencies
+        run: npm ci || npm install
+
+      - name: Install Server Dependencies
+        run: cd server && (npm ci || npm install)
+
+      - name: Execute Security Vulnerability Audit
+        run: |
+          npm audit
+          cd server && npm audit
+
+      - name: Run Full Automated Jest Test Matrix (13 Suites / 114 Tests)
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci_cd_testing_secret_key_minimum_32_characters!
+          MONGO_URI: mongodb://127.0.0.1:27017/voting-system-ci
+        run: cd server && npm test
+
+  production-verification:
+    name: Production Verification & Docker Build
+    needs: test-and-audit
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install
+          cd server && (npm ci || npm install)
+
+      - name: Execute Real HTTP API Latency Benchmark
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci_cd_benchmark_secret_key_minimum_32_characters!
+        run: npm run api-benchmark
+
+      - name: Execute In-Process Cryptographic Benchmark
+        run: npm run benchmark
+
+      - name: Validate Production Docker Image Build
+        run: docker build -t secure-e-voting-system:latest .
