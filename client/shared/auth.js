@@ -1,5 +1,5 @@
 /**
- * SECUREVOTE SHARED CLIENT-SIDE AUTH & LAYOUT HELPER
+ * SECUREVOTE SHARED CLIENT-SIDE AUTH & NAVIGATION HELPER
  */
 
 function escapeHtml(str) {
@@ -68,7 +68,7 @@ function handleLogout() {
  * If so, triggers automatic logout, user notification, and redirect.
  */
 function handleAuthResponse(res) {
-    if (res.status === 401) {
+    if (res && res.status === 401) {
         if (typeof showToast === 'function') {
             showToast('Your session has expired. Please sign in again.', 'error');
         }
@@ -80,25 +80,75 @@ function handleAuthResponse(res) {
     return true;
 }
 
-// Attach event listeners on DOMContentLoaded
+// Global Auth helper compatibility wrapper
+const Auth = {
+    requireAuth: (role) => checkAuth(role),
+    getUser: () => ({
+        username: localStorage.getItem('userName'),
+        email: localStorage.getItem('userEmail'),
+        role: localStorage.getItem('role'),
+        token: localStorage.getItem('token')
+    }),
+    getToken: () => localStorage.getItem('token'),
+    logout: () => handleLogout()
+};
+
+// Global Toast helper compatibility wrapper
+const Toast = {
+    show: (msg, type, dur) => (typeof showToast === 'function' ? showToast(msg, type, dur) : console.log(msg)),
+    success: (msg) => (typeof showToast === 'function' ? showToast(msg, 'success') : console.log(msg)),
+    error: (msg) => (typeof showToast === 'function' ? showToast(msg, 'error') : console.error(msg)),
+    warning: (msg) => (typeof showToast === 'function' ? showToast(msg, 'warning') : console.warn(msg)),
+    info: (msg) => (typeof showToast === 'function' ? showToast(msg, 'info') : console.info(msg)),
+};
+
+// Attach universal navigation and accessibility listeners on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Mobile menu toggle
+    // 1. Mobile menu toggle with Backdrop & Keyboard support
     const mobileBtn = document.getElementById('mobileMenuBtn');
     const sidebar = document.getElementById('appSidebar');
+    
+    let backdrop = document.getElementById('sidebarBackdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.id = 'sidebarBackdrop';
+        backdrop.className = 'sidebar-backdrop';
+        document.body.appendChild(backdrop);
+    }
+
+    const closeSidebar = () => {
+        if (sidebar) sidebar.classList.remove('open', 'active');
+        if (backdrop) backdrop.classList.remove('active');
+        if (mobileBtn) mobileBtn.setAttribute('aria-expanded', 'false');
+    };
+
+    const openSidebar = () => {
+        if (sidebar) sidebar.classList.add('open');
+        if (backdrop) backdrop.classList.add('active');
+        if (mobileBtn) mobileBtn.setAttribute('aria-expanded', 'true');
+    };
+
     if (mobileBtn && sidebar) {
+        mobileBtn.setAttribute('aria-expanded', 'false');
         mobileBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            sidebar.classList.toggle('open');
+            if (sidebar.classList.contains('open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
         });
 
-        document.addEventListener('click', (e) => {
-            if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== mobileBtn) {
-                sidebar.classList.remove('open');
+        backdrop.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                closeSidebar();
             }
         });
     }
 
-    // 2. Universal Logout Handler
+    // 2. Universal Logout Handlers
     const logoutElements = document.querySelectorAll('.logout-btn, .logout-nav-btn, #sidebarLogoutBtn');
     logoutElements.forEach(el => {
         el.addEventListener('click', (e) => {
@@ -110,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. User Name Badges
     const userName = localStorage.getItem('userName');
     if (userName) {
-        const userBadgeEls = document.querySelectorAll('#adminUserName, #voterProfileName, #partyUserName');
+        const userBadgeEls = document.querySelectorAll('#adminUserName, #voterProfileName, #partyUserName, #userDisplayName');
         userBadgeEls.forEach(el => {
             if (el) el.textContent = userName;
         });

@@ -33,6 +33,68 @@ exports.getElections = async (req, res) => {
   }
 };
 
+// ================= GET ELECTION-SPECIFIC VOTER STATUS =================
+exports.getElectionStatus = async (req, res) => {
+  try {
+    const voterId = req.user.id;
+    const { electionId } = req.params;
+
+    if (!electionId) {
+      return res.status(400).json({ message: "Election ID parameter is required" });
+    }
+
+    let election = null;
+    if (Election && typeof Election.findById === "function") {
+      const q = Election.findById(electionId).populate("jurisdictionId", "name type code");
+      election = q && typeof q.then === "function" ? (q.lean ? await q.lean() : await q) : q;
+    }
+
+    if (!election) {
+      return res.status(404).json({ message: "Election not found" });
+    }
+
+    // 1. Server-Side Eligibility Evaluation
+    const eligibility = await checkVoterEligibility(voterId, election._id);
+
+    // 2. Election-Scoped Participation Status
+    const [participationRecord, legacyVoteExists, voterDoc] = await Promise.all([
+      VoterParticipation.findOne({
+        voterId: safeId(voterId),
+        electionId: safeId(election._id),
+      }).select("verificationMethod participatedAt").lean().catch(() => null),
+      election.isDefault ? Vote.exists({ voterId: safeId(voterId) }).catch(() => false) : Promise.resolve(false),
+      Voter.findById(voterId).select("faceDescriptor").lean().catch(() => null),
+    ]);
+
+    const hasVoted = Boolean(participationRecord || legacyVoteExists);
+    const hasBiometrics = Boolean(voterDoc && voterDoc.faceDescriptor && voterDoc.faceDescriptor.length > 0);
+    const windowCheck = isVotingAllowed(election);
+
+    // Strict Privacy Guarantee: Zero candidate choice, Zero party selection, Zero ballot commit link
+    res.json({
+      electionId: election._id,
+      title: election.title,
+      description: election.description,
+      electionType: election.electionType || "NATIONAL",
+      jurisdiction: election.jurisdictionId || { name: "National General", type: "COUNTRY", code: "NAT-01" },
+      phase: election.phase,
+      startDate: election.startDate,
+      endDate: election.endDate,
+      publishLiveTally: Boolean(election.publishLiveTally),
+      eligible: Boolean(eligibility.eligible),
+      eligibilityReason: eligibility.reason || null,
+      hasVoted,
+      hasBiometrics,
+      verificationMethod: participationRecord ? participationRecord.verificationMethod : null,
+      isVotingAllowed: Boolean(windowCheck.allowed),
+      votingWindowReason: windowCheck.reason || null,
+    });
+  } catch (err) {
+    logger.error("Get election voter status error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to retrieve election voter status" });
+  }
+};
+
 // ================= GET VOTER PROFILE =================
 exports.getProfile = async (req, res) => {
   try {

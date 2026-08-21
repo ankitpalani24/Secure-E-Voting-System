@@ -9,29 +9,22 @@ const TOTAL_WIZARD_STEPS = 7;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Enforce Admin Access
-    if (!Auth.requireAuth('admin')) return;
+    if (!checkAuth('admin')) return;
 
-    const user = Auth.getUser();
-    if (user && user.username) {
+    const userName = localStorage.getItem('userName');
+    if (userName) {
         const adminNameEl = document.getElementById('adminUserName');
-        if (adminNameEl) adminNameEl.textContent = user.username;
+        if (adminNameEl) adminNameEl.textContent = userName;
     }
 
-    // 2. Setup Mobile Navigation
-    const mobileBtn = document.getElementById('mobileMenuBtn');
-    const sidebar = document.getElementById('appSidebar');
-    if (mobileBtn && sidebar) {
-        mobileBtn.onclick = () => sidebar.classList.toggle('active');
-    }
-
-    // 3. Setup Default Dates in Wizard (Start: Now, End: +7 Days)
+    // 2. Setup Default Dates in Wizard (Start: Now, End: +7 Days)
     setupDefaultWizardDates();
 
-    // 4. Load Data
+    // 3. Load Data
     await loadJurisdictions();
     await loadElections();
 
-    // 5. Setup Filters & Actions
+    // 4. Setup Filters & Actions
     setupEventListeners();
 });
 
@@ -94,7 +87,10 @@ async function loadElections() {
         if (search) url += `search=${encodeURIComponent(search)}&`;
 
         const res = await fetch(url, { headers: getAuthHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch elections');
+        if (!res.ok) {
+            handleAuthResponse(res);
+            throw new Error('Failed to fetch elections');
+        }
 
         allElections = await res.json();
         renderElections(allElections);
@@ -137,7 +133,7 @@ function renderElections(elections) {
                         <div>
                             <span class="election-type-tag"><i class="fas fa-landmark"></i> ${el.electionType || 'NATIONAL'}</span>
                             <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-top: 6px;">${escapeHtml(el.title)}</h3>
-                            <span style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">${escapeHtml(el.electionCode || el._id.slice(-6).toUpperCase())}</span>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">${escapeHtml(el.electionCode || (el._id ? el._id.slice(-6).toUpperCase() : 'ELEC'))}</span>
                         </div>
                         <span class="status-badge ${phaseBadgeClass}">${el.phase}</span>
                     </div>
@@ -280,22 +276,22 @@ function validateCurrentStep() {
         const title = document.getElementById('wTitle')?.value.trim();
         const code = document.getElementById('wCode')?.value.trim();
         if (!title) {
-            Toast.error('Official Election Title is required');
+            showToast('Official Election Title is required', 'error');
             return false;
         }
         if (!code) {
-            Toast.error('Election Reference Code is required');
+            showToast('Election Reference Code is required', 'error');
             return false;
         }
     } else if (currentWizardStep === 5) {
         const start = document.getElementById('wStartDate')?.value;
         const end = document.getElementById('wEndDate')?.value;
         if (!start || !end) {
-            Toast.error('Start and End dates are required');
+            showToast('Start and End dates are required', 'error');
             return false;
         }
         if (new Date(end) <= new Date(start)) {
-            Toast.error('End date must be strictly after the start date');
+            showToast('End date must be strictly after the start date', 'error');
             return false;
         }
     }
@@ -311,11 +307,17 @@ function updateReviewPane() {
     const start = document.getElementById('wStartDate')?.value || '-';
     const end = document.getElementById('wEndDate')?.value || '-';
 
-    document.getElementById('revTitle').textContent = title;
-    document.getElementById('revCode').textContent = code;
-    document.getElementById('revType').textContent = type;
-    document.getElementById('revJurisdiction').textContent = jurisdictionText;
-    document.getElementById('revSchedule').textContent = `${start} to ${end}`;
+    const revTitle = document.getElementById('revTitle');
+    const revCode = document.getElementById('revCode');
+    const revType = document.getElementById('revType');
+    const revJurisdiction = document.getElementById('revJurisdiction');
+    const revSchedule = document.getElementById('revSchedule');
+
+    if (revTitle) revTitle.textContent = title;
+    if (revCode) revCode.textContent = code;
+    if (revType) revType.textContent = type;
+    if (revJurisdiction) revJurisdiction.textContent = jurisdictionText;
+    if (revSchedule) revSchedule.textContent = `${start} to ${end}`;
 }
 
 async function commitElectionDraft() {
@@ -364,11 +366,11 @@ async function commitElectionDraft() {
             }).catch(() => {});
         }
 
-        Toast.success(`Election draft '${payload.title}' created successfully in DRAFT phase!`);
+        showToast(`Election draft '${payload.title}' created successfully in DRAFT phase!`, 'success');
         document.getElementById('createElectionModal')?.classList.add('hidden');
         await loadElections();
     } catch (err) {
-        Toast.error(err.message || 'Failed to commit draft election');
+        showToast(err.message || 'Failed to commit draft election', 'error');
     } finally {
         if (submitBtn) submitBtn.disabled = false;
     }
@@ -377,13 +379,6 @@ async function commitElectionDraft() {
 function getAuthHeaders() {
     const token = localStorage.getItem('token');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, m => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    })[m]);
 }
 
 function debounce(func, wait) {

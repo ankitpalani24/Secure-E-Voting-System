@@ -433,4 +433,99 @@ describe("PHASE 18 — MULTI-ELECTION & JURISDICTION MANAGEMENT TEST SUITE", () 
       expect(res.body.message).toContain("embargoed");
     });
   });
+
+  // ================= 6. ELECTION-SCOPED VOTER STATUS & PRIVACY (PHASE 19) =================
+  describe("6. Election-Scoped Voter Status & Privacy Isolation (Phase 19)", () => {
+    test("GET /api/voter/elections/:electionId/status returns accurate election-scoped status", async () => {
+      Election.findById.mockReturnValue({
+        populate: () => Promise.resolve({
+          _id: electionAId,
+          title: "State Assembly Election 2028",
+          electionType: "STATE",
+          phase: ELECTION_PHASES.VOTING,
+          startDate: new Date(Date.now() - 3600000),
+          endDate: new Date(Date.now() + 86400000),
+          jurisdictionId: { name: "State Alpha", type: "STATE", code: "STA-01" },
+        }),
+      });
+
+      VoterEligibility.findOne.mockResolvedValue({ status: "ELIGIBLE" });
+      VoterParticipation.findOne.mockReturnValue({
+        select: () => ({
+          lean: () => Promise.resolve(null), // Not voted yet
+        }),
+      });
+      Voter.findById.mockReturnValue({
+        select: () => ({
+          lean: () => Promise.resolve({ faceDescriptor: new Array(128).fill(0.1) }),
+        }),
+      });
+
+      const res = await request(app)
+        .get(`/api/voter/elections/${electionAId}/status`)
+        .set("Authorization", `Bearer ${voter1Token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.electionId.toString()).toBe(electionAId.toString());
+      expect(res.body.eligible).toBe(true);
+      expect(res.body.hasVoted).toBe(false);
+      expect(res.body.hasBiometrics).toBe(true);
+      expect(res.body.isVotingAllowed).toBe(true);
+
+      // PRIVACY INVARIANTS: No party choice, candidate ID, or ballot commitment
+      expect(res.body.partyId).toBeUndefined();
+      expect(res.body.candidateId).toBeUndefined();
+      expect(res.body.ballotCommitmentHash).toBeUndefined();
+      expect(res.body.anonymousBallot).toBeUndefined();
+    });
+
+    test("Voting status is isolated: Voted in Election A does NOT mark Election B as voted", async () => {
+      // Setup Election B
+      Election.findById.mockReturnValue({
+        populate: () => Promise.resolve({
+          _id: electionBId,
+          title: "National General Election 2029",
+          electionType: "NATIONAL",
+          phase: ELECTION_PHASES.VOTING,
+          startDate: new Date(Date.now() - 3600000),
+          endDate: new Date(Date.now() + 86400000),
+          jurisdictionId: { name: "National Territory", type: "COUNTRY", code: "NAT-01" },
+        }),
+      });
+
+      VoterEligibility.findOne.mockResolvedValue({ status: "ELIGIBLE" });
+
+      // Participation query for Election B returns null (even if voter voted in Election A)
+      VoterParticipation.findOne.mockImplementation(({ electionId }) => {
+        if (electionId.toString() === electionAId.toString()) {
+          return { select: () => ({ lean: () => Promise.resolve({ verificationMethod: "FACE_BIOMETRIC" }) }) };
+        }
+        return { select: () => ({ lean: () => Promise.resolve(null) }) };
+      });
+
+      Voter.findById.mockReturnValue({
+        select: () => ({
+          lean: () => Promise.resolve({ faceDescriptor: new Array(128).fill(0.1) }),
+        }),
+      });
+
+      const resB = await request(app)
+        .get(`/api/voter/elections/${electionBId}/status`)
+        .set("Authorization", `Bearer ${voter1Token}`);
+
+      expect(resB.status).toBe(200);
+      expect(resB.body.electionId.toString()).toBe(electionBId.toString());
+      expect(resB.body.hasVoted).toBe(false); // Independent!
+    });
+
+    test("Non-voters or unauthenticated requests are strictly rejected", async () => {
+      const resUnauth = await request(app).get(`/api/voter/elections/${electionAId}/status`);
+      expect([401, 403]).toContain(resUnauth.status);
+
+      const resAdmin = await request(app)
+        .get(`/api/voter/elections/${electionAId}/status`)
+        .set("Authorization", `Bearer ${superAdminToken}`);
+      expect([401, 403]).toContain(resAdmin.status);
+    });
+  });
 });

@@ -15,7 +15,7 @@
 <body>
 
     <div class="app-shell">
-        <!-- Sidebar -->
+        <!-- Sidebar Navigation -->
         <aside class="app-sidebar" id="appSidebar">
             <div class="sidebar-header">
                 <a href="v-dashboard.html" class="brand-logo">
@@ -26,8 +26,8 @@
 
             <nav class="sidebar-nav">
                 <span class="nav-section-title">Citizen Portal</span>
-                <a href="v-dashboard.html" class="nav-link active">
-                    <i class="fas fa-id-card"></i> <span>Voter Status</span>
+                <a href="v-dashboard.html" class="nav-link active" aria-current="page">
+                    <i class="fas fa-id-card"></i> <span>Voter Dashboard</span>
                 </a>
                 <a href="v-vote.html" class="nav-link">
                     <i class="fas fa-vote-yea"></i> <span>Cast Ballot</span>
@@ -51,8 +51,9 @@
             </div>
         </aside>
 
-        <!-- Main -->
+        <!-- Main Workspace -->
         <div class="app-main">
+            <!-- Topbar Header -->
             <header class="app-topbar">
                 <div class="topbar-left">
                     <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
@@ -60,121 +61,80 @@
                     </button>
                     <div class="page-title-group">
                         <h1 id="voterWelcomeHeader">Welcome, Voter</h1>
-                        <p>Official Decentralized Voting & Identity Gateway</p>
+                        <p>Jurisdiction-Aware Democratic Ballot & Status Center</p>
                     </div>
                 </div>
 
                 <div class="topbar-right">
-                    <div class="status-badge live" id="voterElectionStatusBadge">
-                        ● Voting Open
-                    </div>
                     <a href="../login/login.html" class="logout-nav-btn logout-btn">
                         <i class="fas fa-sign-out-alt"></i> Sign Out
                     </a>
                 </div>
             </header>
 
+            <!-- Scrollable Main Content Area -->
             <main class="page-content">
-                <!-- Prominent Cast Ballot Hero Action Card (Olive Gradient) -->
-                <div class="section-card" id="primaryVoteActionCard" style="background: linear-gradient(135deg, #4F612F 0%, #667A3E 100%); color: #FFFFFF; border: none; padding: 36px; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); margin-bottom: 28px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px;">
-                        <div style="max-width: 540px;">
-                            <span class="status-badge live" style="background: rgba(47, 125, 50, 0.25); color: #A5D6A7; border-color: rgba(165, 214, 167, 0.4); margin-bottom: 12px;">
-                                Official Ballot Ready
-                            </span>
-                            <h2 style="color: #FFFFFF; font-size: 1.85rem; font-weight: 800; margin-bottom: 8px; line-height: 1.2;">Your Vote Shapes the Future</h2>
-                            <p style="color: #E4E8DC; font-size: 0.95rem; line-height: 1.5;">Every cast ballot is cryptographically committed with complete anonymity. Your choice remains 100% secret and untamperable.</p>
+                <!-- FOCUS AREA: Selected Election Status Panel -->
+                <div class="section-card" id="selectedElectionPanel" style="border: 2px solid var(--border); border-radius: var(--radius-xl); padding: 28px; margin-bottom: 28px; background-color: var(--surface); box-shadow: var(--shadow-md);">
+                    <div id="unselectedElectionPrompt" style="text-align: center; padding: 24px 16px;">
+                        <div style="width: 56px; height: 56px; background-color: var(--primary-subtle); color: var(--primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 14px auto;">
+                            <i class="fas fa-layer-group"></i>
                         </div>
-                        <a href="v-vote.html" class="btn-primary" id="castVoteHeroBtn" style="background-color: var(--success); color: #FFFFFF; font-size: 1.1rem; padding: 16px 28px; border-radius: var(--radius-lg); font-weight: 700; box-shadow: 0 4px 14px rgba(47, 125, 50, 0.4); transition: transform 0.2s ease;">
-                            <i class="fas fa-vote-yea"></i> CAST YOUR VOTE &rarr;
-                        </a>
+                        <h3 style="font-size: 1.2rem; color: var(--text-primary); margin-bottom: 6px;">Select an Election to View Voting Status</h3>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 520px; margin: 0 auto;">
+                            Voting accreditation and participation records are strictly isolated per election. Please choose an accredited election from the list below.
+                        </p>
+                    </div>
+
+                    <div id="selectedElectionContent" class="hidden">
+                        <!-- Populated dynamically by v-dashboard.js -->
                     </div>
                 </div>
 
-                <!-- Multi-Election Jurisdictional Slates Section -->
+                <!-- ELIGIBLE ELECTIONS LIST SECTION -->
                 <div class="section-card" style="margin-bottom: 28px;">
-                    <div class="section-header">
+                    <div class="section-header" style="flex-wrap: wrap; gap: 14px;">
                         <div>
-                            <h3 style="font-size: 1.15rem; color: var(--text-primary);"><i class="fas fa-layer-group" style="color: var(--primary);"></i> Your Eligible Elections & Jurisdictions</h3>
-                            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;">Official democratic elections for which your voter credentials are authenticated and accredited.</p>
+                            <h3 style="font-size: 1.15rem; color: var(--text-primary);">
+                                <i class="fas fa-landmark" style="color: var(--primary);"></i> Your Accredited Elections
+                            </h3>
+                            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;">
+                                Elections for which your citizen identity is accredited in the electoral roll.
+                            </p>
+                        </div>
+
+                        <!-- Category Filter Tabs -->
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="electionCategoryTabs">
+                            <button type="button" class="btn-secondary active" data-filter="ALL" style="padding: 6px 14px; font-size: 0.82rem;">All</button>
+                            <button type="button" class="btn-secondary" data-filter="ACTIVE" style="padding: 6px 14px; font-size: 0.82rem;">Active (Voting)</button>
+                            <button type="button" class="btn-secondary" data-filter="UPCOMING" style="padding: 6px 14px; font-size: 0.82rem;">Upcoming</button>
+                            <button type="button" class="btn-secondary" data-filter="COMPLETED" style="padding: 6px 14px; font-size: 0.82rem;">Completed</button>
                         </div>
                     </div>
-                    <div id="voterEligibleElectionsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 12px;">
-                        <div style="text-align: center; grid-column: 1 / -1; padding: 24px; color: var(--text-muted);">
-                            <i class="fas fa-spinner fa-spin"></i> Loading your accredited elections...
+
+                    <div id="voterEligibleElectionsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 16px;">
+                        <div style="text-align: center; grid-column: 1 / -1; padding: 32px; color: var(--text-muted);">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top: 10px;">Loading your accredited elections...</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Participation Checklist Grid -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
-                    <!-- Status Checklist Card -->
-                    <div class="section-card" style="margin: 0;">
-                        <div class="section-header">
-                            <h3><i class="fas fa-clipboard-check" style="color: var(--primary);"></i> Voting Eligibility Checklist</h3>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 14px;">
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background-color: var(--surface-muted); border-radius: var(--radius-md);">
-                                <i class="fas fa-check-circle" style="color: var(--success); font-size: 1.2rem;"></i>
-                                <div>
-                                    <strong style="display: block; font-size: 0.9rem;">Accredited Citizen Roll</strong>
-                                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Verified on official electoral roll</span>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background-color: var(--surface-muted); border-radius: var(--radius-md);">
-                                <i class="fas fa-check-circle" style="color: var(--success); font-size: 1.2rem;"></i>
-                                <div>
-                                    <strong style="display: block; font-size: 0.9rem;">Facial Biometrics Registered</strong>
-                                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Single-use 128-d descriptor ready</span>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background-color: var(--surface-muted); border-radius: var(--radius-md);" id="ballotStatusCheckRow">
-                                <i class="fas fa-clock" id="ballotStatusCheckIcon" style="color: var(--warning); font-size: 1.2rem;"></i>
-                                <div>
-                                    <strong style="display: block; font-size: 0.9rem;" id="ballotStatusCheckTitle">Ballot Status: Ready to Cast</strong>
-                                    <span style="font-size: 0.8rem; color: var(--text-secondary);" id="ballotStatusCheckSub">You have not yet submitted your ballot</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Personal Voter Profile Card -->
-                    <div class="section-card personal-info" style="margin: 0;">
-                        <div class="section-header">
-                            <h3><i class="fas fa-user-circle" style="color: var(--primary);"></i> Citizen Profile Summary</h3>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div>
-                                <span style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Registered Full Name</span>
-                                <strong style="font-size: 1rem; color: var(--text-primary);" id="voterName">Voter</strong>
-                            </div>
-                            <div>
-                                <span style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Official Email Address</span>
-                                <span style="font-size: 0.95rem; color: var(--text-secondary);" id="voterEmail">voter@domain.com</span>
-                            </div>
-                            <div>
-                                <span style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Participation Record</span>
-                                <span class="status-badge pending" id="voterHasVotedBadge" style="margin-top: 4px;">Pending Ballot</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Election Guidelines & Secrecy Notice -->
+                <!-- Citizen Security & Ballot Decoupling Information -->
                 <div class="section-card" style="margin: 0;">
                     <div class="section-header">
                         <h3><i class="fas fa-shield-alt" style="color: var(--info);"></i> How Your Vote is Protected</h3>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
-                        <div style="padding: 14px; background-color: var(--surface-muted); border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
+                        <div style="padding: 16px; background-color: var(--surface-muted); border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
                             <strong style="display: block; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 4px;">1. Absolute Anonymity</strong>
-                            <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Your ballot choice is committed without any attached voter identifier or IP address.</p>
+                            <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Your ballot choice is committed without any attached voter identifier, IP address, or tracking cookie.</p>
                         </div>
-                        <div style="padding: 14px; background-color: var(--surface-muted); border-radius: var(--radius-md); border-left: 3px solid var(--success);">
-                            <strong style="display: block; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 4px;">2. One-Person-One-Vote</strong>
-                            <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Compound unique cryptographic indexes strictly prevent double voting.</p>
+                        <div style="padding: 16px; background-color: var(--surface-muted); border-radius: var(--radius-md); border-left: 3px solid var(--success);">
+                            <strong style="display: block; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 4px;">2. Multi-Election Isolation</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Voting in a State or Institutional election has zero bearing on your National ballot status.</p>
                         </div>
-                        <div style="padding: 14px; background-color: var(--surface-muted); border-radius: var(--radius-md); border-left: 3px solid var(--warning);">
+                        <div style="padding: 16px; background-color: var(--surface-muted); border-radius: var(--radius-md); border-left: 3px solid var(--warning);">
                             <strong style="display: block; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 4px;">3. Cryptographic Receipt</strong>
                             <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">You receive a unique SHA-256 reference code confirming your ballot is sealed in the tally box.</p>
                         </div>
@@ -184,8 +144,8 @@
         </div>
     </div>
 
-    <script src="../shared/spinner.js"></script>
     <script src="../shared/toast.js"></script>
+    <script src="../shared/spinner.js"></script>
     <script src="../shared/auth.js"></script>
     <script src="v-dashboard.js"></script>
 </body>

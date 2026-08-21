@@ -13,6 +13,7 @@ let activeCameraStream = null;
 let voterModelsLoaded = false;
 let faceDetectionInterval = null;
 let activeDescriptor = null;
+let currentElection = null;
 
 // Stepper Progress Manager
 function updateStepper(activeStep) {
@@ -78,7 +79,7 @@ function showPane(paneId) {
     });
 }
 
-// Step 1: Load Accredited Parties
+// Step 1: Load Accredited Parties & Scoped Election Validation
 async function loadVoterParties() {
     const token = localStorage.getItem('token');
     if (!token) return window.location.href = '../login/login.html';
@@ -87,16 +88,55 @@ async function loadVoterParties() {
     const nameEl = document.getElementById('voterProfileName');
     if (nameEl && voterName) nameEl.textContent = voterName;
 
-    try {
-        const profileRes = await fetch('/api/voter/profile', {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+    const urlParams = new URLSearchParams(window.location.search);
+    let targetElectionId = urlParams.get('electionId');
 
-        if (profileRes.ok) {
-            const profile = await profileRes.json();
-            if (profile.hasVoted) {
-                renderAlreadyVotedState();
-                return;
+    try {
+        // 1. Election-Scoped Status Validation
+        if (targetElectionId) {
+            const statusRes = await fetch(`/api/voter/elections/${targetElectionId}/status`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (statusRes.ok) {
+                const electionStatus = await statusRes.json();
+                currentElection = electionStatus;
+
+                if (electionStatus.hasVoted) {
+                    renderAlreadyVotedState(electionStatus);
+                    return;
+                }
+                if (!electionStatus.eligible) {
+                    renderIneligibleState(electionStatus);
+                    return;
+                }
+                if (!electionStatus.isVotingAllowed) {
+                    renderVotingClosedState(electionStatus);
+                    return;
+                }
+            }
+        } else {
+            // If no electionId in URL, fetch voter's eligible elections
+            const elRes = await fetch('/api/voter/elections', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (elRes.ok) {
+                const elections = await elRes.json();
+                const activeEl = elections.find(e => e.phase === 'VOTING' && !e.hasVoted) || elections[0];
+                if (activeEl && activeEl._id) {
+                    targetElectionId = activeEl._id;
+                    currentElection = activeEl;
+                    const newUrl = `${window.location.pathname}?electionId=${targetElectionId}`;
+                    window.history.replaceState({ electionId: targetElectionId }, '', newUrl);
+
+                    if (activeEl.hasVoted) {
+                        renderAlreadyVotedState(activeEl);
+                        return;
+                    }
+                } else if (elections.length === 0) {
+                    renderNoElectionsState();
+                    return;
+                }
             }
         }
 
@@ -117,7 +157,7 @@ async function loadVoterParties() {
                 <div class="empty-state-box" style="grid-column: 1 / -1;">
                     <div class="empty-state-icon"><i class="fas fa-landmark"></i></div>
                     <div class="empty-state-title">No Accredited Candidates Available</div>
-                    <p class="empty-state-text">There are currently no active political party slates registered for this election window.</p>
+                    <p class="empty-state-text">There are currently no active political party slates registered for this election.</p>
                 </div>
             `;
             return;
@@ -183,26 +223,78 @@ async function loadVoterParties() {
     }
 }
 
-// Render "Already Voted" Screen
-function renderAlreadyVotedState() {
+// Render "Already Voted" Screen for this Election
+function renderAlreadyVotedState(electionStatus) {
     updateStepper(4);
     const ballotCard = document.getElementById('ballotSelectionCard');
+    const title = electionStatus?.title || 'This Election';
+    const elId = electionStatus?.electionId || electionStatus?._id || '';
+
     if (ballotCard) {
         ballotCard.innerHTML = `
             <div class="empty-state-box" style="padding: 48px 20px;">
                 <div class="empty-state-icon" style="color: var(--success);"><i class="fas fa-check-circle"></i></div>
-                <h2 class="empty-state-title" style="font-size: 1.5rem; margin-bottom: 8px;">Ballot Successfully Recorded</h2>
-                <p class="empty-state-text">Your vote has been cryptographically committed to the decentralized ballot box. Double voting is strictly prevented by server-side constraints.</p>
+                <h2 class="empty-state-title" style="font-size: 1.5rem; margin-bottom: 8px;">Ballot Already Recorded</h2>
+                <p class="empty-state-text">Your anonymous vote for <strong>${escapeHtml(title)}</strong> is cryptographically sealed in the ballot repository. Double voting is mathematically blocked.</p>
                 <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
                     <a href="v-dashboard.html" class="btn-secondary"><i class="fas fa-id-card"></i> Voter Dashboard</a>
-                    <a href="v-result.html" class="btn-primary"><i class="fas fa-poll"></i> View Live Results</a>
+                    <a href="v-result.html?electionId=${elId}" class="btn-primary"><i class="fas fa-poll"></i> View Live Results</a>
                 </div>
             </div>
         `;
     }
 }
 
-// Step 1 $\rightarrow$ Step 2: Continue to Review
+function renderIneligibleState(electionStatus) {
+    const ballotCard = document.getElementById('ballotSelectionCard');
+    if (ballotCard) {
+        ballotCard.innerHTML = `
+            <div class="empty-state-box" style="padding: 48px 20px;">
+                <div class="empty-state-icon" style="color: var(--danger);"><i class="fas fa-ban"></i></div>
+                <h2 class="empty-state-title" style="font-size: 1.4rem; margin-bottom: 8px;">Not Accredited For This Election</h2>
+                <p class="empty-state-text">${escapeHtml(electionStatus.eligibilityReason || 'Your voter profile is not registered in this jurisdiction.')}</p>
+                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+                    <a href="v-dashboard.html" class="btn-primary"><i class="fas fa-arrow-left"></i> Return to Dashboard</a>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function renderVotingClosedState(electionStatus) {
+    const ballotCard = document.getElementById('ballotSelectionCard');
+    if (ballotCard) {
+        ballotCard.innerHTML = `
+            <div class="empty-state-box" style="padding: 48px 20px;">
+                <div class="empty-state-icon" style="color: var(--warning);"><i class="fas fa-lock"></i></div>
+                <h2 class="empty-state-title" style="font-size: 1.4rem; margin-bottom: 8px;">Voting Window Closed</h2>
+                <p class="empty-state-text">${escapeHtml(electionStatus.votingWindowReason || 'Voting is not open at this time.')}</p>
+                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+                    <a href="v-dashboard.html" class="btn-secondary"><i class="fas fa-id-card"></i> Dashboard</a>
+                    <a href="v-result.html?electionId=${electionStatus.electionId || ''}" class="btn-primary"><i class="fas fa-poll"></i> View Results</a>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function renderNoElectionsState() {
+    const ballotCard = document.getElementById('ballotSelectionCard');
+    if (ballotCard) {
+        ballotCard.innerHTML = `
+            <div class="empty-state-box" style="padding: 48px 20px;">
+                <div class="empty-state-icon"><i class="fas fa-info-circle"></i></div>
+                <h2 class="empty-state-title">No Active Elections Available</h2>
+                <p class="empty-state-text">There are currently no active voting elections available for your jurisdiction.</p>
+                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+                    <a href="v-dashboard.html" class="btn-primary"><i class="fas fa-arrow-left"></i> Return to Dashboard</a>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Step 1 -> Step 2: Continue to Review
 const continueToReviewBtn = document.getElementById('continueToReviewBtn');
 if (continueToReviewBtn) {
     continueToReviewBtn.onclick = () => {
@@ -220,7 +312,7 @@ if (continueToReviewBtn) {
     };
 }
 
-// Step 2 $\rightarrow$ Step 1: Change Selection
+// Step 2 -> Step 1: Change Selection
 const changeSelectionBtn = document.getElementById('changeSelectionBtn');
 if (changeSelectionBtn) {
     changeSelectionBtn.onclick = () => {
@@ -229,18 +321,17 @@ if (changeSelectionBtn) {
     };
 }
 
-// Step 2 $\rightarrow$ Step 3: Proceed to Biometric Chamber
+// Step 2 -> Step 3: Proceed to Biometrics
 const proceedToBiometricsBtn = document.getElementById('proceedToBiometricsBtn');
 if (proceedToBiometricsBtn) {
     proceedToBiometricsBtn.onclick = async () => {
-        if (!selectedParty) return;
         updateStepper(3);
         showPane('stepBiometricCard');
-        await initializeBiometricChamber();
+        await initializeBiometricFeed();
     };
 }
 
-// Step 3 $\rightarrow$ Step 2: Cancel Biometrics
+// Step 3 -> Step 2: Cancel Biometrics
 const cancelBiometricsBtn = document.getElementById('cancelBiometricsBtn');
 if (cancelBiometricsBtn) {
     cancelBiometricsBtn.onclick = () => {
@@ -250,72 +341,68 @@ if (cancelBiometricsBtn) {
     };
 }
 
-// Step 3: Camera & Face Detection Engine
-async function initializeBiometricChamber() {
-    const videoEl = document.getElementById('voterVideo');
+// Initialize Live Biometric Camera & Face-api Descriptor Tracking
+async function initializeBiometricFeed() {
+    const video = document.getElementById('voterVideo');
     const statusBadge = document.getElementById('biometricStatusBadge');
     const captureBtn = document.getElementById('captureAndVoteBtn');
-    const faceGuide = document.getElementById('faceGuideOval');
+    const ovalGuide = document.getElementById('faceGuideOval');
 
-    if (captureBtn) captureBtn.disabled = true;
-    if (faceGuide) faceGuide.classList.remove('detected');
+    if (!video || !statusBadge || !captureBtn) return;
 
-    if (!voterModelsLoaded) {
-        if (statusBadge) {
-            statusBadge.className = 'biometric-status-pill detecting';
-            statusBadge.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Loading Neural Face Recognition Models...';
-        }
-        await preloadVoterModels();
-    }
-
-    if (statusBadge) {
-        statusBadge.className = 'biometric-status-pill detecting';
-        statusBadge.innerHTML = '<i class="fas fa-video"></i> Connecting to Secure Camera Stream...';
-    }
+    statusBadge.className = 'biometric-status-pill detecting';
+    statusBadge.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing Biometric Camera...';
+    captureBtn.disabled = true;
 
     try {
+        await preloadVoterModels();
+
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: "user" }
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'user',
+            },
+            audio: false,
         });
+
         activeCameraStream = stream;
-        if (videoEl) videoEl.srcObject = stream;
+        video.srcObject = stream;
 
-        if (statusBadge) {
+        video.onloadedmetadata = () => {
+            video.play();
             statusBadge.className = 'biometric-status-pill detecting';
-            statusBadge.innerHTML = '<i class="fas fa-crosshairs"></i> Align your face within the oval guide';
-        }
+            statusBadge.innerHTML = '<i class="fas fa-crosshairs"></i> Align your face within the guide...';
 
-        // Run continuous face detection loop
-        faceDetectionInterval = setInterval(async () => {
-            if (!videoEl || videoEl.paused || videoEl.ended || !voterModelsLoaded) return;
+            if (faceDetectionInterval) clearInterval(faceDetectionInterval);
 
-            try {
-                const detection = await faceapi.detectSingleFace(videoEl)
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
+            faceDetectionInterval = setInterval(async () => {
+                if (!video || video.paused || video.ended) return;
 
-                if (detection) {
-                    activeDescriptor = Array.from(detection.descriptor);
-                    if (faceGuide) faceGuide.classList.add('detected');
-                    if (statusBadge) {
-                        statusBadge.className = 'biometric-status-pill success';
-                        statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Face Aligned — Ready to Commit';
-                    }
-                    if (captureBtn) captureBtn.disabled = false;
-                } else {
-                    activeDescriptor = null;
-                    if (faceGuide) faceGuide.classList.remove('detected');
-                    if (statusBadge) {
+                try {
+                    const detection = await faceapi
+                        .detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+                        .withFaceLandmarks()
+                        .withFaceDescriptor();
+
+                    if (detection) {
+                        activeDescriptor = Array.from(detection.descriptor);
+                        statusBadge.className = 'biometric-status-pill ready';
+                        statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Face Aligned &mdash; Ready to Verify';
+                        captureBtn.disabled = false;
+                        if (ovalGuide) ovalGuide.classList.add('aligned');
+                    } else {
+                        activeDescriptor = null;
                         statusBadge.className = 'biometric-status-pill detecting';
-                        statusBadge.innerHTML = '<i class="fas fa-exclamation-circle"></i> Searching for face... Center your head';
+                        statusBadge.innerHTML = '<i class="fas fa-crosshairs"></i> Position face in center of oval';
+                        captureBtn.disabled = true;
+                        if (ovalGuide) ovalGuide.classList.remove('aligned');
                     }
-                    if (captureBtn) captureBtn.disabled = true;
+                } catch (detErr) {
+                    console.warn('Detection tick notice:', detErr);
                 }
-            } catch (detErr) {
-                // Ignore transient frame errors
-            }
-        }, 500);
-
+            }, 300);
+        };
     } catch (camErr) {
         console.error('Camera access error:', camErr);
         if (statusBadge) {
@@ -326,7 +413,7 @@ async function initializeBiometricChamber() {
     }
 }
 
-// Step 3 $\rightarrow$ Step 4: Capture, Verify & Cast Ballot
+// Step 3 -> Step 4: Capture, Verify & Cast Ballot
 const captureAndVoteBtn = document.getElementById('captureAndVoteBtn');
 if (captureAndVoteBtn) {
     captureAndVoteBtn.onclick = async () => {
@@ -342,7 +429,7 @@ if (captureAndVoteBtn) {
 
         try {
             const urlParams = new URLSearchParams(window.location.search);
-            const currentElectionId = urlParams.get('electionId') || undefined;
+            const currentElectionId = urlParams.get('electionId') || (currentElection ? currentElection.electionId || currentElection._id : undefined);
 
             // 1. Biometric verification step
             const verifyRes = await fetch('/api/voter/face-verify', {
@@ -366,7 +453,7 @@ if (captureAndVoteBtn) {
                 return;
             }
 
-            // 2. Ballot commit step using issued biometricToken
+            // 2. Ballot commit step using single-use biometricToken
             const voteRes = await fetch('/api/voter/vote', {
                 method: 'POST',
                 headers: {
@@ -407,7 +494,7 @@ function renderBallotReceipt(receipt) {
     const container = document.getElementById('receiptContainer');
     if (!container) return;
 
-    const commitmentHash = receipt.ballotCommitmentHash || receipt.ballotId || '0000-COMMITMENT-HASH-ANONYMOUS';
+    const commitmentHash = receipt.ballotCommitmentHash || receipt.ballotCommitment || receipt.ballotId || '0000-COMMITMENT-HASH-ANONYMOUS';
     const timestamp = receipt.timestamp ? new Date(receipt.timestamp).toLocaleString() : new Date().toLocaleString();
 
     container.innerHTML = `
@@ -463,8 +550,11 @@ function renderBallotReceipt(receipt) {
                 <button type="button" class="btn-secondary" onclick="window.print()">
                     <i class="fas fa-print"></i> Print Official Receipt
                 </button>
+                <a href="v-dashboard.html" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voter Dashboard
+                </a>
                 <a href="v-result.html" class="btn-primary">
-                    <i class="fas fa-chart-pie"></i> View Live Results
+                    <i class="fas fa-chart-pie"></i> View Results
                 </a>
             </div>
         </div>
