@@ -163,11 +163,9 @@ app.get("/readyz", (req, res) => {
   });
 });
 
-// ================== STATIC ASSETS (Development / Standalone) ==================
-if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
-  app.use("/client", express.static(path.join(__dirname, "../client")));
-  app.use("/models", express.static(path.join(__dirname, "../client/models")));
-}
+// ================== STATIC ASSETS ==================
+app.use("/client", express.static(path.join(__dirname, "../client")));
+app.use("/models", express.static(path.join(__dirname, "../client/models")));
 
 // ================== API ROUTES ==================
 const authRoutes = require("./routes/authRoutes");
@@ -183,7 +181,7 @@ app.use("/api/party", partyRoutes);
 app.use("/api/results", resultsRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Secure Online Voting System API is running...");
+  res.redirect("/client/login/login.html");
 });
 
 // ================== CENTRALIZED ERROR HANDLER ==================
@@ -193,13 +191,18 @@ app.use(errorHandler);
 let cachedConnection = null;
 
 async function connectToDatabase() {
-  if (cachedConnection && mongoose.connection.readyState === 1) {
-    return cachedConnection;
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
   }
-  cachedConnection = mongoose.connect(config.mongoUri, {
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-  });
+  if (!config.mongoUri) {
+    throw new Error("MONGO_URI environment variable is missing. Set MONGO_URI in your cloud deployment settings.");
+  }
+  if (!cachedConnection) {
+    cachedConnection = mongoose.connect(config.mongoUri, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    });
+  }
   await cachedConnection;
   logger.info("MongoDB Connected Successfully");
   return cachedConnection;
@@ -247,7 +250,10 @@ module.exports = async (req, res) => {
     await connectToDatabase();
   } catch (err) {
     logger.error("Serverless MongoDB Connection Failed: " + err.message);
-    return res.status(500).json({ message: "Database connection failed" });
+    return res.status(500).json({
+      message: "Database connection failed. Ensure MONGO_URI is configured in cloud environment variables.",
+      error: process.env.NODE_ENV !== "production" ? err.message : undefined,
+    });
   }
   return app(req, res);
 };

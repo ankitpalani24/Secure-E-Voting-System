@@ -4,6 +4,18 @@
     {
       "source": "/api/(.*)",
       "destination": "/api/index.js"
+    },
+    {
+      "source": "/healthz",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/readyz",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/",
+      "destination": "/client/login/login.html"
     }
   ]
 }
