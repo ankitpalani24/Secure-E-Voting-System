@@ -3,7 +3,7 @@ const AnonymousBallot = require("../models/AnonymousBallot");
 const Vote = require("../models/Vote");
 const Party = require("../models/Party");
 const Election = require("../models/Election");
-const { canViewResults, ELECTION_PHASES } = require("../utils/electionEngine");
+const { canViewResults } = require("../utils/electionEngine");
 const logger = require("../utils/logger");
 
 // ================= GET RESULTS =================
@@ -17,7 +17,7 @@ exports.getResults = async (req, res) => {
     if (electionId) {
       election = await Election.findById(electionId);
     } else {
-      election = await Election.findOne({ isDefault: true }) || await Election.findOne().sort({ createdAt: -1 });
+      election = (await Election.findOne({ isDefault: true })) || (await Election.findOne().sort({ createdAt: -1 }));
     }
 
     // 2. Embargo Enforcement: Non-admins cannot view tally if embargoed
@@ -36,17 +36,8 @@ exports.getResults = async (req, res) => {
       matchStage.electionId = new (require("mongoose").Types.ObjectId)(electionId);
     }
 
-    // Check if AnonymousBallot has records
-    const anonymousBallotCount = await AnonymousBallot.countDocuments(matchStage);
-
-    let aggregationModel = AnonymousBallot;
-    if (anonymousBallotCount === 0) {
-      // Fallback to legacy Vote collection if old data exists
-      aggregationModel = Vote;
-    }
-
     const pipeline = [];
-    if (Object.keys(matchStage).length > 0 && aggregationModel === AnonymousBallot) {
+    if (Object.keys(matchStage).length > 0) {
       pipeline.push({ $match: matchStage });
     }
 
@@ -66,14 +57,17 @@ exports.getResults = async (req, res) => {
         },
       },
       {
-        $unwind: "$partyDetails",
+        $unwind: {
+          path: "$partyDetails",
+          preserveNullAndEmptyArrays: true,
+        },
       },
       {
         $project: {
           _id: 0,
           partyId: "$_id",
-          partyName: "$partyDetails.partyName",
-          symbol: "$partyDetails.symbol",
+          partyName: { $ifNull: ["$partyDetails.partyName", "Unknown Slate"] },
+          symbol: { $ifNull: ["$partyDetails.symbol", "🏛️"] },
           totalVotes: 1,
         },
       },
@@ -82,11 +76,8 @@ exports.getResults = async (req, res) => {
       }
     );
 
-    const results = await aggregationModel.aggregate(pipeline);
-
-    // Compute cryptographic manifest hash of the current result set
-    const resultsString = JSON.stringify(results);
-    const manifestHash = crypto.createHash("sha256").update(resultsString).digest("hex");
+    // Primary source: AnonymousBallot collection
+    const results = await AnonymousBallot.aggregate(pipeline);
 
     res.json(results);
   } catch (err) {
