@@ -8,10 +8,17 @@
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
         if (token && role) {
-            if (role === 'admin') window.location.href = 'admin/dashboard/dashboard.html';
-            else if (role === 'voter') window.location.href = 'voter-dashboard/v-dashboard.html';
-            else if (role === 'party') window.location.href = 'party-dashboard/p-parties.html';
-            else window.location.href = 'login/login.html';
+            if (role === 'admin' || role === 'SUPER_ADMIN' || role === 'ELECTION_ADMIN') {
+                window.location.href = 'admin/dashboard/dashboard.html';
+            } else if (role === 'AUDITOR') {
+                window.location.href = 'admin/auditor/auditor.html';
+            } else if (role === 'voter') {
+                window.location.href = 'voter-dashboard/v-dashboard.html';
+            } else if (role === 'party') {
+                window.location.href = 'party-dashboard/p-parties.html';
+            } else {
+                window.location.href = 'login/login.html';
+            }
         } else {
             window.location.href = 'login/login.html';
         }

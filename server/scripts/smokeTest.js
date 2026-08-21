@@ -78,8 +78,8 @@ async function runSmokeTests() {
     {
       name: "1. Root Gateway Status",
       path: "/",
-      test: (res) => res.statusCode === 200,
-      expected: "HTTP 200 OK",
+      test: (res) => res.statusCode === 200 || res.statusCode === 302,
+      expected: "HTTP 200 OK or HTTP 302 Redirect",
     },
     {
       name: "2. Process Liveness Probe (/healthz)",

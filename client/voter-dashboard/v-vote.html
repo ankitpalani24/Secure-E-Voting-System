@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cast Ballot - SecureVote Citizen Portal</title>
+    <title>Official Ballot Chamber - SecureVote Citizen Portal</title>
     <!-- Face-api.js -->
     <script src="../lib/face-api.min.js"></script>
     <link rel="stylesheet" href="../styles/main.css">
@@ -17,7 +17,7 @@
 <body>
 
     <div class="app-shell">
-        <!-- Sidebar -->
+        <!-- Sidebar Navigation -->
         <aside class="app-sidebar" id="appSidebar">
             <div class="sidebar-header">
                 <a href="v-dashboard.html" class="brand-logo">
@@ -27,7 +27,7 @@
             </div>
 
             <nav class="sidebar-nav">
-                <span class="nav-section-title">Citizen Portal</span>
+                <span class="nav-section-title">Citizen Voting</span>
                 <a href="v-dashboard.html" class="nav-link">
                     <i class="fas fa-id-card"></i> <span>Voter Status</span>
                 </a>
@@ -53,8 +53,9 @@
             </div>
         </aside>
 
-        <!-- Main -->
+        <!-- Main Workspace -->
         <div class="app-main">
+            <!-- Topbar Header -->
             <header class="app-topbar">
                 <div class="topbar-left">
                     <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
@@ -78,7 +79,7 @@
 
             <main class="page-content">
                 <!-- 4-Step Progress Stepper -->
-                <div class="stepper" id="votingStepper">
+                <div class="stepper" id="votingStepper" role="navigation" aria-label="Voting Step Progress">
                     <div class="step-item active" id="step1">
                         <div class="step-number">01</div>
                         <div class="step-info">
@@ -112,21 +113,110 @@
                     </div>
                 </div>
 
-                <!-- Party Candidate List Container -->
+                <!-- STEP 1: Candidate Selection Pane -->
                 <div class="section-card" id="ballotSelectionCard">
                     <div class="section-header">
                         <div>
                             <h3><i class="fas fa-users" style="color: var(--primary);"></i> Accredited Candidates & Political Parties</h3>
-                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Click a candidate card below to review and proceed to biometric confirmation.</p>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Select your candidate slate below, then proceed to the verification chamber.</p>
                         </div>
                     </div>
 
-                    <div class="party-list candidates-grid" id="partiesContainer" style="box-shadow: none; border: none; padding: 0;">
-                        <!-- Candidate cards dynamically injected by v-vote.js -->
+                    <div class="party-list candidates-grid" id="partiesContainer" role="radiogroup" aria-label="Candidate selection choices">
+                        <!-- Skeleton Loaders while fetching -->
+                        <div class="candidate-card" style="opacity: 0.7;">
+                            <div class="skeleton skeleton-circle" style="margin-bottom: 12px;"></div>
+                            <div class="skeleton skeleton-title" style="margin-bottom: 8px;"></div>
+                            <div class="skeleton skeleton-text" style="width: 90%;"></div>
+                        </div>
+                        <div class="candidate-card" style="opacity: 0.7;">
+                            <div class="skeleton skeleton-circle" style="margin-bottom: 12px;"></div>
+                            <div class="skeleton skeleton-title" style="margin-bottom: 8px;"></div>
+                            <div class="skeleton skeleton-text" style="width: 90%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 1 Action Bar -->
+                    <div id="step1ActionBar" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 14px;">
+                        <span id="selectionPrompt" style="font-size: 0.85rem; color: var(--text-muted);"><i class="fas fa-info-circle"></i> Please choose a candidate to continue</span>
+                        <button type="button" class="btn-primary" id="continueToReviewBtn" disabled>
+                            Continue to Review Choice <i class="fas fa-arrow-right"></i>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Cryptographic Receipt Container (Revealed upon successful ballot commit) -->
+                <!-- STEP 2: Review Choice Pane -->
+                <div class="section-card hidden" id="stepReviewCard">
+                    <div class="section-header">
+                        <div>
+                            <h3><i class="fas fa-clipboard-check" style="color: var(--primary);"></i> Review Your Ballot Selection</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Verify your chosen candidate before initiating facial identity verification.</p>
+                        </div>
+                    </div>
+
+                    <div class="review-choice-box" style="max-width: 540px; margin: 24px auto;">
+                        <div class="review-choice-symbol" id="reviewChoiceSymbol">🗳️</div>
+                        <div class="review-choice-details">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Selected Candidate Slate</span>
+                            <h3 id="reviewChoiceName" style="color: var(--text-primary); font-size: 1.35rem; margin-top: 2px;">Party Name</h3>
+                            <p id="reviewChoiceDesc" style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">Description</p>
+                        </div>
+                    </div>
+
+                    <div class="warning-callout" style="max-width: 540px; margin: 0 auto 24px auto;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 1.25rem; flex-shrink: 0;"></i>
+                        <span><strong>Permanent Action:</strong> Once confirmed and sealed, your ballot choice is immutable and decoupled. It cannot be changed or re-cast.</span>
+                    </div>
+
+                    <div style="display: flex; gap: 14px; justify-content: center; max-width: 540px; margin: 0 auto;">
+                        <button type="button" class="btn-secondary" id="changeSelectionBtn">
+                            <i class="fas fa-arrow-left"></i> Change Selection
+                        </button>
+                        <button type="button" class="btn-primary" id="proceedToBiometricsBtn">
+                            <i class="fas fa-camera"></i> Confirm & Face Verify <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Biometric Verification Chamber Pane -->
+                <div class="section-card hidden" id="stepBiometricCard">
+                    <div class="section-header" style="text-align: center; justify-content: center;">
+                        <div>
+                            <h3><i class="fas fa-shield-alt" style="color: var(--primary);"></i> Biometric Identity Chamber</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">Align your face within the guide below to corroborate your identity against enrolled descriptor vectors.</p>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; max-width: 480px; margin: 0 auto;">
+                        <!-- Video Viewport with Oval Guide -->
+                        <div class="biometric-viewport-container" id="biometricViewport">
+                            <video id="voterVideo" class="biometric-video-feed" autoplay playsinline muted></video>
+                            <div class="face-guide-oval" id="faceGuideOval"></div>
+                        </div>
+
+                        <!-- Status Pill -->
+                        <div>
+                            <div class="biometric-status-pill detecting" id="biometricStatusBadge">
+                                <i class="fas fa-circle-notch fa-spin"></i> Initializing Biometric Engine...
+                            </div>
+                        </div>
+
+                        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px;">
+                            Position your face steadily within the oval. Ensure adequate lighting and remove heavy facial coverings.
+                        </p>
+
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button type="button" class="btn-secondary" id="cancelBiometricsBtn">
+                                <i class="fas fa-arrow-left"></i> Back to Review
+                            </button>
+                            <button type="button" class="btn-primary" id="captureAndVoteBtn" disabled style="background-color: var(--success); border-color: var(--success);">
+                                <i class="fas fa-check-circle"></i> Verify & Commit Ballot
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Cryptographic Receipt Container -->
                 <div id="receiptContainer" class="hidden"></div>
             </main>
         </div>

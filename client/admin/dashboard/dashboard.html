@@ -77,6 +77,9 @@
                 </div>
 
                 <div class="topbar-right">
+                    <button type="button" class="btn-secondary" id="openCommandPaletteBtn" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;" aria-label="Open Command Launcher (Ctrl+K)">
+                        <i class="fas fa-search"></i> <span>Quick Actions</span> <kbd class="command-shortcut-hint">Ctrl+K</kbd>
+                    </button>
                     <div class="status-badge live" id="electionPhaseBadge">
                         Voting Phase: ACTIVE
                     </div>
@@ -297,6 +300,40 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Quick Action / Global Command Palette (Ctrl+K) -->
+    <div class="command-palette-backdrop hidden" id="commandPaletteModal" role="dialog" aria-modal="true" aria-label="Quick Actions Command Palette">
+        <div class="command-palette-card">
+            <div class="command-search-header">
+                <i class="fas fa-search"></i>
+                <input type="text" class="command-search-input" id="commandSearchInput" placeholder="Type a command or navigate... (e.g., voters, register, verify, results)" autocomplete="off">
+                <kbd class="command-shortcut-hint">ESC</kbd>
+            </div>
+            <div class="command-results-list" id="commandResultsList">
+                <a href="../register-voter/register-voter.html" class="command-item">
+                    <i class="fas fa-user-plus"></i> <span>Register Citizen Voter (Biometric Enrollment)</span>
+                </a>
+                <a href="../register-party/register-party.html" class="command-item">
+                    <i class="fas fa-plus-circle"></i> <span>Register Political Party Slate</span>
+                </a>
+                <a href="../voters/voters.html" class="command-item">
+                    <i class="fas fa-users"></i> <span>View Official Electoral Roll</span>
+                </a>
+                <a href="../parties/parties.html" class="command-item">
+                    <i class="fas fa-landmark"></i> <span>View Accredited Political Parties</span>
+                </a>
+                <a href="../results/results.html" class="command-item">
+                    <i class="fas fa-poll"></i> <span>View Certified Live Results</span>
+                </a>
+                <a href="javascript:void(0)" class="command-item" id="cmdVerifyAudit">
+                    <i class="fas fa-shield-alt"></i> <span>Verify SHA-256 Audit Hash Chain</span>
+                </a>
+                <a href="../../login/login.html" class="command-item">
+                    <i class="fas fa-sign-out-alt" style="color: var(--danger);"></i> <span style="color: var(--danger);">Sign Out of Operations Center</span>
+                </a>
+            </div>
         </div>
     </div>
 

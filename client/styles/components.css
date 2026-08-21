@@ -864,6 +864,30 @@
     display: inline-block;
 }
 
+.skeleton-text {
+    height: 14px;
+    width: 80%;
+    margin-bottom: 8px;
+}
+
+.skeleton-title {
+    height: 22px;
+    width: 50%;
+    margin-bottom: 12px;
+}
+
+.skeleton-card {
+    height: 120px;
+    width: 100%;
+    border-radius: var(--radius-lg);
+}
+
+.skeleton-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+}
+
 @keyframes skeletonPulse {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
@@ -895,6 +919,198 @@
     margin: 0 auto 16px auto;
 }
 
+/* ==========================================================================
+   13. BIOMETRIC CHAMBER & FACE ALIGNMENT OVAL GUIDE
+   ========================================================================== */
+
+.biometric-viewport-container {
+    position: relative;
+    width: 320px;
+    height: 240px;
+    margin: 0 auto 16px auto;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background-color: #11140E;
+    border: 2px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.biometric-video-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+}
+
+.face-guide-oval {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 190px;
+    border: 2px dashed rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 9999px rgba(17, 20, 14, 0.4);
+}
+
+.face-guide-oval.detected {
+    border: 2px solid var(--success);
+    box-shadow: 0 0 15px rgba(47, 125, 50, 0.5), 0 0 0 9999px rgba(17, 20, 14, 0.3);
+}
+
+.biometric-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    background-color: var(--surface-muted);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.biometric-status-pill.detecting {
+    background-color: var(--warning-light);
+    color: var(--warning-text);
+    border-color: var(--warning-border);
+}
+
+.biometric-status-pill.success {
+    background-color: var(--success-light);
+    color: var(--success-text);
+    border-color: var(--success-border);
+}
+
+.biometric-status-pill.error {
+    background-color: var(--danger-light);
+    color: var(--danger-text);
+    border-color: var(--danger-border);
+}
+
+/* ==========================================================================
+   14. COMMAND PALETTE / QUICK ACTION LAUNCHER (CTRL+K)
+   ========================================================================== */
+
+.command-palette-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(32, 37, 26, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 15vh;
+    animation: modalFadeIn 0.15s ease-out;
+}
+
+.command-palette-card {
+    background-color: var(--surface);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    width: min(560px, calc(100vw - 32px));
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+}
+
+.command-search-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.command-search-header i {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.command-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: transparent;
+}
+
+.command-shortcut-hint {
+    font-size: 0.72rem;
+    padding: 3px 6px;
+    background-color: var(--surface-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.command-results-list {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.command-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.12s ease;
+}
+
+.command-item i {
+    width: 20px;
+    text-align: center;
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.command-item:hover, .command-item.focused {
+    background-color: var(--primary-subtle);
+    color: var(--primary-dark);
+}
+
+/* ==========================================================================
+   15. PRINT LAYOUT FOR CRYPTOGRAPHIC BALLOT RECEIPTS
+   ========================================================================== */
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #receiptContainer, #receiptContainer * {
+        visibility: visible;
+    }
+    #receiptContainer {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+    }
+    .app-sidebar, .app-topbar, .stepper, .btn-primary, .btn-secondary {
+        display: none !important;
+    }
+}
+
 /* Reduced Motion Preference for Accessibility */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -904,3 +1120,4 @@
         scroll-behavior: auto !important;
     }
 }
+

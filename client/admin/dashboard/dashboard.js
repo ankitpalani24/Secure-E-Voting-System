@@ -606,6 +606,74 @@ if (filterSelect) {
     };
 }
 
+// ================== GLOBAL COMMAND PALETTE (CTRL+K) ==================
+const cmdModal = document.getElementById('commandPaletteModal');
+const cmdInput = document.getElementById('commandSearchInput');
+const cmdList = document.getElementById('commandResultsList');
+const openCmdBtn = document.getElementById('openCommandPaletteBtn');
+const cmdVerifyAudit = document.getElementById('cmdVerifyAudit');
+
+function openCommandPalette() {
+    if (!cmdModal) return;
+    cmdModal.classList.remove('hidden');
+    if (cmdInput) {
+        cmdInput.value = '';
+        cmdInput.focus();
+        filterCommands('');
+    }
+}
+
+function closeCommandPalette() {
+    if (!cmdModal) return;
+    cmdModal.classList.add('hidden');
+}
+
+function filterCommands(query) {
+    if (!cmdList) return;
+    const q = query.toLowerCase().trim();
+    const items = cmdList.querySelectorAll('.command-item');
+    items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        if (!q || text.includes(q)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+if (openCmdBtn) openCmdBtn.onclick = openCommandPalette;
+
+if (cmdInput) {
+    cmdInput.oninput = () => filterCommands(cmdInput.value);
+}
+
+if (cmdVerifyAudit) {
+    cmdVerifyAudit.onclick = () => {
+        closeCommandPalette();
+        verifyAuditChain();
+    };
+}
+
+if (cmdModal) {
+    cmdModal.onclick = (e) => {
+        if (e.target === cmdModal) closeCommandPalette();
+    };
+}
+
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (cmdModal && !cmdModal.classList.contains('hidden')) {
+            closeCommandPalette();
+        } else {
+            openCommandPalette();
+        }
+    } else if (e.key === 'Escape') {
+        closeCommandPalette();
+    }
+});
+
 // Real-time socket updates
 const socket = window.io ? window.io(window.location.origin) : null;
 if (socket) {
@@ -630,3 +698,4 @@ if (socket) {
         loadDashboardStats();
     });
 }
+
