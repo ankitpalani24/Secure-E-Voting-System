@@ -25,7 +25,13 @@ async function loadElectionOperations() {
 
         const elections = await res.json();
         if (Array.isArray(elections) && elections.length > 0) {
-            activeElection = elections[0]; // Active/default slate
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetId = urlParams.get('electionId');
+            if (targetId) {
+                activeElection = elections.find(e => e._id === targetId) || elections[0];
+            } else {
+                activeElection = elections.find(e => e.phase === 'VOTING') || elections[0];
+            }
             renderElectionControlCenter(activeElection);
             startRealElectionClock(activeElection);
         }

@@ -7,11 +7,31 @@ const Election = require("../models/Election");
 const AnonymousBallot = require("../models/AnonymousBallot");
 const VoterParticipation = require("../models/VoterParticipation");
 const BiometricToken = require("../models/BiometricToken");
+const VoterEligibility = require("../models/VoterEligibility");
 const { euclideanDistance } = require("../utils/faceUtils");
 const { logAuditEvent } = require("../utils/auditUtils");
 const { isVotingAllowed, ELECTION_PHASES } = require("../utils/electionEngine");
 const { getBiometricProvider } = require("../utils/biometricProvider");
+const { checkVoterEligibility, getVoterEligibleElections } = require("../utils/eligibilityEngine");
 const logger = require("../utils/logger");
+
+// Helper to safely format ID for MongoDB queries without throwing on mock strings
+function safeId(id) {
+  if (!id) return id;
+  return mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id;
+}
+
+// ================= GET ELIGIBLE ELECTIONS =================
+exports.getElections = async (req, res) => {
+  try {
+    const voterId = req.user.id;
+    const elections = await getVoterEligibleElections(voterId);
+    res.json(elections);
+  } catch (err) {
+    logger.error("Get voter elections error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to retrieve eligible elections list" });
+  }
+};
 
 // ================= GET VOTER PROFILE =================
 exports.getProfile = async (req, res) => {
@@ -23,36 +43,24 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: "Voter not found" });
     }
 
-    // Active election metadata
-    let election = null;
-    try {
-      const q = Election.findOne({ isDefault: true });
-      election = q && typeof q.lean === "function" ? await q.lean() : await q;
-      if (!election) {
-        const q2 = Election.findOne({ phase: ELECTION_PHASES.VOTING });
-        election = q2 && typeof q2.lean === "function" ? await q2.lean() : await q2;
-      }
-    } catch (e) {
-      election = null;
-    }
+    // Retrieve all eligible elections for this voter
+    const eligibleElections = await getVoterEligibleElections(voterId);
 
-    // Single source of truth for vote status across both decoupled and legacy records
+    // Active election metadata (default to the first active voting election or primary default)
+    const activeVotingElection =
+      eligibleElections.find((e) => e.phase === ELECTION_PHASES.VOTING && !e.hasVoted) ||
+      eligibleElections.find((e) => e.phase === ELECTION_PHASES.VOTING) ||
+      eligibleElections[0] ||
+      null;
+
     const [participationExists, legacyVoteExists] = await Promise.all([
-      VoterParticipation.exists({ voterId: new mongoose.Types.ObjectId(voterId) }),
-      Vote.exists({ voterId: new mongoose.Types.ObjectId(voterId) }),
+      VoterParticipation.exists({ voterId: safeId(voterId) }),
+      Vote.exists({ voterId: safeId(voterId) }),
     ]);
 
     voter.hasVoted = Boolean(participationExists || legacyVoteExists);
-    voter.election = election
-      ? {
-          _id: election._id,
-          title: election.title,
-          phase: election.phase,
-          startDate: election.startDate,
-          endDate: election.endDate,
-          publishLiveTally: election.publishLiveTally,
-        }
-      : null;
+    voter.election = activeVotingElection;
+    voter.eligibleElectionsCount = eligibleElections.length;
 
     res.json(voter);
   } catch (err) {
@@ -65,9 +73,10 @@ exports.getProfile = async (req, res) => {
 exports.faceVerify = async (req, res) => {
   try {
     const voterId = req.user.id;
-    const { descriptor, electionId } = req.body;
+    const { descriptor, electionId, faceDescriptor } = req.body;
+    const rawDescriptor = descriptor || faceDescriptor;
 
-    if (!descriptor || !Array.isArray(descriptor) || descriptor.length !== 128) {
+    if (!rawDescriptor || !Array.isArray(rawDescriptor) || rawDescriptor.length !== 128) {
       return res.status(400).json({ message: "Invalid biometric descriptor format" });
     }
 
@@ -76,42 +85,62 @@ exports.faceVerify = async (req, res) => {
       return res.status(400).json({ message: "No facial biometric data registered on file" });
     }
 
-    // Look up election and enforce voting window
+    // 1. Resolve Target Election
     let election = null;
     if (electionId) {
       election = await Election.findById(electionId);
     }
     if (!election) {
-      election = await Election.findOne({ phase: ELECTION_PHASES.VOTING }) || await Election.findOne({ isDefault: true });
+      election = (await Election.findOne({ phase: ELECTION_PHASES.VOTING })) || (await Election.findOne({ isDefault: true }));
     }
 
+    // 2. Server-Side Eligibility Enforcement
     if (election) {
+      const eligibility = await checkVoterEligibility(voter._id || voterId, election._id);
+      if (!eligibility.eligible) {
+        await logAuditEvent({
+          action: "VOTER_INELIGIBLE_ACCESS_ATTEMPT",
+          category: "SECURITY_EVENT",
+          userId: voter._id || voterId,
+          userRole: "voter",
+          electionId: election._id,
+          status: "DENIED",
+          details: { reason: eligibility.reason },
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"],
+        });
+        return res.status(403).json({ message: eligibility.reason || "You are not accredited for this election." });
+      }
+
+      // 3. Voting Window Enforcement
       const windowCheck = isVotingAllowed(election);
       if (!windowCheck.allowed) {
         return res.status(400).json({ message: windowCheck.reason });
       }
     }
 
-    // Check if voter has already participated
+    // 4. Double-Voting Prevention Scoped to THIS Specific Election
     const [participationExists, legacyVoteExists] = await Promise.all([
-      VoterParticipation.exists({ voterId: voter._id }),
-      Vote.exists({ voterId: voter._id }),
+      VoterParticipation.exists({
+        voterId: safeId(voter._id || voterId),
+        ...(election ? { electionId: election._id } : {}),
+      }),
+      Vote.exists({ voterId: safeId(voter._id || voterId) }),
     ]);
 
     if (participationExists || legacyVoteExists) {
       return res.status(400).json({ message: "Voter has already cast a ballot in this election" });
     }
 
-    // Use BiometricProvider abstraction
+    // 5. Biometric Comparison
     const provider = getBiometricProvider("face");
-    const result = await provider.verify(voter.faceDescriptor, descriptor);
+    const result = await provider.verify(voter.faceDescriptor, rawDescriptor);
 
     if (result.verified) {
-      // Generate a single-use cryptographically random token valid for 5 minutes
       const randomSecret = crypto.randomBytes(32).toString("hex");
       const biometricToken = await BiometricToken.create({
         token: randomSecret,
-        voterId: voter._id,
+        voterId: voter._id || voterId,
         electionId: election ? election._id : (electionId || null),
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       });
@@ -119,8 +148,9 @@ exports.faceVerify = async (req, res) => {
       await logAuditEvent({
         action: "BIOMETRIC_VERIFICATION_SUCCESS",
         category: "AUDIT_EVENT",
-        userId: voter._id,
+        userId: voter._id || voterId,
         userRole: "voter",
+        electionId: election ? election._id : null,
         status: "SUCCESS",
         details: { distance: result.score },
         ipAddress: req.ip,
@@ -130,6 +160,7 @@ exports.faceVerify = async (req, res) => {
       res.json({
         verified: true,
         biometricToken: biometricToken.token,
+        electionId: election ? election._id : null,
         distance: result.score,
         message: "Biometric identity verified successfully. Authorization token issued.",
       });
@@ -137,8 +168,9 @@ exports.faceVerify = async (req, res) => {
       await logAuditEvent({
         action: "BIOMETRIC_VERIFICATION_FAILED_MISMATCH",
         category: "SECURITY_EVENT",
-        userId: voter._id,
+        userId: voter._id || voterId,
         userRole: "voter",
+        electionId: election ? election._id : null,
         status: "DENIED",
         details: { distance: result.score, threshold: result.threshold },
         ipAddress: req.ip,
@@ -157,7 +189,7 @@ exports.faceVerify = async (req, res) => {
 exports.castVote = async (req, res) => {
   try {
     const voterId = req.user.id;
-    const { partyId, candidateId, biometricToken } = req.body;
+    const { partyId, candidateId, biometricToken, electionId } = req.body;
 
     if (!partyId) {
       return res.status(400).json({ message: "Political party selection is required" });
@@ -175,34 +207,55 @@ exports.castVote = async (req, res) => {
       return res.status(404).json({ message: "Selected political party is invalid or does not exist" });
     }
 
-    // 3. Find Active Election
-    let election = await Election.findOne({ phase: ELECTION_PHASES.VOTING });
+    // 3. Resolve Target Election
+    let election = null;
+    if (electionId) {
+      election = await Election.findById(electionId);
+    }
     if (!election) {
-      // Auto-fallback/create default voting election if first run
-      election = await Election.findOne({ isDefault: true });
+      election = (await Election.findOne({ phase: ELECTION_PHASES.VOTING })) || (await Election.findOne({ isDefault: true }));
       if (!election) {
-        election = await Election.create({
-          title: "General Election",
-          phase: ELECTION_PHASES.VOTING,
-          isDefault: true,
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        });
+        election = await Election.findOne().sort({ createdAt: -1 });
       }
     }
 
+    if (!election) {
+      return res.status(404).json({ message: "No active voting election found." });
+    }
+
+    // 4. Server-Side Eligibility Enforcement
+    const eligibility = await checkVoterEligibility(voterId, election._id);
+    if (!eligibility.eligible) {
+      await logAuditEvent({
+        action: "VOTER_INELIGIBLE_BALLOT_BLOCKED",
+        category: "SECURITY_EVENT",
+        userId: voterId,
+        userRole: "voter",
+        electionId: election._id,
+        status: "DENIED",
+        details: { reason: eligibility.reason },
+        ipAddress: req.ip,
+        userAgent: req.headers["user-agent"],
+      });
+      return res.status(403).json({ message: eligibility.reason || "You are not accredited to vote in this election." });
+    }
+
+    // 5. Voting Window Enforcement
     const windowCheck = isVotingAllowed(election);
     if (!windowCheck.allowed) {
       return res.status(400).json({ message: windowCheck.reason });
     }
 
-    // 4. Verify Double-Voting Prevention (both decoupled and legacy)
+    // 6. Double-Voting Prevention Scoped to THIS Specific Election
     const [alreadyParticipated, legacyVoteExists] = await Promise.all([
-      VoterParticipation.exists({ voterId, electionId: election._id }),
-      Vote.exists({ voterId: new mongoose.Types.ObjectId(voterId) }),
+      VoterParticipation.exists({
+        voterId: safeId(voterId),
+        electionId: election._id,
+      }),
+      Vote.exists({ voterId: safeId(voterId) }),
     ]);
 
-    if (alreadyParticipated || legacyVoteExists) {
+    if (alreadyParticipated || (election.isDefault && legacyVoteExists)) {
       await logAuditEvent({
         action: "DUPLICATE_VOTE_ATTEMPT_BLOCKED",
         category: "SECURITY_EVENT",
@@ -216,58 +269,75 @@ exports.castVote = async (req, res) => {
       return res.status(400).json({ message: "You have already voted in this election." });
     }
 
-    // 5. Mandatory Biometric Authorization Token Validation & Single-Use Consumption
+    // 7. Mandatory Biometric Authorization Token Validation & Single-Use Consumption
     if (!biometricToken || typeof biometricToken !== "string" || biometricToken.trim() === "") {
       return res.status(400).json({ message: "Biometric authorization token is required to cast a ballot" });
     }
 
-    const consumedToken = await BiometricToken.findOneAndDelete({
+    const tokenQuery = {
       token: biometricToken.trim(),
-      voterId: new mongoose.Types.ObjectId(voterId),
+      voterId: safeId(voterId),
       used: false,
       expiresAt: { $gt: new Date() },
-    });
+    };
+
+    const consumedToken = await BiometricToken.findOneAndDelete(tokenQuery);
 
     if (!consumedToken) {
       return res.status(400).json({ message: "Invalid, expired, or previously consumed biometric authorization token. Please scan face again." });
     }
 
-    // 6. Generate Decoupled Cryptographic Commitment Hash for Ballot
+    // Cross-Election Biometric Poisoning Defense
+    if (consumedToken.electionId && election._id && consumedToken.electionId.toString() !== election._id.toString()) {
+      await logAuditEvent({
+        action: "CROSS_ELECTION_TOKEN_HIJACK_BLOCKED",
+        category: "SECURITY_EVENT",
+        userId: voterId,
+        userRole: "voter",
+        electionId: election._id,
+        status: "DENIED",
+        details: { tokenElectionId: consumedToken.electionId, targetElectionId: election._id },
+        ipAddress: req.ip,
+        userAgent: req.headers["user-agent"],
+      });
+      return res.status(403).json({ message: "Biometric authorization token belongs to a different election." });
+    }
+
+    // 8. Generate Decoupled Cryptographic Commitment Hash for Ballot
     const serialNonce = crypto.randomBytes(24).toString("hex");
     const ballotCommitmentHash = crypto
       .createHash("sha256")
       .update(`${serialNonce}|${election._id}|${partyId}`)
       .digest("hex");
 
-    // 7. Insert Decoupled Participation Record & Anonymous Ballot with atomic rollback resilience
+    // 9. Insert Decoupled Participation Record & Anonymous Ballot with atomic rollback resilience
     const coarseTimestamp = new Date(Math.floor(Date.now() / 3600000) * 3600000);
     let participationRecord = null;
 
     try {
       participationRecord = await VoterParticipation.create({
-        voterId,
+        voterId: safeId(voterId),
         electionId: election._id,
         participatedAt: coarseTimestamp,
         verificationMethod: "FACE_BIOMETRIC",
       });
 
-      // 8. Insert Anonymous Ballot with cryptographically random UUID primary key (ZERO voter identity & NO millisecond timing)
+      // 10. Insert Anonymous Ballot with cryptographically random UUID primary key (ZERO voter identity & NO millisecond timing)
       await AnonymousBallot.create({
         _id: crypto.randomUUID(),
         electionId: election._id,
-        partyId,
-        candidateId: candidateId || null,
+        partyId: safeId(partyId),
+        candidateId: candidateId ? safeId(candidateId) : null,
         ballotCommitmentHash,
       });
     } catch (ballotErr) {
-      // If ballot insertion fails after participation record was created, roll back participation record to prevent permanent voter lockout
       if (participationRecord && participationRecord._id) {
         await VoterParticipation.findByIdAndDelete(participationRecord._id).catch(() => {});
       }
       throw ballotErr;
     }
 
-    // 9. Chained Audit Logging (NEVER records partyId, candidateId, or ballotCommitmentHash to eliminate database correlation)
+    // 11. Chained Audit Logging
     await logAuditEvent({
       action: "BALLOT_CAST_SUCCESS",
       category: "AUDIT_EVENT",
@@ -282,8 +352,8 @@ exports.castVote = async (req, res) => {
       userAgent: req.headers["user-agent"],
     });
 
-    // 10. Real-Time Broadcast: Sanitized event without partyId, voterId, candidateId, or individual choices
-    const io = req.app.get("io");
+    // 12. Real-Time Broadcast
+    const io = req.app ? req.app.get("io") : null;
     if (io) {
       io.emit("newVote", {
         type: "vote-update",
@@ -296,6 +366,7 @@ exports.castVote = async (req, res) => {
       receipt: {
         electionId: election._id,
         ballotCommitment: ballotCommitmentHash,
+        ballotCommitmentHash: ballotCommitmentHash,
         timestamp: new Date().toISOString(),
       },
     });

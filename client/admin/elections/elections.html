@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elections Operations & Jurisdiction Center - SecureVote Admin</title>
+    <link rel="stylesheet" href="../../styles/main.css">
+    <link rel="stylesheet" href="elections.css">
+    <link rel="stylesheet" href="../../shared/toast.css">
+    <link rel="stylesheet" href="../../shared/spinner.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <div class="app-shell">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="../dashboard/dashboard.html" class="brand-logo">
+                    <div class="brand-icon"><i class="fas fa-vote-yea"></i></div>
+                    <span>SecureVote</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <span class="nav-section-title">Operations</span>
+                <a href="../dashboard/dashboard.html" class="nav-link">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </a>
+                <a href="elections.html" class="nav-link active">
+                    <i class="fas fa-layer-group"></i> <span>Elections Center</span>
+                </a>
+                <a href="../voters/voters.html" class="nav-link">
+                    <i class="fas fa-users"></i> <span>Voters Roll</span>
+                </a>
+                <a href="../parties/parties.html" class="nav-link">
+                    <i class="fas fa-landmark"></i> <span>Parties Catalog</span>
+                </a>
+                <a href="../results/results.html" class="nav-link">
+                    <i class="fas fa-poll"></i> <span>Live Results</span>
+                </a>
+
+                <span class="nav-section-title">Registration</span>
+                <a href="../register-voter/register-voter.html" class="nav-link">
+                    <i class="fas fa-user-plus"></i> <span>Register Voter</span>
+                </a>
+                <a href="../register-party/register-party.html" class="nav-link">
+                    <i class="fas fa-plus-circle"></i> <span>Register Party</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile-badge">
+                    <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
+                    <div class="user-info-text">
+                        <strong id="adminUserName">Electoral Admin</strong>
+                        <span>Administrator</span>
+                    </div>
+                </div>
+                <a href="../../login/login.html" class="logout-nav-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <div class="app-main">
+            <!-- Topbar Header -->
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title-group">
+                        <h1>Multi-Election & Jurisdiction Center</h1>
+                        <p>Independent Jurisdictional Ballots, Lifecycle Governance & Tally Embargos</p>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <button type="button" class="btn-primary" id="openCreateElectionWizardBtn" style="padding: 9px 18px; font-size: 0.88rem;">
+                        <i class="fas fa-plus"></i> Create New Election
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="page-content">
+                <!-- Search & Filters Toolbar -->
+                <div class="elections-filter-bar">
+                    <div style="display: flex; gap: 10px; flex: 1; min-width: 260px; max-width: 400px; position: relative;">
+                        <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                        <input type="text" id="electionSearchInput" class="form-control" style="padding-left: 38px; font-size: 0.85rem;" placeholder="Search by election name or code...">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                        <select id="typeFilter" class="form-control" style="width: auto; font-size: 0.85rem;">
+                            <option value="ALL">All Types (National, State, Local, Inst)</option>
+                            <option value="NATIONAL">National Elections</option>
+                            <option value="STATE">State Elections</option>
+                            <option value="LOCAL">Local / Municipal</option>
+                            <option value="INSTITUTIONAL">Institutional Elections</option>
+                        </select>
+
+                        <select id="phaseFilter" class="form-control" style="width: auto; font-size: 0.85rem;">
+                            <option value="ALL">All Phases</option>
+                            <option value="DRAFT">Draft</option>
+                            <option value="SCHEDULED">Scheduled</option>
+                            <option value="VOTING">Voting Open</option>
+                            <option value="CLOSED">Closed</option>
+                            <option value="RESULTS_PUBLISHED">Results Published</option>
+                            <option value="ARCHIVED">Archived</option>
+                        </select>
+
+                        <button type="button" class="btn-secondary" id="refreshElectionsBtn" style="padding: 8px 12px;" title="Refresh list">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Elections Cards Grid -->
+                <div class="elections-grid" id="electionsGridContainer">
+                    <div style="text-align: center; grid-column: 1 / -1; padding: 48px; color: var(--text-muted);">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p style="margin-top: 12px;">Loading independent election instances...</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 7-STEP CREATE ELECTION WIZARD MODAL -->
+    <div class="modal-backdrop hidden" id="createElectionModal" role="dialog" aria-modal="true" aria-labelledby="wizardTitle">
+        <div class="wizard-modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 14px;">
+                <div>
+                    <span class="status-badge pending" style="margin-bottom: 4px; font-size: 0.72rem;">STEP <span id="wizardStepIndicator">1 of 7</span></span>
+                    <h2 id="wizardTitle" style="font-size: 1.3rem; color: var(--text-primary);">Create Institutional Election</h2>
+                </div>
+                <button type="button" class="close-btn" id="closeWizardBtn" style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;">×</button>
+            </div>
+
+            <!-- Mini Wizard Stepper Bar -->
+            <div style="display: flex; gap: 4px; margin-bottom: 24px;">
+                <div class="wizard-bar-segment" id="wBar1" style="flex: 1; height: 4px; background: var(--primary); border-radius: 2px;"></div>
+                <div class="wizard-bar-segment" id="wBar2" style="flex: 1; height: 4px; background: var(--border); border-radius: 2px;"></div>
+                <div class="wizard-bar-segment" id="wBar3" style="flex: 1; height: 4px; background: var(--border); border-radius: 2px;"></div>
+                <div class="wizard-bar-segment" id="wBar4" style="flex: 1; height: 4px; background: var(--border); border-radius: 2px;"></div>
+                <div class="wizard-bar-segment" id="wBar5" style="flex: 1; height: 4px; background: var(--border); border-radius: 2px;"></div>
+                <div class="wizard-bar-segment" id="wBar6" style="flex: 1; height: 4px; background: var(--border); border-radius: 2px;"></div>
+                <div class="wizard-bar-segment" id="wBar7" style="flex: 1; height: 4px; background: var(--border); border-radius: 2px;"></div>
+            </div>
+
+            <form id="wizardForm">
+                <!-- STEP 1: Basic Information -->
+                <div class="wizard-step-pane" id="wizardPane1">
+                    <h3 style="font-size: 1.05rem; margin-bottom: 12px;"><i class="fas fa-info-circle" style="color: var(--primary);"></i> 01. Basic Election Information</h3>
+                    <div class="form-group">
+                        <label for="wTitle">Official Election Title *</label>
+                        <input type="text" id="wTitle" class="form-control" placeholder="e.g. State Legislative Assembly Election 2027" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="wCode">Election Reference Code *</label>
+                        <input type="text" id="wCode" class="form-control" placeholder="e.g. ELEC-STATE-2027" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="wDescription">Description & Purpose</label>
+                        <textarea id="wDescription" class="form-control" rows="2" placeholder="Describe the electoral scope and mandate..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="wType">Election Classification Type *</label>
+                        <select id="wType" class="form-control" required>
+                            <option value="NATIONAL">National General Election</option>
+                            <option value="STATE">State / Regional Election</option>
+                            <option value="LOCAL">Local / Municipal Election</option>
+                            <option value="INSTITUTIONAL">Institutional / University Election</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Jurisdiction Assignment -->
+                <div class="wizard-step-pane hidden" id="wizardPane2">
+                    <h3 style="font-size: 1.05rem; margin-bottom: 12px;"><i class="fas fa-map-marked-alt" style="color: var(--primary);"></i> 02. Jurisdiction Assignment</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">Assign this election to an official geopolitical or institutional jurisdiction.</p>
+                    <div class="form-group">
+                        <label for="wJurisdiction">Select Target Jurisdiction *</label>
+                        <select id="wJurisdiction" class="form-control" required>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Voter Eligibility Criteria -->
+                <div class="wizard-step-pane hidden" id="wizardPane3">
+                    <h3 style="font-size: 1.05rem; margin-bottom: 12px;"><i class="fas fa-user-check" style="color: var(--primary);"></i> 03. Voter Eligibility & Accreditation</h3>
+                    <div style="background-color: var(--surface-muted); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 16px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="wAccreditAllCitizens" checked style="width: 18px; height: 18px;">
+                            <div>
+                                <strong style="display: block; font-size: 0.9rem;">Auto-Accredit All Registered Citizen Voters</strong>
+                                <span style="font-size: 0.8rem; color: var(--text-secondary);">Enrolls all currently registered citizen voters into this election's electoral roll.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Configuration & Security Policies -->
+                <div class="wizard-step-pane hidden" id="wizardPane4">
+                    <h3 style="font-size: 1.05rem; margin-bottom: 12px;"><i class="fas fa-cogs" style="color: var(--primary);"></i> 04. Ballot & Security Configuration</h3>
+                    <div class="form-group">
+                        <label for="wMaxChoices">Maximum Candidate Choices Allowed</label>
+                        <input type="number" id="wMaxChoices" class="form-control" value="1" min="1" max="5">
+                    </div>
+                    <div style="background-color: var(--surface-muted); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="wRequireBiometrics" checked disabled style="width: 18px; height: 18px;">
+                            <div>
+                                <strong style="font-size: 0.88rem;">Mandatory Biometric Verification</strong>
+                                <span style="font-size: 0.78rem; display: block; color: var(--text-secondary);">Enforces single-use facial descriptor verification prior to ballot deposit.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- STEP 5: Schedule & Embargo Settings -->
+                <div class="wizard-step-pane hidden" id="wizardPane5">
+                    <h3 style="font-size: 1.05rem; margin-bottom: 12px;"><i class="fas fa-calendar-alt" style="color: var(--primary);"></i> 05. Voting Window & Result Embargo</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label for="wStartDate">Voting Window Opens *</label>
+                            <input type="datetime-local" id="wStartDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="wEndDate">Voting Window Concludes *</label>
+                            <input type="datetime-local" id="wEndDate" class="form-control" required>
+                        </div>
+                    </div>
+                    <div style="background-color: var(--surface-muted); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-top: 12px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="wPublishLiveTally" style="width: 18px; height: 18px;">
+                            <div>
+                                <strong style="font-size: 0.88rem;">Enable Real-Time Public Live Tally</strong>
+                                <span style="font-size: 0.78rem; display: block; color: var(--text-secondary);">If unchecked, results are embargoed until certified and published by administration.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- STEP 6: Review Summary -->
+                <div class="wizard-step-pane hidden" id="wizardPane6">
+                    <h3 style="font-size: 1.05rem; margin-bottom: 12px;"><i class="fas fa-clipboard-check" style="color: var(--primary);"></i> 06. Review Election Parameters</h3>
+                    <div style="background-color: var(--surface-muted); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border); font-size: 0.85rem; display: flex; flex-direction: column; gap: 10px;">
+                        <div><span style="color: var(--text-muted);">Title:</span> <strong id="revTitle">-</strong></div>
+                        <div><span style="color: var(--text-muted);">Code:</span> <strong id="revCode">-</strong></div>
+                        <div><span style="color: var(--text-muted);">Type:</span> <strong id="revType">-</strong></div>
+                        <div><span style="color: var(--text-muted);">Jurisdiction:</span> <strong id="revJurisdiction">-</strong></div>
+                        <div><span style="color: var(--text-muted);">Schedule:</span> <strong id="revSchedule">-</strong></div>
+                    </div>
+                </div>
+
+                <!-- STEP 7: Confirmation & Draft Submission -->
+                <div class="wizard-step-pane hidden" id="wizardPane7">
+                    <div style="text-align: center; padding: 24px 0;">
+                        <div style="font-size: 3rem; color: var(--primary); margin-bottom: 12px;">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <h3 style="font-size: 1.25rem; margin-bottom: 8px;">Ready to Create Draft Election</h3>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 480px; margin: 0 auto 20px auto;">
+                            The election will be registered in the immutable <strong>DRAFT</strong> phase. It will require scheduling and multi-admin consensus before voting opens.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Wizard Navigation Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px;">
+                    <button type="button" class="btn-secondary" id="wBackBtn" style="visibility: hidden;">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn-secondary" id="wCancelBtn">Cancel</button>
+                        <button type="button" class="btn-primary" id="wNextBtn">
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button type="submit" class="btn-primary hidden" id="wSubmitDraftBtn" style="background-color: var(--primary);">
+                            <i class="fas fa-check-circle"></i> Commit Election Draft
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../../shared/spinner.js"></script>
+    <script src="../../shared/toast.js"></script>
+    <script src="../../shared/auth.js"></script>
+    <script src="elections.js"></script>
+</body>
+
+</html>

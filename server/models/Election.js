@@ -19,13 +19,23 @@ const electionSchema = new mongoose.Schema(
     },
     electionType: {
       type: String,
-      enum: ["NATIONAL", "STATE", "MUNICIPAL", "ORGANIZATIONAL", "GENERAL"],
-      default: "GENERAL",
+      enum: ["NATIONAL", "STATE", "LOCAL", "INSTITUTIONAL", "MUNICIPAL", "GENERAL"],
+      default: "NATIONAL",
+    },
+    jurisdictionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Jurisdiction",
+      default: null,
     },
     phase: {
       type: String,
       enum: Object.values(ELECTION_PHASES),
-      default: ELECTION_PHASES.VOTING, // Default to VOTING for non-breaking backward compatibility
+      default: ELECTION_PHASES.DRAFT,
+    },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "INACTIVE", "ARCHIVED"],
+      default: "ACTIVE",
     },
     startDate: {
       type: Date,
@@ -43,6 +53,12 @@ const electionSchema = new mongoose.Schema(
       type: Boolean,
       default: false, // Embargo results to citizens until RESULTS_PUBLISHED phase
     },
+    configuration: {
+      allowBiometricVerification: { type: Boolean, default: true },
+      maxBallotChoices: { type: Number, default: 1 },
+      allowWriteIns: { type: Boolean, default: false },
+      requireTwoPersonGovernance: { type: Boolean, default: true },
+    },
     resultsPublishedAt: {
       type: Date,
       default: null,
@@ -53,7 +69,7 @@ const electionSchema = new mongoose.Schema(
     },
     isDefault: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     manifestHash: {
       type: String,
@@ -67,6 +83,9 @@ const electionSchema = new mongoose.Schema(
 
 electionSchema.index({ phase: 1 });
 electionSchema.index({ isDefault: 1 });
+electionSchema.index({ jurisdictionId: 1 });
+electionSchema.index({ electionType: 1 });
+electionSchema.index({ status: 1 });
 electionSchema.index({ electionCode: 1 }, { sparse: true });
 
 module.exports = mongoose.model("Election", electionSchema);

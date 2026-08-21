@@ -1,6 +1,5 @@
-const crypto = require("crypto");
+const mongoose = require("mongoose");
 const AnonymousBallot = require("../models/AnonymousBallot");
-const Vote = require("../models/Vote");
 const Party = require("../models/Party");
 const Election = require("../models/Election");
 const { canViewResults } = require("../utils/electionEngine");
@@ -12,36 +11,39 @@ exports.getResults = async (req, res) => {
     const { electionId } = req.query;
     const userRole = req.user ? req.user.role : "public";
 
-    // 1. Look up Election
+    // 1. Resolve Target Election
     let election = null;
     if (electionId) {
+      if (!mongoose.Types.ObjectId.isValid(electionId)) {
+        return res.status(400).json({ message: "Invalid election identifier format" });
+      }
       election = await Election.findById(electionId);
     } else {
-      election = (await Election.findOne({ isDefault: true })) || (await Election.findOne().sort({ createdAt: -1 }));
+      election = (await Election.findOne({ isDefault: true })) || (await Election.findOne({ phase: "VOTING" })) || (await Election.findOne().sort({ createdAt: -1 }));
+    }
+
+    if (!election) {
+      return res.status(404).json({ message: "No active election found for result aggregation." });
     }
 
     // 2. Embargo Enforcement: Non-admins cannot view tally if embargoed
-    if (election && !canViewResults(election, userRole)) {
+    if (!canViewResults(election, userRole)) {
       return res.status(403).json({
         message: "Official election tally results are embargoed until voting concludes and certified results are published.",
+        electionId: election._id,
         phase: election.phase,
         resultsPublished: false,
         results: [],
       });
     }
 
-    // Build match stage
-    const matchStage = {};
-    if (electionId) {
-      matchStage.electionId = new (require("mongoose").Types.ObjectId)(electionId);
-    }
+    // 3. Isolated Aggregation Pipeline Scoped Exclusively to this Election
+    const targetObjectId = new mongoose.Types.ObjectId(election._id);
 
-    const pipeline = [];
-    if (Object.keys(matchStage).length > 0) {
-      pipeline.push({ $match: matchStage });
-    }
-
-    pipeline.push(
+    const pipeline = [
+      {
+        $match: { electionId: targetObjectId },
+      },
       {
         $group: {
           _id: "$partyId",
@@ -73,10 +75,9 @@ exports.getResults = async (req, res) => {
       },
       {
         $sort: { totalVotes: -1 },
-      }
-    );
+      },
+    ];
 
-    // Primary source: AnonymousBallot collection
     const results = await AnonymousBallot.aggregate(pipeline);
 
     res.json(results);

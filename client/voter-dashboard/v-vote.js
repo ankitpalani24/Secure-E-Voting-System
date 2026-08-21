@@ -341,6 +341,9 @@ if (captureAndVoteBtn) {
         captureAndVoteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying & Sealing Ballot...';
 
         try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentElectionId = urlParams.get('electionId') || undefined;
+
             // 1. Biometric verification step
             const verifyRes = await fetch('/api/voter/face-verify', {
                 method: 'POST',
@@ -348,7 +351,10 @@ if (captureAndVoteBtn) {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ faceDescriptor: activeDescriptor }),
+                body: JSON.stringify({
+                    faceDescriptor: activeDescriptor,
+                    electionId: currentElectionId,
+                }),
             });
 
             const verifyData = await verifyRes.json();
@@ -370,6 +376,7 @@ if (captureAndVoteBtn) {
                 body: JSON.stringify({
                     partyId: selectedParty.id,
                     biometricToken: verifyData.biometricToken,
+                    electionId: currentElectionId || verifyData.electionId,
                 }),
             });
 

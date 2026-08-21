@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const Voter = require("../models/Voter");
 const Party = require("../models/Party");
@@ -5,6 +6,8 @@ const Vote = require("../models/Vote");
 const AnonymousBallot = require("../models/AnonymousBallot");
 const VoterParticipation = require("../models/VoterParticipation");
 const Election = require("../models/Election");
+const Jurisdiction = require("../models/Jurisdiction");
+const VoterEligibility = require("../models/VoterEligibility");
 const AuditLog = require("../models/AuditLog");
 const { euclideanDistance } = require("../utils/faceUtils");
 const { logAuditEvent } = require("../utils/auditUtils");
@@ -233,10 +236,81 @@ exports.getDashboardStats = async (req, res) => {
   }
 };
 
+// ================= JURISDICTION MANAGEMENT =================
+exports.createJurisdiction = async (req, res) => {
+  try {
+    const { name, type, code, parentId } = req.body;
+
+    if (!name || !type || !code || typeof name !== "string" || typeof type !== "string" || typeof code !== "string") {
+      return res.status(400).json({ message: "Name, type, and code are required strings for jurisdiction creation." });
+    }
+
+    const cleanCode = code.toUpperCase().trim();
+    const existing = await Jurisdiction.findOne({ code: cleanCode });
+    if (existing) {
+      return res.status(400).json({ message: `Jurisdiction code '${cleanCode}' already exists.` });
+    }
+
+    let parentJurisdiction = null;
+    if (parentId) {
+      parentJurisdiction = await Jurisdiction.findById(parentId);
+      if (!parentJurisdiction) {
+        return res.status(404).json({ message: "Specified parent jurisdiction not found." });
+      }
+    }
+
+    const jurisdiction = await Jurisdiction.create({
+      name: name.trim(),
+      type: type.toUpperCase().trim(),
+      code: cleanCode,
+      parentId: parentJurisdiction ? parentJurisdiction._id : null,
+    });
+
+    await logAuditEvent({
+      action: "JURISDICTION_CREATED",
+      category: "AUDIT_EVENT",
+      userId: req.user.id,
+      userRole: "admin",
+      status: "SUCCESS",
+      details: { name: jurisdiction.name, type: jurisdiction.type, code: jurisdiction.code },
+      ipAddress: req.ip,
+      userAgent: req.headers["user-agent"],
+    });
+
+    res.status(201).json({ message: "Jurisdiction created successfully", jurisdiction });
+  } catch (err) {
+    logger.error("Create jurisdiction error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to create jurisdiction" });
+  }
+};
+
+exports.getJurisdictions = async (req, res) => {
+  try {
+    const { ensureDefaultJurisdictions } = require("../utils/jurisdictionUtils");
+    await ensureDefaultJurisdictions();
+
+    const jurisdictions = await Jurisdiction.find().populate("parentId", "name code type").sort({ type: 1, name: 1 }).lean();
+    res.json(jurisdictions);
+  } catch (err) {
+    logger.error("Get jurisdictions error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to load jurisdictions" });
+  }
+};
+
 // ================= ELECTION MANAGEMENT =================
 exports.createElection = async (req, res) => {
   try {
-    const { title, description, electionType, startDate, endDate, electionCode, publishLiveTally } = req.body;
+    const {
+      title,
+      description,
+      electionType,
+      jurisdictionId,
+      startDate,
+      endDate,
+      electionCode,
+      publishLiveTally,
+      configuration,
+    } = req.body;
 
     if (!title || typeof title !== "string" || title.trim() === "") {
       return res.status(400).json({ message: "Election title is required" });
@@ -250,16 +324,33 @@ exports.createElection = async (req, res) => {
       return res.status(400).json({ message: dateValidation.error });
     }
 
+    // Resolve or fallback jurisdiction
+    let assignedJurisdictionId = jurisdictionId;
+    if (!assignedJurisdictionId) {
+      if (mongoose.connection && mongoose.connection.readyState === 1) {
+        const { ensureDefaultJurisdictions } = require("../utils/jurisdictionUtils");
+        await ensureDefaultJurisdictions();
+        const defaultJurisdiction = await Jurisdiction.findOne({ type: "COUNTRY" });
+        if (defaultJurisdiction) assignedJurisdictionId = defaultJurisdiction._id;
+      }
+    }
+
     const newElection = await Election.create({
       title: title.trim(),
       description: description ? description.trim() : "Standard electronic democratic election.",
-      electionType: electionType || "GENERAL",
+      electionType: electionType || "NATIONAL",
       electionCode: electionCode ? electionCode.trim() : undefined,
-      phase: ELECTION_PHASES.DRAFT,
+      jurisdictionId: assignedJurisdictionId || null,
+      phase: ELECTION_PHASES.DRAFT, // All elections strictly start in DRAFT state
       startDate: start,
       endDate: end,
       publishLiveTally: Boolean(publishLiveTally),
-      createdBy: req.user.id,
+      configuration: configuration || {
+        allowBiometricVerification: true,
+        maxBallotChoices: 1,
+        requireTwoPersonGovernance: true,
+      },
+      createdBy: req.user ? req.user.id : null,
       isDefault: false,
     });
 
@@ -270,7 +361,7 @@ exports.createElection = async (req, res) => {
       userRole: "admin",
       electionId: newElection._id,
       status: "SUCCESS",
-      details: { title: newElection.title, phase: newElection.phase },
+      details: { title: newElection.title, phase: newElection.phase, type: newElection.electionType },
       ipAddress: req.ip,
       userAgent: req.headers["user-agent"],
     });
@@ -284,12 +375,35 @@ exports.createElection = async (req, res) => {
 
 exports.getElections = async (req, res) => {
   try {
-    let elections = await Election.find().sort({ createdAt: -1 }).lean();
-    if (elections.length === 0) {
+    const { phase, type, jurisdictionId, search } = req.query;
+    const filter = { status: { $ne: "INACTIVE" } };
+
+    if (phase && phase !== "ALL") filter.phase = phase;
+    if (type && type !== "ALL") filter.electionType = type;
+    if (jurisdictionId) filter.jurisdictionId = jurisdictionId;
+    if (search && search.trim()) {
+      filter.$or = [
+        { title: { $regex: search.trim(), $options: "i" } },
+        { electionCode: { $regex: search.trim(), $options: "i" } },
+      ];
+    }
+
+    let elections = await Election.find(filter)
+      .populate("jurisdictionId", "name code type")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (elections.length === 0 && (!phase && !type && !search)) {
       // Initialize default active general election if none exist
+      const { ensureDefaultJurisdictions } = require("../utils/jurisdictionUtils");
+      await ensureDefaultJurisdictions();
+      const defaultJurisdiction = await Jurisdiction.findOne({ type: "COUNTRY" });
+
       const defaultElection = await Election.create({
         title: "National General Election",
         description: "Official secure electronic ballot general election.",
+        electionType: "NATIONAL",
+        jurisdictionId: defaultJurisdiction ? defaultJurisdiction._id : null,
         phase: ELECTION_PHASES.VOTING,
         isDefault: true,
         startDate: new Date(),
@@ -297,10 +411,105 @@ exports.getElections = async (req, res) => {
       });
       elections = [defaultElection];
     }
+
     res.json(elections);
   } catch (err) {
     logger.error("Get elections error: " + err.message, { requestId: req.id });
     res.status(500).json({ message: "Failed to load election configurations" });
+  }
+};
+
+exports.getElectionById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const election = await Election.findById(id).populate("jurisdictionId", "name code type").lean();
+    if (!election) {
+      return res.status(404).json({ message: "Election not found" });
+    }
+
+    // Query scoped election metrics
+    const [votesCount, participationCount, registeredEligibleCount] = await Promise.all([
+      AnonymousBallot.countDocuments({ electionId: election._id }),
+      VoterParticipation.countDocuments({ electionId: election._id }),
+      VoterEligibility.countDocuments({ electionId: election._id, status: "ELIGIBLE" }),
+    ]);
+
+    const totalVoters = registeredEligibleCount > 0 ? registeredEligibleCount : await Voter.countDocuments();
+    const effectiveBallots = Math.max(votesCount, participationCount);
+    const turnoutPct = totalVoters > 0 ? ((effectiveBallots / totalVoters) * 100).toFixed(1) : "0.0";
+
+    res.json({
+      election,
+      metrics: {
+        registeredVoters: totalVoters,
+        votesCast: effectiveBallots,
+        turnoutPercentage: `${turnoutPct}%`,
+      },
+    });
+  } catch (err) {
+    logger.error("Get election by ID error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to load election details" });
+  }
+};
+
+exports.enrollVotersToElection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { voterIds, enrollAllRegistered } = req.body;
+
+    const election = await Election.findById(id);
+    if (!election) {
+      return res.status(404).json({ message: "Target election not found" });
+    }
+
+    let targetVoters = [];
+    if (enrollAllRegistered) {
+      targetVoters = await Voter.find().select("_id").lean();
+    } else if (Array.isArray(voterIds)) {
+      targetVoters = voterIds.map(vid => ({ _id: vid }));
+    }
+
+    if (targetVoters.length === 0) {
+      return res.status(400).json({ message: "No eligible voter IDs supplied for accreditation." });
+    }
+
+    const operations = targetVoters.map(v => ({
+      updateOne: {
+        filter: { voterId: v._id, electionId: election._id },
+        update: {
+          $set: {
+            voterId: v._id,
+            electionId: election._id,
+            jurisdictionId: election.jurisdictionId || null,
+            status: "ELIGIBLE",
+            assignedAt: new Date(),
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    const bulkResult = await VoterEligibility.bulkWrite(operations);
+
+    await logAuditEvent({
+      action: "ELECTION_VOTERS_ENROLLED",
+      category: "AUDIT_EVENT",
+      userId: req.user.id,
+      userRole: "admin",
+      electionId: election._id,
+      status: "SUCCESS",
+      details: { enrolledCount: targetVoters.length },
+      ipAddress: req.ip,
+      userAgent: req.headers["user-agent"],
+    });
+
+    res.json({
+      message: `Successfully accredited ${targetVoters.length} citizen voters for ${election.title}.`,
+      result: bulkResult,
+    });
+  } catch (err) {
+    logger.error("Enroll voters error: " + err.message, { requestId: req.id });
+    res.status(500).json({ message: "Failed to enroll voters for election" });
   }
 };
 
