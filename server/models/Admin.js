@@ -36,7 +36,6 @@ const adminSchema = new mongoose.Schema(
   }
 );
 
-adminSchema.index({ username: 1 });
 adminSchema.index({ role: 1 });
 
 module.exports = mongoose.model("Admin", adminSchema);

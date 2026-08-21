@@ -95,8 +95,10 @@ if (loginForm) {
                 showToast('Authentication successful. Redirecting...', 'success');
 
                 setTimeout(() => {
-                    if (data.role === 'admin') {
+                    if (data.role === 'admin' || data.role === 'SUPER_ADMIN' || data.role === 'ELECTION_ADMIN') {
                         window.location.href = '../admin/dashboard/dashboard.html';
+                    } else if (data.role === 'AUDITOR') {
+                        window.location.href = '../admin/auditor/auditor.html';
                     } else if (data.role === 'voter') {
                         window.location.href = '../voter-dashboard/v-dashboard.html';
                     } else if (data.role === 'party') {
