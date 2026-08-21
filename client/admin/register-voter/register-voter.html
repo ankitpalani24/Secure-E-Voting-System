@@ -157,8 +157,9 @@
                 <button type="button" id="closePopup" class="close-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">×</button>
             </div>
             
-            <div style="position: relative; width: 320px; height: 240px; margin: 0 auto 16px auto; border-radius: var(--radius-md); overflow: hidden; background-color: #000; border: 2px solid var(--border);">
-                <video id="video" width="320" height="240" autoplay playsinline muted style="transform: scaleX(-1); object-fit: cover; width: 100%; height: 100%;"></video>
+            <div class="biometric-viewport-container" id="adminFaceViewport">
+                <video id="video" class="biometric-video-feed" autoplay playsinline muted></video>
+                <div class="face-guide-oval" id="adminFaceGuideOval"></div>
             </div>
 
             <div id="faceStatus" style="font-size: 0.85rem; font-weight: 600; min-height: 24px; margin-bottom: 16px; color: var(--warning-text);">

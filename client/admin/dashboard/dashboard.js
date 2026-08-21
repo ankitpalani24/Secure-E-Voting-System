@@ -87,26 +87,44 @@ function renderElectionControlCenter(election) {
     if (btnArchive) btnArchive.disabled = !(phase === 'CLOSED' || phase === 'RESULTS_PUBLISHED' || phase === 'DRAFT');
 }
 
-async function handlePhaseTransition(targetPhase) {
-    if (!activeElection || !activeElection._id) return;
-    const token = localStorage.getItem('token');
-    if (!token) return;
+// ================== GOVERNANCE PROPOSAL MODAL WORKFLOW ==================
+let pendingGovernanceTarget = null;
+const govModal = document.getElementById('governanceProposalModal');
+const closeGovModalBtn = document.getElementById('closeGovModalBtn');
+const cancelGovModalBtn = document.getElementById('cancelGovModalBtn');
+const confirmGovProposalBtn = document.getElementById('confirmGovProposalBtn');
+const govReasonInput = document.getElementById('govReasonInput');
 
-    // Offer two-person governance proposal workflow for sensitive actions
-    const isSensitive = targetPhase === 'VOTING' || targetPhase === 'CLOSED' || targetPhase === 'RESULTS_PUBLISHED' || targetPhase === 'ARCHIVED';
-    const actionMap = {
-        'VOTING': 'OPEN_VOTING',
-        'CLOSED': 'CLOSE_VOTING',
-        'RESULTS_PUBLISHED': 'PUBLISH_RESULTS',
-        'ARCHIVED': 'ARCHIVE_ELECTION'
+function closeGovModal() {
+    if (govModal) govModal.classList.add('hidden');
+    pendingGovernanceTarget = null;
+}
+
+if (closeGovModalBtn) closeGovModalBtn.onclick = closeGovModal;
+if (cancelGovModalBtn) cancelGovModalBtn.onclick = closeGovModal;
+if (govModal) {
+    govModal.onclick = (e) => {
+        if (e.target === govModal) closeGovModal();
     };
+}
 
-    if (isSensitive) {
-        const action = actionMap[targetPhase];
-        const reason = prompt(`Submit Two-Person Governance Proposal to '${action}'?\nEnter operational reason:`, `Scheduled transition to ${targetPhase}`);
-        if (reason === null) return;
+if (confirmGovProposalBtn) {
+    confirmGovProposalBtn.onclick = async () => {
+        if (!pendingGovernanceTarget || !activeElection || !activeElection._id) return;
+        const token = localStorage.getItem('token');
+        if (!token) return;
 
+        const reason = govReasonInput ? govReasonInput.value.trim() : '';
+        if (!reason) {
+            showToast('Please provide an operational reason for the audit chain.', 'warning');
+            if (govReasonInput) govReasonInput.focus();
+            return;
+        }
+
+        const action = pendingGovernanceTarget.action;
+        closeGovModal();
         showSpinner(`Submitting ${action} Governance Proposal...`);
+
         try {
             const res = await fetch('/api/admin/proposals', {
                 method: 'POST',
@@ -125,7 +143,7 @@ async function handlePhaseTransition(targetPhase) {
             hideSpinner();
 
             if (res.ok) {
-                showToast(`✓ Proposal created! Awaiting secondary administrator review.`, 'success');
+                showToast(`✓ Proposal created! Awaiting secondary administrator authorization.`, 'success');
                 loadGovernanceProposals();
                 loadAuditLogs();
             } else {
@@ -135,10 +153,70 @@ async function handlePhaseTransition(targetPhase) {
             hideSpinner();
             showToast('Network error during proposal submission: ' + err.message, 'error');
         }
-        return;
-    }
+    };
+}
 
-    if (!confirm(`Are you sure you want to transition election to '${targetPhase}' phase?`)) {
+async function handlePhaseTransition(targetPhase) {
+    if (!activeElection || !activeElection._id) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    // Offer two-person governance proposal workflow for sensitive actions
+    const isSensitive = targetPhase === 'VOTING' || targetPhase === 'CLOSED' || targetPhase === 'RESULTS_PUBLISHED' || targetPhase === 'ARCHIVED';
+    const actionMeta = {
+        'VOTING': {
+            action: 'OPEN_VOTING',
+            badge: 'OPEN VOTING PROPOSAL',
+            title: 'Open Citizen Voting Window',
+            impactTitle: 'Enables Citizen Voting System-Wide',
+            impactText: 'Opens the ballot chamber to all accredited voters. Allows citizens to cast anonymous, biometrically-authorized ballots.',
+            reversibility: '<span style="color: var(--info);"><i class="fas fa-info-circle"></i> Status: Reversible by subsequent Close Voting action</span>'
+        },
+        'CLOSED': {
+            action: 'CLOSE_VOTING',
+            badge: 'CLOSE VOTING PROPOSAL',
+            title: 'Conclude & Lock Voting Chamber',
+            impactTitle: 'Terminates All Ballot Submissions Immediately',
+            impactText: 'Locks the decentralized ballot box. No citizen or administrator can submit further votes.',
+            reversibility: '<span style="color: var(--danger-text);"><i class="fas fa-exclamation-triangle"></i> Status: Permanent Lock — Submissions Halted</span>'
+        },
+        'RESULTS_PUBLISHED': {
+            action: 'PUBLISH_RESULTS',
+            badge: 'PUBLISH RESULTS PROPOSAL',
+            title: 'Publish Certified Election Results',
+            impactTitle: 'Lifts Public Embargo On Live Standings',
+            impactText: 'Certified candidate vote totals, turnout analytics, and standings become publicly accessible to voters and parties.',
+            reversibility: '<span style="color: var(--warning-text);"><i class="fas fa-eye"></i> Status: Results Embargo Lifted Permanently</span>'
+        },
+        'ARCHIVED': {
+            action: 'ARCHIVE_ELECTION',
+            badge: 'ARCHIVE ELECTION PROPOSAL',
+            title: 'Permanently Archive Election Records',
+            impactTitle: 'Freezes Tally & Read-Only Archival',
+            impactText: 'Freezes the election ledger permanently. The tally is archived and no further state modifications are permitted.',
+            reversibility: '<span style="color: var(--danger-text);"><i class="fas fa-archive"></i> Status: Irreversible Archival</span>'
+        }
+    };
+
+    if (isSensitive && govModal) {
+        const meta = actionMeta[targetPhase];
+        pendingGovernanceTarget = meta;
+
+        const badgeEl = document.getElementById('govActionBadge');
+        const titleEl = document.getElementById('govModalTitle');
+        const impactTitleEl = document.getElementById('govImpactTitle');
+        const impactTextEl = document.getElementById('govImpactText');
+        const revBadgeEl = document.getElementById('govReversibilityBadge');
+
+        if (badgeEl) badgeEl.textContent = meta.badge;
+        if (titleEl) titleEl.textContent = meta.title;
+        if (impactTitleEl) impactTitleEl.textContent = meta.impactTitle;
+        if (impactTextEl) impactTextEl.textContent = meta.impactText;
+        if (revBadgeEl) revBadgeEl.innerHTML = meta.reversibility;
+        if (govReasonInput) govReasonInput.value = `Scheduled institutional transition to ${targetPhase}`;
+
+        govModal.classList.remove('hidden');
+        if (govReasonInput) govReasonInput.focus();
         return;
     }
 
@@ -612,10 +690,12 @@ const cmdInput = document.getElementById('commandSearchInput');
 const cmdList = document.getElementById('commandResultsList');
 const openCmdBtn = document.getElementById('openCommandPaletteBtn');
 const cmdVerifyAudit = document.getElementById('cmdVerifyAudit');
+let focusedCommandIndex = -1;
 
 function openCommandPalette() {
     if (!cmdModal) return;
     cmdModal.classList.remove('hidden');
+    focusedCommandIndex = -1;
     if (cmdInput) {
         cmdInput.value = '';
         cmdInput.focus();
@@ -626,6 +706,30 @@ function openCommandPalette() {
 function closeCommandPalette() {
     if (!cmdModal) return;
     cmdModal.classList.add('hidden');
+    focusedCommandIndex = -1;
+    clearCommandFocus();
+}
+
+function getVisibleCommandItems() {
+    if (!cmdList) return [];
+    return Array.from(cmdList.querySelectorAll('.command-item')).filter(
+        el => el.style.display !== 'none'
+    );
+}
+
+function clearCommandFocus() {
+    if (!cmdList) return;
+    cmdList.querySelectorAll('.command-item').forEach(el => el.classList.remove('focused'));
+}
+
+function updateCommandFocus() {
+    clearCommandFocus();
+    const visible = getVisibleCommandItems();
+    if (visible.length === 0) return;
+    if (focusedCommandIndex >= 0 && focusedCommandIndex < visible.length) {
+        visible[focusedCommandIndex].classList.add('focused');
+        visible[focusedCommandIndex].scrollIntoView({ block: 'nearest' });
+    }
 }
 
 function filterCommands(query) {
@@ -640,6 +744,8 @@ function filterCommands(query) {
             item.style.display = 'none';
         }
     });
+    focusedCommandIndex = -1;
+    clearCommandFocus();
 }
 
 if (openCmdBtn) openCmdBtn.onclick = openCommandPalette;
@@ -669,8 +775,30 @@ document.addEventListener('keydown', (e) => {
         } else {
             openCommandPalette();
         }
+    } else if (cmdModal && !cmdModal.classList.contains('hidden')) {
+        const visible = getVisibleCommandItems();
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (visible.length > 0) {
+                focusedCommandIndex = (focusedCommandIndex + 1) % visible.length;
+                updateCommandFocus();
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (visible.length > 0) {
+                focusedCommandIndex = (focusedCommandIndex - 1 + visible.length) % visible.length;
+                updateCommandFocus();
+            }
+        } else if (e.key === 'Enter') {
+            if (focusedCommandIndex >= 0 && focusedCommandIndex < visible.length) {
+                e.preventDefault();
+                visible[focusedCommandIndex].click();
+            }
+        } else if (e.key === 'Escape') {
+            closeCommandPalette();
+        }
     } else if (e.key === 'Escape') {
-        closeCommandPalette();
+        closeGovModal();
     }
 });
 

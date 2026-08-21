@@ -117,6 +117,8 @@ function startContinuousFaceDetection() {
     const statusEl = document.getElementById('faceStatus');
     const captureBtn = document.getElementById('captureBtn');
 
+    const adminGuide = document.getElementById('adminFaceGuideOval');
+
     detectInterval = setInterval(async () => {
         if (!videoEl || videoEl.paused || videoEl.ended || !modelsLoaded) return;
 
@@ -129,6 +131,7 @@ function startContinuousFaceDetection() {
             if (detection) {
                 statusEl.textContent = '✓ High-quality face detected! Ready to capture.';
                 statusEl.style.color = 'var(--success-text)';
+                if (adminGuide) adminGuide.classList.add('detected');
                 if (captureBtn) {
                     captureBtn.className = 'btn-primary';
                     captureBtn.style.backgroundColor = 'var(--success)';
@@ -136,6 +139,7 @@ function startContinuousFaceDetection() {
             } else {
                 statusEl.textContent = 'Looking for face — please face camera directly.';
                 statusEl.style.color = 'var(--warning-text)';
+                if (adminGuide) adminGuide.classList.remove('detected');
                 if (captureBtn) {
                     captureBtn.className = 'btn-primary';
                     captureBtn.style.backgroundColor = 'var(--primary)';

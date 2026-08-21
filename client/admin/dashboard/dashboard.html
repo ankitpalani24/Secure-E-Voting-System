@@ -303,6 +303,48 @@
         </div>
     </div>
 
+    <!-- Two-Person Governance Proposal Confirmation Modal -->
+    <div class="modal-backdrop hidden" id="governanceProposalModal" role="dialog" aria-modal="true" aria-labelledby="govModalTitle">
+        <div class="review-modal-card" style="max-width: 540px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                <div>
+                    <span class="status-badge pending" id="govActionBadge" style="margin-bottom: 6px;">PROPOSAL REQUIRED</span>
+                    <h3 id="govModalTitle" style="font-size: 1.25rem; color: var(--text-primary);">Two-Person Governance Action</h3>
+                </div>
+                <button type="button" id="closeGovModalBtn" class="close-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-muted);" aria-label="Close dialog">×</button>
+            </div>
+
+            <!-- Impact & Reversibility Statement -->
+            <div id="govImpactBox" style="background-color: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px;">
+                <strong style="display: block; font-size: 0.88rem; color: var(--text-primary); margin-bottom: 4px;" id="govImpactTitle">Action Impact</strong>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;" id="govImpactText">Description of consequence</p>
+                <div style="margin-top: 8px; font-size: 0.78rem; font-weight: 600;" id="govReversibilityBadge">
+                    <span style="color: var(--warning-text);"><i class="fas fa-exclamation-triangle"></i> Status: Permanent State Change</span>
+                </div>
+            </div>
+
+            <!-- Separation of Duties Callout -->
+            <div class="warning-callout" style="margin-bottom: 18px; padding: 10px 14px; font-size: 0.82rem;">
+                <i class="fas fa-user-shield" style="font-size: 1.1rem; flex-shrink: 0;"></i>
+                <span><strong>Two-Person Rule:</strong> You are submitting this as the initiating officer. A secondary administrator must independently authorize it before execution.</span>
+            </div>
+
+            <!-- Operational Justification Input -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="govReasonInput" style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Operational Justification & Audit Reason *</label>
+                <textarea id="govReasonInput" class="form-control" rows="3" placeholder="Provide clear operational reason for audit compliance..." required></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" class="btn-secondary" id="cancelGovModalBtn">Cancel</button>
+                <button type="button" class="btn-primary" id="confirmGovProposalBtn" style="background-color: var(--primary);">
+                    <i class="fas fa-paper-plane"></i> Submit Governance Proposal
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Quick Action / Global Command Palette (Ctrl+K) -->
     <div class="command-palette-backdrop hidden" id="commandPaletteModal" role="dialog" aria-modal="true" aria-label="Quick Actions Command Palette">
         <div class="command-palette-card">
@@ -333,6 +375,11 @@
                 <a href="../../login/login.html" class="command-item">
                     <i class="fas fa-sign-out-alt" style="color: var(--danger);"></i> <span style="color: var(--danger);">Sign Out of Operations Center</span>
                 </a>
+            </div>
+            <!-- Keyboard Navigation Shortcuts Footer -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background-color: var(--surface-muted); border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-muted);">
+                <span><kbd class="command-shortcut-hint">↑</kbd> <kbd class="command-shortcut-hint">↓</kbd> Navigate &nbsp;&bull;&nbsp; <kbd class="command-shortcut-hint">↵</kbd> Select</span>
+                <span><kbd class="command-shortcut-hint">ESC</kbd> Close</span>
             </div>
         </div>
     </div>
